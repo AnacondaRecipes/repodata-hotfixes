@@ -250,9 +250,13 @@ def _patch_repodata(repodata, subdir):
         if "features" in record:
             _fix_nomkl_features(fn, record, instructions)
 
-        if (record.get('requires_features', {}).get("blas") == "mkl" and not
-                  any(dep.startswith("blas ") for dep in record['depends'])):
-            instructions["packages"][fn]["depends"] = record['depends'] + ["blas * mkl"]
+        # this was a not-very-successful approach at fixing features
+        blas_req_feature = record.get('requires_features', {}).get("blas")
+        if blas_req_feature:
+            if not any(dep.startswith("blas ") for dep in record['depends']):
+                instructions["packages"][fn]["depends"] = record['depends'] + ["blas * %s" % blas_req_feature]
+            del record["requires_features"]["blas"]
+            instructions["packages"][fn]["requires_features"] = record["requires_features"]
 
         if record.get("track_features"):
             for feat in record["track_features"].split():
