@@ -247,9 +247,9 @@ def _patch_repodata(repodata, subdir):
                 instructions["packages"][fn]['constrains'] = [dep for dep in record["constrains"]
                                                               if not dep.startswith("pyobjc-")]
 
-        if record["name"] == "blas" and record["build"] == "openblas":
-            if not any(dep == "openblas" for dep in record["depends"]):
-                instructions["packages"][fn]["depends"] = record["depends"] + ["openblas"]
+        # if record["name"] == "blas" and record["build"] == "openblas":
+        #     if not any(dep == "openblas" for dep in record["depends"]):
+        #         instructions["packages"][fn]["depends"] = record["depends"] + ["openblas"]
 
         if "features" in record:
             _fix_nomkl_features(fn, record, instructions)
@@ -258,9 +258,10 @@ def _patch_repodata(repodata, subdir):
         blas_req_feature = record.get('requires_features', {}).get("blas")
         if blas_req_feature:
             if not any(dep.startswith("blas ") for dep in record['depends']):
-                instructions["packages"][fn]["depends"] = record['depends'] + ["blas * %s" % blas_req_feature]
-            del record["requires_features"]["blas"]
-            instructions["packages"][fn]["requires_features"] = record["requires_features"]
+                record['depends'].append("blas * %s" % blas_req_feature)
+                instructions["packages"][fn]["depends"] = record['depends']
+            # del record["requires_features"]["blas"]
+            # instructions["packages"][fn]["requires_features"] = record["requires_features"]
 
         if record.get("track_features"):
             for feat in record["track_features"].split():
@@ -280,10 +281,12 @@ def _patch_repodata(repodata, subdir):
                 instructions["packages"][fn]["namespace"] = "python"
 
         if record['name'] == 'openblas-devel' and not any(d.startswith('blas ') for d in record['depends']):
-                instructions["packages"][fn]["depends"] = record["depends"] + ["blas * openblas"]
+            record["depends"].append("blas * openblas")
+            instructions["packages"][fn]["depends"] = record["depends"]
 
         if record['name'] == 'mkl-devel' and not any(d.startswith('blas') for d in record['depends']):
-                instructions["packages"][fn]["depends"] = record["depends"] + ["blas * mkl"]
+            record["depends"].append("blas * mkl")
+            instructions["packages"][fn]["depends"] = record["depends"]
 
         if fn == 'cupti-9.0.176-0.tar.bz2':
             # depends in package is set as cudatoolkit 9.*, should be 9.0.*
@@ -293,7 +296,8 @@ def _patch_repodata(repodata, subdir):
         if (record['name'] in BLAS_USING_PKGS and
                 any(dep.split()[0] == 'mkl' for dep in record['depends']) and
                 not any(dep.split()[0] == "blas" for dep in record['depends'])):
-            instructions["packages"][fn]["depends"] = record["depends"] + ["blas * mkl"]
+            record["depends"].append("blas * mkl")
+            instructions["packages"][fn]["depends"] = record["depends"]
 
         if subdir.startswith("win-"):
             _replace_vc_features_with_vc_pkg_deps(fn, record, instructions)
