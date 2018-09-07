@@ -53,16 +53,20 @@ REVOKED = {
     "linux-64": numpy_revocations + [
         # early builds did not attach blas metapackage dep appropriately
         # Jonathan?
-        "tensorflow-base-1.9.0-gpu_*_0.tar.bz2",
+        "tensorflow-base-1.9.0-gpu_py35h9f529ab_0.tar.bz2",
+        "tensorflow-base-1.9.0-gpu_py36h9f529ab_0.tar.bz2",
+        "tensorflow-base-1.9.0-gpu_py27h9f529ab_0.tar.bz2",
         # compilers with wrong dependencies (missing impl)
         "g*_linux-64-7.2.0-24.tar.bz2",
         ],
     "linux-32": numpy_revocations + [
         # early builds did not attach blas metapackage dep appropriately
         # Jonathan?
-        "tensorflow-base-1.9.0-gpu_*_0.tar.bz2",
+        "tensorflow-base-1.9.0-gpu_py35h9f529ab_0.tar.bz2",
+        "tensorflow-base-1.9.0-gpu_py36h9f529ab_0.tar.bz2",
+        "tensorflow-base-1.9.0-gpu_py27h9f529ab_0.tar.bz2",
         # compilers with wrong dependencies (missing impl)
-        "g*_linux-64-7.2.0-24.tar.bz2",
+        "g*_linux-32-7.2.0-24.tar.bz2",
         ],
     "linux-ppc64le": numpy_revocations,
     "osx-64": numpy_revocations,
@@ -231,9 +235,9 @@ def _patch_repodata(repodata, subdir):
         }
 
     for fn, record in index.items():
-        if any(fnmatch.fnmatch(fn, rev) for rev in REVOKED):
+        if any(fnmatch.fnmatch(fn, rev) for rev in REVOKED.get(subdir, [])):
             instructions['revoke'].append(fn)
-        if any(fnmatch.fnmatch(fn, rev) for rev in REMOVALS):
+        if any(fnmatch.fnmatch(fn, rev) for rev in REMOVALS.get(subdir, [])):
             instructions['remove'].append(fn)
         _apply_namespace_overrides(fn, record, instructions)
         if fn.startswith("numba-0.36.1") and record.get('timestamp') != 1512604800000:
