@@ -181,7 +181,8 @@ def _fix_linux_runtime_bounds(fn, record, instructions):
                     if lower_bound < 8:
                         dep += ",<8.0a0"
             deps.append(dep)
-        record['depends'] = deps
+        instructions["packages"][fn]["depends"] = deps
+
 
 def _fix_nomkl_features(fn, record, instructions):
     if "nomkl" == record["features"]:
@@ -257,6 +258,10 @@ def _patch_repodata(repodata, subdir):
 
         if record['name'] == 'mkl-devel' and not any(d.startswith('blas') for d in record['depends']):
                 instructions["packages"][fn]["depends"] = record["depends"] + ["blas * mkl"]
+
+        if fn == 'cupti-9.0.176-0.tar.bz2':
+            # depends in package is set as cudatoolkit 9.*, should be 9.0.*
+            instructions["packages"][fn]["depends"] = ['cudatoolkit 9.0.*']
 
         if (record['name'] in BLAS_USING_PKGS and
                 any(dep.split()[0] == 'mkl' for dep in record['depends']) and
