@@ -2,6 +2,7 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 from collections import defaultdict
+import fnmatch
 import json
 import os
 from os.path import join, dirname, isfile, isdir
@@ -30,31 +31,47 @@ REMOVALS = {
 
     ),
     "win-64": (
-        "vc-14.1-h21ff451_3.tar.bz2",
-        "vc-14.1-h0510ff6_3.tar.bz2",
+        "vc-14.1-*_3.tar.bz2",
         "vs2015_runtime-15.5.2-3.tar.bz2",
-        "vs2017_win-32-15.5.2-1.tar.bz2",
-        "vs2017_win-64-15.5.2-1.tar.bz2",
-        "vs2017_win-64-15.5.2-h55c1224_3.tar.bz2",
-        "vs2017_win-32-15.5.2-0.tar.bz2",
-        "vs2017_win-64-15.5.2-0.tar.bz2",
-        "vs2017_win-64-15.5.2-h17c34da_3.tar.bz2",
+        "vs2017_win-*-[0123].tar.bz2",
+    ),
+    "win-32": (
+        "vc-14.1-*_3.tar.bz2",
+        "vs2015_runtime-15.5.2-3.tar.bz2",
+        "vs2017_win-*-[0123].tar.bz2",
     ),
 }
 
+# early days with splitting the numpy package.  Messed up deps.
+numpy_revocations = ["numpy-base-1.11.3*_[0123456].tar.bz2",
+                     "numpy-1.11.3*_[0123456].tar.bz2",
+                     "numpy-base-1.14.5*_[0123456].tar.bz2",
+                     "numpy-1.14.5*_[0123456].tar.bz2",
+                     "numpy-1.14.3*_2.tar.bz2"]
 
 REVOKED = {
-    "win-64": (
-        # "vc-14.1-h21ff451_3.tar.bz2",
-        # "vc-14.1-h0510ff6_3.tar.bz2",
-        # "vs2015_runtime-15.5.2-3.tar.bz2",
-        # "vs2017_win-32-15.5.2-1.tar.bz2",
-        # "vs2017_win-64-15.5.2-1.tar.bz2",
-        # "vs2017_win-64-15.5.2-h55c1224_3.tar.bz2",
-        # "vs2017_win-32-15.5.2-0.tar.bz2",
-        # "vs2017_win-64-15.5.2-0.tar.bz2",
-        # "vs2017_win-64-15.5.2-h17c34da_3.tar.bz2",
-    ),
+    "linux-64": numpy_revocations + [
+        # early builds did not attach blas metapackage dep appropriately
+        # Jonathan?
+        "tensorflow-base-1.9.0-gpu_*_0.tar.bz2",
+        # compilers with wrong dependencies (missing impl)
+        "g*_linux-64-7.2.0-24.tar.bz2",
+        ],
+    "linux-32": numpy_revocations + [
+        # early builds did not attach blas metapackage dep appropriately
+        # Jonathan?
+        "tensorflow-base-1.9.0-gpu_*_0.tar.bz2",
+        # compilers with wrong dependencies (missing impl)
+        "g*_linux-64-7.2.0-24.tar.bz2",
+        ],
+    "linux-ppc64le": numpy_revocations,
+    "osx-64": numpy_revocations,
+    "win-32": numpy_revocations + [
+        "spyder-kernels-1.0.1-*_0"
+    ],
+    "win-64": numpy_revocations + [
+        "spyder-kernels-1.0.1-*_0"
+    ],
 }
 
 BLAS_USING_PKGS = {"numpy", "numpy-base", "scipy", "numexpr", "scikit-learn"}
@@ -206,9 +223,6 @@ def _patch_repodata(repodata, subdir):
         "remove": [],
     }
 
-    instructions["revoke"].extend(REVOKED.get(subdir, ()))
-    instructions["remove"].extend(REMOVALS.get(subdir, ()))
-
     if subdir == "noarch":
         instructions["external_dependencies"] = {
             "util-linux": "global:util-linux",  # libdap4, pynio
@@ -217,6 +231,10 @@ def _patch_repodata(repodata, subdir):
         }
 
     for fn, record in index.items():
+        if any(fnmatch.fnmatch(fn, rev) for rev in REVOKED):
+            instructions['revoke'].append(fn)
+        if any(fnmatch.fnmatch(fn, rev) for rev in REMOVALS):
+            instructions['remove'].append(fn)
         _apply_namespace_overrides(fn, record, instructions)
         if fn.startswith("numba-0.36.1") and record.get('timestamp') != 1512604800000:
             # set a specific timestamp
