@@ -43,14 +43,9 @@ REMOVALS = {
 }
 
 # early days with splitting the numpy package.  Messed up deps.
-numpy_revocations = ["numpy-base-1.11.3*_[0123456].tar.bz2",
-                     "numpy-1.11.3*_[0123456].tar.bz2",
-                     "numpy-base-1.14.5*_[0123456].tar.bz2",
-                     "numpy-1.14.5*_[0123456].tar.bz2",
-                     "numpy-1.14.3*_2.tar.bz2"]
 
 REVOKED = {
-    "linux-64": numpy_revocations + [
+    "linux-64": [
         # early builds did not attach blas metapackage dep appropriately
         # Jonathan?
         "tensorflow-base-1.9.0-gpu_py35h9f529ab_0.tar.bz2",
@@ -59,7 +54,7 @@ REVOKED = {
         # compilers with wrong dependencies (missing impl)
         "g*_linux-64-7.2.0-24.tar.bz2",
         ],
-    "linux-32": numpy_revocations + [
+    "linux-32": [
         # early builds did not attach blas metapackage dep appropriately
         # Jonathan?
         "tensorflow-base-1.9.0-gpu_py35h9f529ab_0.tar.bz2",
@@ -68,12 +63,12 @@ REVOKED = {
         # compilers with wrong dependencies (missing impl)
         "g*_linux-32-7.2.0-24.tar.bz2",
         ],
-    "linux-ppc64le": numpy_revocations,
-    "osx-64": numpy_revocations,
-    "win-32": numpy_revocations + [
+    "linux-ppc64le": [],
+    "osx-64": [],
+    "win-32": [
         "spyder-kernels-1.0.1-*_0"
     ],
-    "win-64": numpy_revocations + [
+    "win-64": [
         "spyder-kernels-1.0.1-*_0"
     ],
 }
@@ -293,10 +288,12 @@ def _patch_repodata(repodata, subdir):
             instructions["packages"][fn]["depends"] = ['cudatoolkit 9.0.*']
 
         # add in blas mkl metapkg for mutex behavior on packages that have just mkl deps
-        if (record['name'] in BLAS_USING_PKGS and
-                any(dep.split()[0] == 'mkl' for dep in record['depends']) and
-                not any(dep.split()[0] == "blas" for dep in record['depends'])):
-            record["depends"].append("blas * mkl")
+        if (record['name'] in BLAS_USING_PKGS and not
+                   any(dep.split()[0] == "blas" for dep in record['depends'])):
+            if any(dep.split()[0] == 'mkl' for dep in record['depends']):
+                record["depends"].append("blas * mkl")
+            elif any(dep.split()[0] in ('openblas', "libopenblas") for dep in record['depends']):
+                record["depends"].append("blas * openblas")
             instructions["packages"][fn]["depends"] = record["depends"]
 
         if subdir.startswith("win-"):
