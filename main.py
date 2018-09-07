@@ -74,7 +74,7 @@ REVOKED = {
     ],
 }
 
-BLAS_USING_PKGS = {"numpy", "numpy-base", "scipy", "numexpr", "scikit-learn"}
+BLAS_USING_PKGS = {"numpy", "numpy-base", "scipy", "numexpr", "scikit-learn", "libmxnet"}
 
 
 def _replace_vc_features_with_vc_pkg_deps(fn, record, instructions):
@@ -205,13 +205,13 @@ def _fix_nomkl_features(fn, record, instructions):
     if "nomkl" == record["features"]:
         del record['features']
         if not any(d.startswith("blas ") for d in record["depends"]):
-            record['depends'].append("blas * openblas")
             instructions["packages"][fn]["depends"] = record['depends'] + ["blas * openblas"]
     elif "nomkl" in record["features"]:
         # remove nomkl feature
         record['features'].remove('nomkl')
         if not any(d.startswith("blas ") for d in record["depends"]):
             instructions["packages"][fn]["depends"] = record['depends'] + ["blas * openblas"]
+            instructions["packages"][fn]["features"] = record['features']
 
 
 def _patch_repodata(repodata, subdir):
@@ -285,6 +285,7 @@ def _patch_repodata(repodata, subdir):
             # depends in package is set as cudatoolkit 9.*, should be 9.0.*
             instructions["packages"][fn]["depends"] = ['cudatoolkit 9.0.*']
 
+        # add in blas mkl metapkg for mutex behavior on packages that have just mkl deps
         if (record['name'] in BLAS_USING_PKGS and
                 any(dep.split()[0] == 'mkl' for dep in record['depends']) and
                 not any(dep.split()[0] == "blas" for dep in record['depends'])):
