@@ -27,22 +27,26 @@ SUBDIRS = (
 )
 
 REMOVALS = {
-    "noarch": (
-
-    ),
-    "win-64": (
+    "noarch": (),
+    "linux-ppc64le": [],
+    "osx-64": [],
+    "win-32": [],
+    "win-64": [],
+    "any": {
+        # early efforts on splitting numpy recipe did not pin numpy-base exactly.
+        #     These led to bad builds (built against newest numpy)
+        "numpy-*1.11.3-*_6.tar.bz2",
+        "numpy-*1.14.3-*_2.tar.bz2",
+        # missing blas deps that make solver able to choose wrong things.
+        #    numpy-base is pinned exactly, but this effectively defeated the
+        #    variant being able to distinguish between openblas and mkl.
+        "numpy-1.14.5-py35h28100ab_0.tar.bz2",
+        # VS 2017 early efforts had wrong version.  We remove them to avoid confusion.
         "vc-14.1-*_3.tar.bz2",
         "vs2015_runtime-15.5.2-3.tar.bz2",
         "vs2017_win-*-[0123].tar.bz2",
-    ),
-    "win-32": (
-        "vc-14.1-*_3.tar.bz2",
-        "vs2015_runtime-15.5.2-3.tar.bz2",
-        "vs2017_win-*-[0123].tar.bz2",
-    ),
+    }
 }
-
-# early days with splitting the numpy package.  Messed up deps.
 
 REVOKED = {
     "linux-64": [
@@ -71,6 +75,7 @@ REVOKED = {
     "win-64": [
         "spyder-kernels-1.0.1-*_0"
     ],
+    "any": []
 }
 
 BLAS_USING_PKGS = {"numpy", "numpy-base", "scipy", "numexpr", "scikit-learn", "libmxnet"}
@@ -230,21 +235,21 @@ def _patch_repodata(repodata, subdir):
         }
 
     for fn, record in index.items():
-        if any(fnmatch.fnmatch(fn, rev) for rev in REVOKED.get(subdir, [])):
+        if (any(fnmatch.fnmatch(fn, rev) for rev in REVOKED.get(subdir, [])) or
+                 any(fnmatch.fnmatch(fn, rev) for rev in REVOKED.get("any", []))):
             instructions['revoke'].append(fn)
-        if any(fnmatch.fnmatch(fn, rev) for rev in REMOVALS.get(subdir, [])):
+        if (any(fnmatch.fnmatch(fn, rev) for rev in REMOVALS.get(subdir, [])) or
+                 any(fnmatch.fnmatch(fn, rev) for rev in REMOVALS.get("any", []))):
             instructions['remove'].append(fn)
         _apply_namespace_overrides(fn, record, instructions)
         if fn.startswith("numba-0.36.1") and record.get('timestamp') != 1512604800000:
             # set a specific timestamp
             instructions["packages"][fn]['timestamp'] = 1512604800000
+
+        # strip out pyobjc stuff from twisted  (maybe Kale understands this one?)
         if record["name"] == "twisted" and any(dep.startswith("pyobjc-") for dep in record.get("constrains", ())):
                 instructions["packages"][fn]['constrains'] = [dep for dep in record["constrains"]
                                                               if not dep.startswith("pyobjc-")]
-
-        # if record["name"] == "blas" and record["build"] == "openblas":
-        #     if not any(dep == "openblas" for dep in record["depends"]):
-        #         instructions["packages"][fn]["depends"] = record["depends"] + ["openblas"]
 
         if "features" in record:
             _fix_nomkl_features(fn, record, instructions)
