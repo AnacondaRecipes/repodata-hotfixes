@@ -247,9 +247,12 @@ def _patch_repodata(repodata, subdir):
             instructions["packages"][fn]['timestamp'] = 1512604800000
 
         # strip out pyobjc stuff from twisted  (maybe Kale understands this one?)
-        if record["name"] == "twisted" and any(dep.startswith("pyobjc-") for dep in record.get("constrains", ())):
-                instructions["packages"][fn]['constrains'] = [dep for dep in record["constrains"]
-                                                              if not dep.startswith("pyobjc-")]
+        #
+        # 2018/09/10: we're not sure why this one was necessary.  Commenting until we understand the need for it.
+        #
+        # if record["name"] == "twisted" and any(dep.startswith("pyobjc-") for dep in record.get("constrains", ())):
+        #         instructions["packages"][fn]['constrains'] = [dep for dep in record["constrains"]
+        #                                                       if not dep.startswith("pyobjc-")]
 
         if "features" in record:
             _fix_nomkl_features(fn, record, instructions)
