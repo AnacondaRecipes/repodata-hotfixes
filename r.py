@@ -6,6 +6,7 @@ import json
 import os
 from os.path import join, dirname, isfile, isdir
 import sys
+import fnmatch
 
 import requests
 
@@ -28,17 +29,13 @@ REMOVALS = {
     "linux-64": (
         "r-nloptr-1.0.4-r3.2.2_1.tar.bz2",  # dependency on nlopt; only in conda-forge, and has problems of its own
     ),
-    "osx-64": (
-
-    ),
-    "win-32": (
-
-
-    ),
-    "win-64": (
-
-    ),
+    "osx-64": (),
+    "win-32": (),
+    "win-64": (),
+    "any": {}
 }
+
+REVOKED = {}
 
 EXTERNAL_DEPENDENCIES = {
     "blas": "global:blas",
@@ -153,6 +150,33 @@ def _patch_repodata(repodata, subdir):
         if NAMESPACE_OVERRIDES.get(record_name):
             # explicitly set namespace
             instructions["packages"][fn]['namespace'] = NAMESPACE_OVERRIDES[record_name]
+        # ensure that all r/r-base/mro-base packages have the mutex
+        if record_name == "r-base":
+            if not any(dep.split()[0] == "_r_mutex" for dep in record['depends']):
+                record['depends'].append("_r-mutex 1.* anacondar_1")
+                instructions["packages"][fn]["depends"] = record['depends']
+        elif record_name == "mro-base":
+            if not any(dep.split()[0] == "_r_mutex" for dep in record['depends']):
+                record['depends'].append("_r-mutex 1.* mro_2")
+                instructions["packages"][fn]["depends"] = record['depends']
+        # None of the 3.1.2 builds used r-base, and none of them have the mutex
+        elif record_name == "r" and record['version'] == "3.1.2":
+            # less than build 3 was an actual package; no r-base connection.  These need the mutex.
+            if int(record["build_number"]) < 3:
+                record['depends'].append("_r-mutex 1.* anacondar_1")
+                instructions["packages"][fn]["depends"] = record['depends']
+            else:
+                # this dep was underspecified
+                record['depends'].remove('r-base')
+                record['depends'].append('r-base 3.1.2')
+                instructions["packages"][fn]["depends"] = record['depends']
+
+        if (any(fnmatch.fnmatch(fn, rev) for rev in REVOKED.get(subdir, [])) or
+                 any(fnmatch.fnmatch(fn, rev) for rev in REVOKED.get("any", []))):
+            instructions['revoke'].append(fn)
+        if (any(fnmatch.fnmatch(fn, rev) for rev in REMOVALS.get(subdir, [])) or
+                 any(fnmatch.fnmatch(fn, rev) for rev in REMOVALS.get("any", []))):
+            instructions['remove'].append(fn)
 
     return instructions
 
