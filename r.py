@@ -36,6 +36,7 @@ REMOVALS = {
     "any": {
         "r-3.[123]*",
         "r-base-3.[123]*",
+        "r-essentials-*-mro*",
     }
 }
 
