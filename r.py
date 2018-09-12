@@ -34,8 +34,8 @@ REMOVALS = {
     "win-32": (),
     "win-64": (),
     "any": {
-        "r-3.[123]*",
-        "r-base-3.[123]*",
+        "r-3.[12]*",
+        "r-base-3.[12]*",
     }
 }
 
@@ -182,17 +182,17 @@ def _patch_repodata(repodata, subdir):
                     pass
                 record['depends'].append('r-base 3.1.2')
                 instructions["packages"][fn]["depends"] = record['depends']
-        # cyclical dep here
-        if record_name in ("r-recommended", "r-essentials"):
-            new_deps = []
-            for dep in record['depends']:
-                parts = dep.split()
-                if len(parts) > 1 and parts[0] == 'r':
-                    new_deps.append("r-base %s" % parts[1])
-                else:
-                    new_deps.append(dep)
-            record['depends'] = new_deps
-            instructions["packages"][fn]["depends"] = record['depends']
+
+        # cyclical dep here.  Everything should depend on r-base instead of r, as r brings in r-essentials
+        new_deps = []
+        for dep in record['depends']:
+            parts = dep.split()
+            if len(parts) > 1 and parts[0] == 'r':
+                new_deps.append("r-base %s" % parts[1])
+            else:
+                new_deps.append(dep)
+        record['depends'] = new_deps
+        instructions["packages"][fn]["depends"] = record['depends']
 
         if (any(fnmatch.fnmatch(fn, rev) for rev in REVOKED.get(subdir, [])) or
                  any(fnmatch.fnmatch(fn, rev) for rev in REVOKED.get("any", []))):
