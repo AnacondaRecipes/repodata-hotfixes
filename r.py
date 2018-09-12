@@ -194,6 +194,14 @@ def _patch_repodata(repodata, subdir):
         record['depends'] = new_deps
         instructions["packages"][fn]["depends"] = record['depends']
 
+        # try to attach mutex metapackages more directly
+        if not any(dep.split()[0] == "_r-mutex" for dep in record['depends']):
+            if any(dep.split()[0] == "r-base" for dep in record['depends']):
+                record['depends'].append("_r-mutex 1.* anacondar_1")
+            elif any(dep.split()[0] == "mro-base" for dep in record['depends']):
+                record['depends'].append("_r-mutex 1.* mro_2")
+            instructions["packages"][fn]["depends"] = record['depends']
+
         if (any(fnmatch.fnmatch(fn, rev) for rev in REVOKED.get(subdir, [])) or
                  any(fnmatch.fnmatch(fn, rev) for rev in REVOKED.get("any", []))):
             instructions['revoke'].append(fn)
