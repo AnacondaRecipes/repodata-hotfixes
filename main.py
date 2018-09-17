@@ -304,6 +304,19 @@ def _patch_repodata(repodata, subdir):
                 record["depends"].append("blas * openblas")
             instructions["packages"][fn]["depends"] = record["depends"]
 
+        # some of these got hard-coded to overly restrictive values
+        if record['name'] in ('scikit-learn', 'pytorch'):
+            new_deps = []
+            for dep in record['depends']:
+                if dep.startswith('mkl 2018'):
+                    if not any(_.startswith('mkl >') for _ in record['depends']):
+                        new_deps.append("mkl >=2018.0.3")
+                else:
+                    new_deps.append(dep)
+            record["depends"] = new_deps
+            instructions["packages"][fn]["depends"] = record["depends"]
+
+
         if subdir.startswith("win-"):
             _replace_vc_features_with_vc_pkg_deps(fn, record, instructions)
 
