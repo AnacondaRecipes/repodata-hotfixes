@@ -323,6 +323,8 @@ def _patch_repodata(repodata, subdir):
         elif subdir.startswith("linux-"):
             _fix_linux_runtime_bounds(fn, record, instructions)
 
+    instructions['remove'].sort()
+    instructions['revoke'].sort()
     return instructions
 
 
