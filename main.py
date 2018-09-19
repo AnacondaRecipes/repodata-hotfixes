@@ -30,8 +30,8 @@ REMOVALS = {
     "noarch": (),
     "linux-ppc64le": [],
     "osx-64": [],
-    "win-32": [],
-    "win-64": [],
+    "win-32": ["nomkl-*"],
+    "win-64": ["nomkl-*"],
     "any": {
         # early efforts on splitting numpy recipe did not pin numpy-base exactly.
         #     These led to bad builds (built against newest numpy)
