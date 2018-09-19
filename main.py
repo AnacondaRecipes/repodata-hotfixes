@@ -50,8 +50,7 @@ REMOVALS = {
 
 REVOKED = {
     "linux-64": [
-        # early builds did not attach blas metapackage dep appropriately
-        # Jonathan?
+        # build _0 were built against an invalid CuDNN library version
         "tensorflow-base-1.9.0-gpu_py35h9f529ab_0.tar.bz2",
         "tensorflow-base-1.9.0-gpu_py36h9f529ab_0.tar.bz2",
         "tensorflow-base-1.9.0-gpu_py27h9f529ab_0.tar.bz2",
@@ -59,8 +58,7 @@ REVOKED = {
         "g*_linux-64-7.2.0-24.tar.bz2",
         ],
     "linux-32": [
-        # early builds did not attach blas metapackage dep appropriately
-        # Jonathan?
+        # build _0 were built against an invalid CuDNN library version
         "tensorflow-base-1.9.0-gpu_py35h9f529ab_0.tar.bz2",
         "tensorflow-base-1.9.0-gpu_py36h9f529ab_0.tar.bz2",
         "tensorflow-base-1.9.0-gpu_py27h9f529ab_0.tar.bz2",
