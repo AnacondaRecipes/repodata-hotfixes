@@ -316,6 +316,9 @@ def _patch_repodata(repodata, subdir):
                 if dep.startswith('mkl 2018'):
                     if not any(_.startswith('mkl >') for _ in record['depends']):
                         new_deps.append("mkl >=2018.0.3")
+                elif dep == 'nccl':
+                    # pytorch was built with nccl 1.x
+                    new_deps.append('nccl <2')
                 else:
                     new_deps.append(dep)
             record["depends"] = new_deps
