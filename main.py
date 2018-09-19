@@ -289,6 +289,13 @@ def _patch_repodata(repodata, subdir):
             record["depends"].append("blas * mkl")
             instructions["packages"][fn]["depends"] = record["depends"]
 
+        if record['name'] == 'pyqt'and record['version'] == '5.9.2':
+            # pyqt needs an upper limit of sip, build 2 has this already
+            if 'sip >=4.19.4' in record['depends']:
+                sip_index = record['depends'].index('sip >=4.19.4')
+                record['depends'][sip_index]= 'sip >=4.19.4,<=4.19.8'
+                instructions["packages"][fn]["depends"] = record["depends"]
+
         if fn == 'cupti-9.0.176-0.tar.bz2':
             # depends in package is set as cudatoolkit 9.*, should be 9.0.*
             instructions["packages"][fn]["depends"] = ['cudatoolkit 9.0.*']
