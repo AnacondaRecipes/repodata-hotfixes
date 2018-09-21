@@ -46,8 +46,7 @@ REMOVALS = {
 
 REVOKED = {
     "linux-64": [
-        # early builds did not attach blas metapackage dep appropriately
-        # Jonathan?
+        # build _0 were built against an invalid CuDNN library version
         "tensorflow-base-1.9.0-gpu_py35h9f529ab_0.tar.bz2",
         "tensorflow-base-1.9.0-gpu_py36h9f529ab_0.tar.bz2",
         "tensorflow-base-1.9.0-gpu_py27h9f529ab_0.tar.bz2",
@@ -55,8 +54,7 @@ REVOKED = {
         "g*_linux-64-7.2.0-24.tar.bz2",
         ],
     "linux-32": [
-        # early builds did not attach blas metapackage dep appropriately
-        # Jonathan?
+        # build _0 were built against an invalid CuDNN library version
         "tensorflow-base-1.9.0-gpu_py35h9f529ab_0.tar.bz2",
         "tensorflow-base-1.9.0-gpu_py36h9f529ab_0.tar.bz2",
         "tensorflow-base-1.9.0-gpu_py27h9f529ab_0.tar.bz2",
@@ -287,6 +285,13 @@ def _patch_repodata(repodata, subdir):
             record["depends"].append("blas * mkl")
             instructions["packages"][fn]["depends"] = record["depends"]
 
+        if record['name'] == 'pyqt'and record['version'] == '5.9.2':
+            # pyqt needs an upper limit of sip, build 2 has this already
+            if 'sip >=4.19.4' in record['depends']:
+                sip_index = record['depends'].index('sip >=4.19.4')
+                record['depends'][sip_index]= 'sip >=4.19.4,<=4.19.8'
+                instructions["packages"][fn]["depends"] = record["depends"]
+
         if fn == 'cupti-9.0.176-0.tar.bz2':
             # depends in package is set as cudatoolkit 9.*, should be 9.0.*
             instructions["packages"][fn]["depends"] = ['cudatoolkit 9.0.*']
@@ -307,6 +312,9 @@ def _patch_repodata(repodata, subdir):
                 if dep.startswith('mkl 2018'):
                     if not any(_.startswith('mkl >') for _ in record['depends']):
                         new_deps.append("mkl >=2018.0.3")
+                elif dep == 'nccl':
+                    # pytorch was built with nccl 1.x
+                    new_deps.append('nccl <2')
                 else:
                     new_deps.append(dep)
             record["depends"] = new_deps
