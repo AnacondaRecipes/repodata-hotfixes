@@ -41,6 +41,10 @@ REMOVALS = {
         #    numpy-base is pinned exactly, but this effectively defeated the
         #    variant being able to distinguish between openblas and mkl.
         "numpy-1.14.5-py35h28100ab_0.tar.bz2",
+        # early vs2017 packages used wrong version numbers
+        "vs2017_win-*-15.5.2*",
+        "vs2017*h590f102_0*",
+        "vs2017*hb4ce483_0*"
     }
 }
 
