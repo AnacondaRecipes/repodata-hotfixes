@@ -362,10 +362,7 @@ def _extract_track_feature(record, feature_name):
     return " ".join(features)
 
 
-def main():
-
-    base_dir = join(dirname(__file__), CHANNEL_NAME)
-
+def do_hotfixes(base_dir):
     # Step 1. Collect initial repodata for all subdirs.
     repodatas = {}
     for subdir in SUBDIRS:
@@ -392,6 +389,11 @@ def main():
         with open(patch_instructions_path, 'w') as fh:
             json.dump(instructions, fh, indent=2, sort_keys=True, separators=(',', ': '))
         patch_instructions[subdir] = instructions
+
+
+def main():
+    base_dir = join(dirname(__file__), CHANNEL_NAME)
+    do_hotfixes(base_dir)
 
 
 if __name__ == "__main__":

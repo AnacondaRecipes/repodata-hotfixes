@@ -106,9 +106,7 @@ def _extract_and_remove_vc_feature(record):
     return vc_version
 
 
-def main():
-
-    base_dir = join(dirname(__file__), CHANNEL_NAME)
+def do_hotfixes(base_dir):
 
     # Step 1. Collect initial repodata for all subdirs.
     repodatas = {}
@@ -136,6 +134,11 @@ def main():
         with open(patch_instructions_path, 'w') as fh:
             json.dump(instructions, fh, indent=2, sort_keys=True, separators=(',', ': '))
         patch_instructions[subdir] = instructions
+
+
+def main():
+    base_dir = join(dirname(__file__), CHANNEL_NAME)
+    do_hotfixes(base_dir)
 
 
 if __name__ == "__main__":
