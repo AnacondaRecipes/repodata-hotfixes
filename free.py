@@ -160,6 +160,10 @@ def _patch_repodata(repodata, subdir):
             if mpfr_idx is not None:
                 depends[mpfr_idx] += upper_bound
                 instructions["packages"][fn]['depends'] = depends
+        if record_name == "git":
+            # fix dependency on openssl
+            instructions["packages"][fn]['depends'] = [*map(lambda x: x if
+                x!='openssl' else 'openssl 1.0.*', record['depends'])]
         if "features" in record:
             if "nomkl" in record["features"]:
                 # remove nomkl feature
