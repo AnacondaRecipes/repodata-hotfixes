@@ -224,6 +224,8 @@ def _patch_repodata(repodata, subdir):
         "revoke": [],
         "remove": [],
     }
+    mkl_version_2018_re = re.compile(r">=2018(.\d){0,2}$")
+    mkl_version_2018_extended_rc = re.compile(r">=2018(.\d){0,2}")
 
     if subdir == "noarch":
         instructions["external_dependencies"] = {
@@ -300,6 +302,17 @@ def _patch_repodata(repodata, subdir):
             # depends in package is set as cudatoolkit 9.*, should be 9.0.*
             instructions["packages"][fn]["depends"] = ['cudatoolkit 9.0.*']
 
+        if any(dep.split()[0] == 'mkl' for dep in record['depends']):
+            for dep in record['depends']:
+                if dep.split()[0] == 'mkl':
+                    if len(dep.split()) == 1:
+                        record['depends'].remove(dep)
+                        record['depends'].append("mkl >=2018,<2019.0a0")
+                    elif mkl_version_2018_re.match(dep.split()[1]):
+                        record['depends'].remove(dep)
+                        record['depends'].append(mkl_version_2018_extended_rc.sub('%s,<2019.0a0'%(dep.split()[1]), dep))
+            instructions["packages"][fn]["depends"] = record["depends"]
+
         # add in blas mkl metapkg for mutex behavior on packages that have just mkl deps
         if (record['name'] in BLAS_USING_PKGS and not
                    any(dep.split()[0] == "blas" for dep in record['depends'])):
@@ -315,7 +328,7 @@ def _patch_repodata(repodata, subdir):
             for dep in record['depends']:
                 if dep.startswith('mkl 2018'):
                     if not any(_.startswith('mkl >') for _ in record['depends']):
-                        new_deps.append("mkl >=2018.0.3")
+                        new_deps.append("mkl >=2018.0.3,<2019.0a0")
                 elif dep == 'nccl':
                     # pytorch was built with nccl 1.x
                     new_deps.append('nccl <2')
