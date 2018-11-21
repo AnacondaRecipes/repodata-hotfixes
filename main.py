@@ -313,6 +313,15 @@ def _patch_repodata(repodata, subdir):
                         record['depends'].append(mkl_version_2018_extended_rc.sub('%s,<2019.0a0'%(dep.split()[1]), dep))
             instructions["packages"][fn]["depends"] = record["depends"]
 
+        # openssl uses funnny version numbers, 1.1.1, 1.1.1a, 1.1.1b, etc
+        # openssl >=1.1.1,<1.1.2.0a0 -> >=1.1.1a,<1.1.2a
+        if any(dep == 'openssl >=1.1.1,<1.1.2.0a0' for dep in record['depends']):
+            for dep in record['depends']:
+                if dep == 'openssl >=1.1.1,<1.1.2.0a0':
+                    record['depends'].remove(dep)
+                    record['depends'].append('>=1.1.1a,<1.1.2a')
+            instructions["packages"][fn]["depends"] = record["depends"]
+
         # add in blas mkl metapkg for mutex behavior on packages that have just mkl deps
         if (record['name'] in BLAS_USING_PKGS and not
                    any(dep.split()[0] == "blas" for dep in record['depends'])):
