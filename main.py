@@ -316,10 +316,9 @@ def _patch_repodata(repodata, subdir):
         # openssl uses funnny version numbers, 1.1.1, 1.1.1a, 1.1.1b, etc
         # openssl >=1.1.1,<1.1.2.0a0 -> >=1.1.1a,<1.1.2a
         if any(dep == 'openssl >=1.1.1,<1.1.2.0a0' for dep in record['depends']):
-            for dep in record['depends']:
+            for index, dep in enumerate(record['depends']):
                 if dep == 'openssl >=1.1.1,<1.1.2.0a0':
-                    record['depends'].remove(dep)
-                    record['depends'].append('>=1.1.1a,<1.1.2a')
+                    record['depends'][index] = 'openssl >=1.1.1a,<1.1.2a'
             instructions["packages"][fn]["depends"] = record["depends"]
 
         # add in blas mkl metapkg for mutex behavior on packages that have just mkl deps
