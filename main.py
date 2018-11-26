@@ -352,6 +352,15 @@ def _patch_repodata(repodata, subdir):
         elif subdir.startswith("linux-"):
             _fix_linux_runtime_bounds(fn, record, instructions)
 
+        if record['name'] == 'anaconda' and record['version'] in ["5.3.0", "5.3.1"]:
+            mkl_version = [i for i in record['depends'] if "mkl" == i.split()[0] and "2019" in i.split()[1]]
+            if len(mkl_version) == 1:
+                record['depends'].remove(mkl_version[0])
+                record['depends'].append('mkl 2018.0.3 1')
+            elif len(mkl_version) > 1:
+                raise Exception("Found multiple mkl entries, expected only 1.")
+            instructions["packages"][fn]["depends"] = record["depends"]
+
     instructions['remove'].sort()
     instructions['revoke'].sort()
     return instructions
