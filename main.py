@@ -304,7 +304,7 @@ def _patch_repodata(repodata, subdir):
 
         if any(dep.split()[0] == 'mkl' for dep in record['depends']):
             for dep in record['depends']:
-                if dep.split()[0] == 'mkl' and mkl_version_2018_re.match(dep.split()[1]):
+                if dep.split()[0] == 'mkl' and len(dep.split()) > 1 and mkl_version_2018_re.match(dep.split()[1]):
                     record['depends'].remove(dep)
                     record['depends'].append(mkl_version_2018_extended_rc.sub('%s,<2019.0a0'%(dep.split()[1]), dep))
             instructions["packages"][fn]["depends"] = record["depends"]
