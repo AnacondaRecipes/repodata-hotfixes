@@ -29,7 +29,10 @@ SUBDIRS = (
 REMOVALS = {
     "noarch": (),
     "linux-ppc64le": [],
-    "osx-64": [],
+    "osx-64": [
+        # qt 5.9.7 accidentially added .conda. to the dylibs names
+        'qt-5.9.7-h468cd18_0.tar.bz2',
+        ],
     "win-32": ["nomkl-*"],
     "win-64": ["nomkl-*"],
     "any": {
