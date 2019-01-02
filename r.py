@@ -5,6 +5,7 @@ from collections import defaultdict
 import json
 import os
 from os.path import join, dirname, isfile, isdir
+import re
 import sys
 import fnmatch
 
@@ -177,6 +178,24 @@ def _patch_repodata(repodata, subdir):
         if (any(fnmatch.fnmatch(fn, rev) for rev in REMOVALS.get(subdir, [])) or
                  any(fnmatch.fnmatch(fn, rev) for rev in REMOVALS.get("any", []))):
             instructions['remove'].append(fn)
+
+        if any(dep == 'mro-base' for dep in record.get('depends', [])):
+            deps = record['depends']
+            deps.remove('mro-base')
+            version = re.search(".*\-mro(\d{3})", fn).group(1)
+            lb = '.'.join((_ for _ in version))
+            ub = '.'.join((_ for _ in str(int(version) + 10)))
+            ub = '.'.join(ub.split('.')[:2] + ['0'])
+            deps.append("mro-base >={},<{}a0".format(lb, ub))
+
+        if any(dep == 'r-base' for dep in record.get('depends', [])):
+            deps = record['depends']
+            deps.remove('r-base')
+            version = re.search(".*\-r(\d{3})", fn).group(1)
+            lb = '.'.join((_ for _ in version))
+            ub = '.'.join((_ for _ in str(int(version) + 10)))
+            ub = '.'.join(ub.split('.')[:2] + ['0'])
+            deps.append("r-base >={},<{}a0".format(lb, ub))
 
     return instructions
 
