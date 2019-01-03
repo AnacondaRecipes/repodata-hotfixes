@@ -8,3 +8,11 @@ When packages are created, authors do their best to specify constraints that mak
 * changes to features or track_features (removal, addition, change to different names)
 * addition or removal of dependencies
 * addition or removal of constraints
+
+## Testing hotfixes:
+
+There's a script that downloads the current repodata and runs your instructions against it.  It then shows you a diff.  Example usage of this script:
+
+python test-hotfix.py r --subdir=linux-64
+
+You should run this before merging any PRs so that you understand the effects your change may have (or not have, if you have bugs).
