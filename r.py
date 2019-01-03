@@ -11,7 +11,7 @@ import fnmatch
 
 import requests
 
-CHANNEL_NAME = "pro"
+CHANNEL_NAME = "r"
 CHANNEL_ALIAS = "https://repo.anaconda.com/pkgs"
 SUBDIRS = (
     "noarch",
@@ -118,14 +118,16 @@ NAMESPACE_OVERRIDES = {
 
 
 def _patch_repodata(repodata, subdir):
-    index = repodata["packages"]
     instructions = {
         "patch_instructions_version": 1,
         "packages": defaultdict(dict),
         "revoke": [],
         "remove": [],
     }
+    if 'packages' not in repodata:
+        return instructions
 
+    index = repodata["packages"]
     instructions["remove"].extend(REMOVALS.get(subdir, ()))
 
     if subdir == "noarch":
@@ -154,21 +156,27 @@ def _patch_repodata(repodata, subdir):
         # ensure that all r/r-base/mro-base packages have the mutex
         if record_name == "r-base":
             if not any(dep.split()[0] == "_r_mutex" for dep in record['depends']):
-                record['depends'].append("_r-mutex 1.* anacondar_1")
+                if "_r-mutex 1.* anacondar_1" not in record['depends']:
+                    record['depends'].append("_r-mutex 1.* anacondar_1")
                 instructions["packages"][fn]["depends"] = record['depends']
         elif record_name == "mro-base":
             if not any(dep.split()[0] == "_r_mutex" for dep in record['depends']):
-                record['depends'].append("_r-mutex 1.* mro_2")
+                if "_r-mutex 1.* mro_2" not in record['depends']:
+                    record['depends'].append("_r-mutex 1.* mro_2")
                 instructions["packages"][fn]["depends"] = record['depends']
         # None of the 3.1.2 builds used r-base, and none of them have the mutex
         elif record_name == "r" and record['version'] == "3.1.2":
             # less than build 3 was an actual package; no r-base connection.  These need the mutex.
             if int(record["build_number"]) < 3:
-                record['depends'].append("_r-mutex 1.* anacondar_1")
+                if "_r-mutex 1.* anacondar_1" not in record['depends']:
+                    record['depends'].append("_r-mutex 1.* anacondar_1")
                 instructions["packages"][fn]["depends"] = record['depends']
             else:
                 # this dep was underspecified
-                record['depends'].remove('r-base')
+                try:
+                    record['depends'].remove('r-base')
+                except ValueError:
+                    pass
                 record['depends'].append('r-base 3.1.2')
                 instructions["packages"][fn]["depends"] = record['depends']
 
@@ -182,20 +190,22 @@ def _patch_repodata(repodata, subdir):
         if any(dep == 'mro-base' for dep in record.get('depends', [])):
             deps = record['depends']
             deps.remove('mro-base')
-            version = re.search(".*\-mro(\d{3})", fn).group(1)
+            version = re.search(r".*\-.*mro(\d{3})", fn).group(1)
             lb = '.'.join((_ for _ in version))
             ub = '.'.join((_ for _ in str(int(version) + 10)))
             ub = '.'.join(ub.split('.')[:2] + ['0'])
             deps.append("mro-base >={},<{}a0".format(lb, ub))
+            instructions["packages"][fn]["depends"] = deps
 
         if any(dep == 'r-base' for dep in record.get('depends', [])):
             deps = record['depends']
             deps.remove('r-base')
-            version = re.search(".*\-r(\d{3})", fn).group(1)
+            version = re.search(r".*\-.*r(\d{3})", fn).group(1)
             lb = '.'.join((_ for _ in version))
             ub = '.'.join((_ for _ in str(int(version) + 10)))
             ub = '.'.join(ub.split('.')[:2] + ['0'])
             deps.append("r-base >={},<{}a0".format(lb, ub))
+            instructions["packages"][fn]["depends"] = deps
 
     return instructions
 
@@ -240,6 +250,7 @@ def main():
     patch_instructions = {}
     for subdir in SUBDIRS:
         instructions = _patch_repodata(repodatas[subdir], subdir)
+
         patch_instructions_path = join(base_dir, subdir, "patch_instructions.json")
         with open(patch_instructions_path, 'w') as fh:
             json.dump(instructions, fh, indent=2, sort_keys=True, separators=(',', ': '))
