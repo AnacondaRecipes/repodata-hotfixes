@@ -33,7 +33,10 @@ REMOVALS = {
     "osx-64": (),
     "win-32": (),
     "win-64": (),
-    "any": {}
+    "any": {
+        "r-3.[12]*",
+        "r-base-3.[12]*",
+    }
 }
 
 REVOKED = {}
@@ -179,6 +182,25 @@ def _patch_repodata(repodata, subdir):
                     pass
                 record['depends'].append('r-base 3.1.2')
                 instructions["packages"][fn]["depends"] = record['depends']
+
+        # cyclical dep here.  Everything should depend on r-base instead of r, as r brings in r-essentials
+        new_deps = []
+        for dep in record['depends']:
+            parts = dep.split()
+            if len(parts) > 1 and parts[0] == 'r':
+                new_deps.append("r-base %s" % parts[1])
+            else:
+                new_deps.append(dep)
+        record['depends'] = new_deps
+        instructions["packages"][fn]["depends"] = record['depends']
+
+        # try to attach mutex metapackages more directly
+        if not any(dep.split()[0] == "_r-mutex" for dep in record['depends']):
+            if any(dep.split()[0] == "r-base" for dep in record['depends']):
+                record['depends'].append("_r-mutex 1.* anacondar_1")
+            elif any(dep.split()[0] == "mro-base" for dep in record['depends']):
+                record['depends'].append("_r-mutex 1.* mro_2")
+            instructions["packages"][fn]["depends"] = record['depends']
 
         if (any(fnmatch.fnmatch(fn, rev) for rev in REVOKED.get(subdir, [])) or
                  any(fnmatch.fnmatch(fn, rev) for rev in REVOKED.get("any", []))):
