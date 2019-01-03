@@ -85,6 +85,25 @@ REVOKED = {
 
 BLAS_USING_PKGS = {"numpy", "numpy-base", "scipy", "numexpr", "scikit-learn", "libmxnet"}
 
+TFLOW_SUBS = {
+    # 1.8.0, eigen is the default variant
+    '_tflow_180_select ==1.0 gpu': '_tflow_select ==1.1.0 gpu',
+    '_tflow_180_select ==2.0 mkl': '_tflow_select ==1.2.0 mkl',
+    '_tflow_180_select ==3.0 eigen': '_tflow_select ==1.2.0 eigen',
+
+    # 1.9.0, mkl is the default variant
+    '_tflow_190_select ==0.0.1 gpu': '_tflow_select ==2.1.0 gpu',
+    '_tflow_190_select ==0.0.2 eigen': '_tflow_select ==2.2.0 eigen',
+    '_tflow_190_select ==0.0.3 mkl': '_tflow_select ==2.3.0 mkl',
+
+    # 1.10.0, mkl is the default variant
+    '_tflow_1100_select ==0.0.1 gpu': '_tflow_select ==2.1.0 gpu',
+    '_tflow_1100_select ==0.0.2 eigen': '_tflow_select ==2.2.0 eigen',
+    '_tflow_1100_select ==0.0.3 mkl': '_tflow_select ==2.3.0 mkl',
+
+    # 1.11.0+ needs no fixing
+}
+
 
 def _replace_vc_features_with_vc_pkg_deps(fn, record, instructions):
     python_vc_deps = {
@@ -304,6 +323,13 @@ def _patch_repodata(repodata, subdir):
                 sip_index = record['depends'].index('sip >=4.19.4')
                 record['depends'][sip_index]= 'sip >=4.19.4,<=4.19.8'
                 instructions["packages"][fn]["depends"] = record["depends"]
+
+        if record['name'] in ['tensorflow', 'tensorflow-gpu', 'tensorflow-eigen', 'tensorflow-mkl']:
+            if record['version'] not in ['1.8.0', '1.9.0', '1.10.0']:
+                continue
+            # use _tflow_select as the mutex/selector not _tflow_180_select, etc
+            depends = [TFLOW_SUBS[d] if d in TFLOW_SUBS else d for d in record['depends']]
+            instructions["packages"][fn]["depends"] = depends
 
         if fn == 'cupti-9.0.176-0.tar.bz2':
             # depends in package is set as cudatoolkit 9.*, should be 9.0.*
