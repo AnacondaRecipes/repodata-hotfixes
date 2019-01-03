@@ -69,7 +69,11 @@ REVOKED = {
         "g*_linux-32-7.2.0-24.tar.bz2",
         ],
     "linux-ppc64le": [],
-    "osx-64": [],
+    "osx-64": [
+        # this build statically links libxml2-with-icu but doesn't statically
+        # link icu. xref: https://github.com/AnacondaRecipes/aggregate/issues/10
+        "xar-1.6.1-hd3d9906_0.tar.bz2",
+        ],
     "win-32": [
         "spyder-kernels-1.0.1-*_0"
     ],
