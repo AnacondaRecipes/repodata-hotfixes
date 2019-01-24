@@ -242,6 +242,48 @@ def _fix_nomkl_features(fn, record, instructions):
             instructions["packages"][fn]["features"] = record['features']
 
 
+def _fix_cudnn_depends(fn, record, instructions, subdir):
+    if fn in instructions['packages']:
+        depends = instructions['packages'][fn]['depends']
+    else:
+        depends = record['depends']
+    for dep in depends:
+        if dep.startswith('cudnn'):
+            original_cudnn_depend = dep
+        if dep.startswith('cudatoolkit'):
+            cudatoolkit_depend = dep
+    is_seven_star = (original_cudnn_depend.startswith('cudnn 7*') or
+                     original_cudnn_depend.startswith('cudnn 7.*'))
+    if subdir.startswith("win-"):
+        # all packages prior to 2019-01-24 built with cudnn 7.1.4
+        correct_cudnn_depends = 'cudnn >=7.1.4,<8.0a0'
+    else:
+        if original_cudnn_depend.startswith('cudnn 7.0'):
+            correct_cudnn_depends = 'cudnn >=7.0.0,<=8.0a0'
+        elif original_cudnn_depend.startswith('cudnn 7.1.*'):
+            correct_cudnn_depends = 'cudnn >=7.1.0,<=8.0a0'
+        elif original_cudnn_depend.startswith('cudnn 7.2.*'):
+            correct_cudnn_depends = 'cudnn >=7.2.0,<=8.0a0'
+        # these packages express a dependeny of 7* or 7.* which is correct for
+        # the cudnn package versions available in defaults but are be rewritten
+        # to be more precise.
+        # Prior to 2019-01-24 all packages were build against:
+        # cudatoolkit 8.0 : cudnn 7.0.5
+        # cudatoolkit 9.0 : cudnn 7.1.2
+        # cudatoolkit 9.2 : cudnn 7.2.1
+        elif is_seven_star and cudatoolkit_depend.startswith('cudatoolkit 8.0'):
+            correct_cudnn_depends = 'cudnn >=7.0.5,<=8.0a0'
+        elif is_seven_star and cudatoolkit_depend.startswith('cudatoolkit 9.0'):
+            correct_cudnn_depends = 'cudnn >=7.1.2,<=8.0a0'
+        elif is_seven_star and cudatoolkit_depend.startswith('cudatoolkit 9.2'):
+            correct_cudnn_depends = 'cudnn >=7.2.1,<=8.0a0'
+        else:
+            raise Exception("unknown cudnn depedency")
+    idx = depends.index(original_cudnn_depend)
+    depends[idx] = correct_cudnn_depends
+    instructions['packages'][fn]['depends'] = depends
+
+
 def _patch_repodata(repodata, subdir):
     index = repodata["packages"]
     instructions = {
@@ -373,6 +415,9 @@ def _patch_repodata(repodata, subdir):
                     new_deps.append(dep)
             record["depends"] = new_deps
             instructions["packages"][fn]["depends"] = record["depends"]
+
+        if any(dep.startswith('cudnn 7') for dep in record['depends']):
+            _fix_cudnn_depends(fn, record, instructions, subdir)
 
 
         if subdir.startswith("win-"):
