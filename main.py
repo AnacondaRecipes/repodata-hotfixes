@@ -104,172 +104,6 @@ TFLOW_SUBS = {
     # 1.11.0+ needs no fixing
 }
 
-LINUX_64_CUDNN_CHANGES = {
-    # package: correct cudnn dependency
-    'caffe-gpu-1.0-py27h16099b3_4.tar.bz2': 'cudnn >=7.1.0,<=8.0a0',
-    'caffe-gpu-1.0-py27h2b1a04e_4.tar.bz2': 'cudnn >=7.2.0,<=8.0a0',
-    'caffe-gpu-1.0-py27h37b1cb2_3.tar.bz2': 'cudnn >=7.0.0,<=8.0a0',
-    'caffe-gpu-1.0-py27h4dc7405_3.tar.bz2': 'cudnn >=7.1.2,<=8.0a0',
-    'caffe-gpu-1.0-py27h51fbcb3_4.tar.bz2': 'cudnn >=7.2.0,<=8.0a0',
-    'caffe-gpu-1.0-py27h62894bf_4.tar.bz2': 'cudnn >=7.1.0,<=8.0a0',
-    'caffe-gpu-1.0-py27h7b71608_4.tar.bz2': 'cudnn >=7.1.0,<=8.0a0',
-    'caffe-gpu-1.0-py27h960b796_3.tar.bz2': 'cudnn >=7.0.0,<=8.0a0',
-    'caffe-gpu-1.0-py27hdb72b7a_4.tar.bz2': 'cudnn >=7.1.0,<=8.0a0',
-    'caffe-gpu-1.0-py27hdfd716b_2.tar.bz2': 'cudnn >=7.0.0,<=8.0a0',
-    'caffe-gpu-1.0-py27he096b04_2.tar.bz2': 'cudnn >=7.0.0,<=8.0a0',
-    'caffe-gpu-1.0-py27heda4471_3.tar.bz2': 'cudnn >=7.1.2,<=8.0a0',
-    'caffe-gpu-1.0-py35h16099b3_4.tar.bz2': 'cudnn >=7.1.0,<=8.0a0',
-    'caffe-gpu-1.0-py35h2b1a04e_4.tar.bz2': 'cudnn >=7.2.0,<=8.0a0',
-    'caffe-gpu-1.0-py35h37b1cb2_3.tar.bz2': 'cudnn >=7.0.0,<=8.0a0',
-    'caffe-gpu-1.0-py35h4dc7405_3.tar.bz2': 'cudnn >=7.1.2,<=8.0a0',
-    'caffe-gpu-1.0-py35h51fbcb3_4.tar.bz2': 'cudnn >=7.2.0,<=8.0a0',
-    'caffe-gpu-1.0-py35h62894bf_4.tar.bz2': 'cudnn >=7.1.0,<=8.0a0',
-    'caffe-gpu-1.0-py35h7b71608_4.tar.bz2': 'cudnn >=7.1.0,<=8.0a0',
-    'caffe-gpu-1.0-py35h960b796_3.tar.bz2': 'cudnn >=7.0.0,<=8.0a0',
-    'caffe-gpu-1.0-py35hdb72b7a_4.tar.bz2': 'cudnn >=7.1.0,<=8.0a0',
-    'caffe-gpu-1.0-py35hdfd716b_2.tar.bz2': 'cudnn >=7.0.0,<=8.0a0',
-    'caffe-gpu-1.0-py35he096b04_2.tar.bz2': 'cudnn >=7.0.0,<=8.0a0',
-    'caffe-gpu-1.0-py35heda4471_3.tar.bz2': 'cudnn >=7.1.2,<=8.0a0',
-    'caffe-gpu-1.0-py36h16099b3_4.tar.bz2': 'cudnn >=7.1.0,<=8.0a0',
-    'caffe-gpu-1.0-py36h2b1a04e_4.tar.bz2': 'cudnn >=7.2.0,<=8.0a0',
-    'caffe-gpu-1.0-py36h37b1cb2_3.tar.bz2': 'cudnn >=7.0.0,<=8.0a0',
-    'caffe-gpu-1.0-py36h4dc7405_3.tar.bz2': 'cudnn >=7.1.2,<=8.0a0',
-    'caffe-gpu-1.0-py36h51fbcb3_4.tar.bz2': 'cudnn >=7.2.0,<=8.0a0',
-    'caffe-gpu-1.0-py36h62894bf_4.tar.bz2': 'cudnn >=7.1.0,<=8.0a0',
-    'caffe-gpu-1.0-py36h7b71608_4.tar.bz2': 'cudnn >=7.1.0,<=8.0a0',
-    'caffe-gpu-1.0-py36h960b796_3.tar.bz2': 'cudnn >=7.0.0,<=8.0a0',
-    'caffe-gpu-1.0-py36hdb72b7a_4.tar.bz2': 'cudnn >=7.1.0,<=8.0a0',
-    'caffe-gpu-1.0-py36hdfd716b_2.tar.bz2': 'cudnn >=7.0.0,<=8.0a0',
-    'caffe-gpu-1.0-py36he096b04_2.tar.bz2': 'cudnn >=7.0.0,<=8.0a0',
-    'caffe-gpu-1.0-py36heda4471_3.tar.bz2': 'cudnn >=7.1.2,<=8.0a0',
-    'caffe-gpu-1.0-py37h16099b3_4.tar.bz2': 'cudnn >=7.1.0,<=8.0a0',
-    'caffe-gpu-1.0-py37h2b1a04e_4.tar.bz2': 'cudnn >=7.2.0,<=8.0a0',
-    'caffe-gpu-1.0-py37h51fbcb3_4.tar.bz2': 'cudnn >=7.2.0,<=8.0a0',
-    'caffe-gpu-1.0-py37h62894bf_4.tar.bz2': 'cudnn >=7.1.0,<=8.0a0',
-    'caffe-gpu-1.0-py37h7b71608_4.tar.bz2': 'cudnn >=7.1.0,<=8.0a0',
-    'caffe-gpu-1.0-py37hdb72b7a_4.tar.bz2': 'cudnn >=7.1.0,<=8.0a0',
-    'cupy-4.0.0-py27he3f55b6_0.tar.bz2': 'cudnn >=7.1.2,<=8.0a0',
-    'cupy-4.0.0-py27hef69808_0.tar.bz2': 'cudnn >=7.0.5,<=8.0a0',
-    'cupy-4.0.0-py35he3f55b6_0.tar.bz2': 'cudnn >=7.1.2,<=8.0a0',
-    'cupy-4.0.0-py35hef69808_0.tar.bz2': 'cudnn >=7.0.5,<=8.0a0',
-    'cupy-4.0.0-py36he3f55b6_0.tar.bz2': 'cudnn >=7.1.2,<=8.0a0',
-    'cupy-4.0.0-py36hef69808_0.tar.bz2': 'cudnn >=7.0.5,<=8.0a0',
-    'cupy-4.1.0-py27h0ee51e5_0.tar.bz2': 'cudnn >=7.1.0,<=8.0a0',
-    'cupy-4.1.0-py27had95abb_0.tar.bz2': 'cudnn >=7.0.5,<=8.0a0',
-    'cupy-4.1.0-py35h0ee51e5_0.tar.bz2': 'cudnn >=7.1.0,<=8.0a0',
-    'cupy-4.1.0-py35had95abb_0.tar.bz2': 'cudnn >=7.0.5,<=8.0a0',
-    'cupy-4.1.0-py36h0ee51e5_0.tar.bz2': 'cudnn >=7.1.0,<=8.0a0',
-    'cupy-4.1.0-py36had95abb_0.tar.bz2': 'cudnn >=7.0.5,<=8.0a0',
-    'libmxnet-1.2.1-gpu_mkl_h3d71631_1.tar.bz2': 'cudnn >=7.0.5,<=8.0a0',
-    'libmxnet-1.2.1-gpu_mkl_he87abd8_1.tar.bz2': 'cudnn >=7.1.2,<=8.0a0',
-    'libmxnet-1.2.1-gpu_openblas_h1d4bbbf_1.tar.bz2': 'cudnn >=7.0.5,<=8.0a0',
-    'libmxnet-1.2.1-gpu_openblas_hf1ee61d_1.tar.bz2': 'cudnn >=7.1.2,<=8.0a0',
-    'pytorch-0.3.0-py27cuda8.0cudnn7.0_0.tar.bz2': 'cudnn >=7.0.0,<=8.0a0',
-    'pytorch-0.3.0-py35cuda8.0cudnn7.0_0.tar.bz2': 'cudnn >=7.0.0,<=8.0a0',
-    'pytorch-0.3.0-py36cuda8.0cudnn7.0_0.tar.bz2': 'cudnn >=7.0.0,<=8.0a0',
-    'pytorch-0.3.1-py27had95abb_0.tar.bz2': 'cudnn >=7.0.5,<=8.0a0',
-    'pytorch-0.3.1-py27hfbe7015_1.tar.bz2': 'cudnn >=7.0.5,<=8.0a0',
-    'pytorch-0.3.1-py35had95abb_0.tar.bz2': 'cudnn >=7.0.5,<=8.0a0',
-    'pytorch-0.3.1-py35hfbe7015_1.tar.bz2': 'cudnn >=7.0.5,<=8.0a0',
-    'pytorch-0.3.1-py36had95abb_0.tar.bz2': 'cudnn >=7.0.5,<=8.0a0',
-    'pytorch-0.3.1-py36hfbe7015_1.tar.bz2': 'cudnn >=7.0.5,<=8.0a0',
-    'pytorch-0.4.0-py27hd73e86b_0.tar.bz2': 'cudnn >=7.0.5,<=8.0a0',
-    'pytorch-0.4.0-py27hdf912b8_0.tar.bz2': 'cudnn >=7.1.2,<=8.0a0',
-    'pytorch-0.4.0-py35hd73e86b_0.tar.bz2': 'cudnn >=7.0.5,<=8.0a0',
-    'pytorch-0.4.0-py35hdf912b8_0.tar.bz2': 'cudnn >=7.1.2,<=8.0a0',
-    'pytorch-0.4.0-py36hd73e86b_0.tar.bz2': 'cudnn >=7.0.5,<=8.0a0',
-    'pytorch-0.4.0-py36hdf912b8_0.tar.bz2': 'cudnn >=7.1.2,<=8.0a0',
-    'pytorch-0.4.1-py27ha74772b_0.tar.bz2': 'cudnn >=7.1.0,<=8.0a0',
-    'pytorch-0.4.1-py35ha74772b_0.tar.bz2': 'cudnn >=7.1.0,<=8.0a0',
-    'pytorch-0.4.1-py36ha74772b_0.tar.bz2': 'cudnn >=7.1.0,<=8.0a0',
-    'pytorch-0.4.1-py37ha74772b_0.tar.bz2': 'cudnn >=7.1.0,<=8.0a0',
-    'tensorflow-base-1.10.0-gpu_py27h3435052_0.tar.bz2': 'cudnn >=7.1.0,<=8.0a0',
-    'tensorflow-base-1.10.0-gpu_py27h6ecc378_0.tar.bz2': 'cudnn >=7.1.0,<=8.0a0',
-    'tensorflow-base-1.10.0-gpu_py27had579c0_0.tar.bz2': 'cudnn >=7.2.0,<=8.0a0',
-    'tensorflow-base-1.10.0-gpu_py35h3435052_0.tar.bz2': 'cudnn >=7.1.0,<=8.0a0',
-    'tensorflow-base-1.10.0-gpu_py35h6ecc378_0.tar.bz2': 'cudnn >=7.1.0,<=8.0a0',
-    'tensorflow-base-1.10.0-gpu_py35had579c0_0.tar.bz2': 'cudnn >=7.2.0,<=8.0a0',
-    'tensorflow-base-1.10.0-gpu_py36h3435052_0.tar.bz2': 'cudnn >=7.1.0,<=8.0a0',
-    'tensorflow-base-1.10.0-gpu_py36h6ecc378_0.tar.bz2': 'cudnn >=7.1.0,<=8.0a0',
-    'tensorflow-base-1.10.0-gpu_py36had579c0_0.tar.bz2': 'cudnn >=7.2.0,<=8.0a0',
-    'tensorflow-base-1.11.0-gpu_py27h8e0ae2d_0.tar.bz2': 'cudnn >=7.1.0,<=8.0a0',
-    'tensorflow-base-1.11.0-gpu_py27had579c0_0.tar.bz2': 'cudnn >=7.2.0,<=8.0a0',
-    'tensorflow-base-1.11.0-gpu_py36h8e0ae2d_0.tar.bz2': 'cudnn >=7.1.0,<=8.0a0',
-    'tensorflow-base-1.11.0-gpu_py36had579c0_0.tar.bz2': 'cudnn >=7.2.0,<=8.0a0',
-    'tensorflow-base-1.12.0-gpu_py27h8e0ae2d_0.tar.bz2': 'cudnn >=7.1.0,<=8.0a0',
-    'tensorflow-base-1.12.0-gpu_py27had579c0_0.tar.bz2': 'cudnn >=7.2.0,<=8.0a0',
-    'tensorflow-base-1.12.0-gpu_py36h8e0ae2d_0.tar.bz2': 'cudnn >=7.1.0,<=8.0a0',
-    'tensorflow-base-1.12.0-gpu_py36had579c0_0.tar.bz2': 'cudnn >=7.2.0,<=8.0a0',
-    'tensorflow-base-1.8.0-py27h4df133c_0.tar.bz2': 'cudnn >=7.0.5,<=8.0a0',
-    'tensorflow-base-1.8.0-py27hc1a7637_0.tar.bz2': 'cudnn >=7.1.2,<=8.0a0',
-    'tensorflow-base-1.8.0-py35h4df133c_0.tar.bz2': 'cudnn >=7.0.5,<=8.0a0',
-    'tensorflow-base-1.8.0-py35hc1a7637_0.tar.bz2': 'cudnn >=7.1.2,<=8.0a0',
-    'tensorflow-base-1.8.0-py36h4df133c_0.tar.bz2': 'cudnn >=7.0.5,<=8.0a0',
-    'tensorflow-base-1.8.0-py36hc1a7637_0.tar.bz2': 'cudnn >=7.1.2,<=8.0a0',
-    'tensorflow-base-1.9.0-gpu_py27h6ecc378_0.tar.bz2': 'cudnn >=7.1.0,<=8.0a0',
-    'tensorflow-base-1.9.0-gpu_py27h9f529ab_0.tar.bz2': 'cudnn >=7.0.0,<=8.0a0',
-    'tensorflow-base-1.9.0-gpu_py27h9f529ab_1.tar.bz2': 'cudnn >=7.1.0,<=8.0a0',
-    'tensorflow-base-1.9.0-gpu_py35h6ecc378_0.tar.bz2': 'cudnn >=7.1.0,<=8.0a0',
-    'tensorflow-base-1.9.0-gpu_py35h9f529ab_0.tar.bz2': 'cudnn >=7.0.0,<=8.0a0',
-    'tensorflow-base-1.9.0-gpu_py35h9f529ab_1.tar.bz2': 'cudnn >=7.1.0,<=8.0a0',
-    'tensorflow-base-1.9.0-gpu_py36h6ecc378_0.tar.bz2': 'cudnn >=7.1.0,<=8.0a0',
-    'tensorflow-base-1.9.0-gpu_py36h9f529ab_0.tar.bz2': 'cudnn >=7.0.0,<=8.0a0',
-    'tensorflow-base-1.9.0-gpu_py36h9f529ab_1.tar.bz2': 'cudnn >=7.1.0,<=8.0a0',
-    'tensorflow-gpu-base-1.4.1-py27h01caf0a_0.tar.bz2': 'cudnn >=7.0.5,<=8.0a0',
-    'tensorflow-gpu-base-1.4.1-py35h01caf0a_0.tar.bz2': 'cudnn >=7.0.5,<=8.0a0',
-    'tensorflow-gpu-base-1.4.1-py36h01caf0a_0.tar.bz2': 'cudnn >=7.0.5,<=8.0a0',
-    'tensorflow-gpu-base-1.5.0-py27h8a131e3_0.tar.bz2': 'cudnn >=7.1.2,<=8.0a0',
-    'tensorflow-gpu-base-1.5.0-py27had95abb_0.tar.bz2': 'cudnn >=7.0.5,<=8.0a0',
-    'tensorflow-gpu-base-1.5.0-py35h8a131e3_0.tar.bz2': 'cudnn >=7.1.2,<=8.0a0',
-    'tensorflow-gpu-base-1.5.0-py35had95abb_0.tar.bz2': 'cudnn >=7.0.5,<=8.0a0',
-    'tensorflow-gpu-base-1.5.0-py36h8a131e3_0.tar.bz2': 'cudnn >=7.1.2,<=8.0a0',
-    'tensorflow-gpu-base-1.5.0-py36had95abb_0.tar.bz2': 'cudnn >=7.0.5,<=8.0a0',
-    'tensorflow-gpu-base-1.6.0-py27h5b7bae4_1.tar.bz2': 'cudnn >=7.0.5,<=8.0a0',
-    'tensorflow-gpu-base-1.6.0-py27h8a131e3_0.tar.bz2': 'cudnn >=7.1.2,<=8.0a0',
-    'tensorflow-gpu-base-1.6.0-py27had95abb_0.tar.bz2': 'cudnn >=7.0.5,<=8.0a0',
-    'tensorflow-gpu-base-1.6.0-py27hcdda91b_1.tar.bz2': 'cudnn >=7.1.2,<=8.0a0',
-    'tensorflow-gpu-base-1.6.0-py35h5b7bae4_1.tar.bz2': 'cudnn >=7.0.5,<=8.0a0',
-    'tensorflow-gpu-base-1.6.0-py35h8a131e3_0.tar.bz2': 'cudnn >=7.1.2,<=8.0a0',
-    'tensorflow-gpu-base-1.6.0-py35had95abb_0.tar.bz2': 'cudnn >=7.0.5,<=8.0a0',
-    'tensorflow-gpu-base-1.6.0-py35hcdda91b_1.tar.bz2': 'cudnn >=7.1.2,<=8.0a0',
-    'tensorflow-gpu-base-1.6.0-py36h5b7bae4_1.tar.bz2': 'cudnn >=7.0.5,<=8.0a0',
-    'tensorflow-gpu-base-1.6.0-py36h8a131e3_0.tar.bz2': 'cudnn >=7.1.2,<=8.0a0',
-    'tensorflow-gpu-base-1.6.0-py36had95abb_0.tar.bz2': 'cudnn >=7.0.5,<=8.0a0',
-    'tensorflow-gpu-base-1.6.0-py36hcdda91b_1.tar.bz2': 'cudnn >=7.1.2,<=8.0a0',
-    'tensorflow-gpu-base-1.7.0-py27h5b7bae4_1.tar.bz2': 'cudnn >=7.0.5,<=8.0a0',
-    'tensorflow-gpu-base-1.7.0-py27h8a131e3_0.tar.bz2': 'cudnn >=7.1.2,<=8.0a0',
-    'tensorflow-gpu-base-1.7.0-py27had95abb_0.tar.bz2': 'cudnn >=7.0.5,<=8.0a0',
-    'tensorflow-gpu-base-1.7.0-py27hcdda91b_1.tar.bz2': 'cudnn >=7.1.2,<=8.0a0',
-    'tensorflow-gpu-base-1.7.0-py35h5b7bae4_1.tar.bz2': 'cudnn >=7.0.5,<=8.0a0',
-    'tensorflow-gpu-base-1.7.0-py35h8a131e3_0.tar.bz2': 'cudnn >=7.1.2,<=8.0a0',
-    'tensorflow-gpu-base-1.7.0-py35had95abb_0.tar.bz2': 'cudnn >=7.0.5,<=8.0a0',
-    'tensorflow-gpu-base-1.7.0-py35hcdda91b_1.tar.bz2': 'cudnn >=7.1.2,<=8.0a0',
-    'tensorflow-gpu-base-1.7.0-py36h5b7bae4_1.tar.bz2': 'cudnn >=7.0.5,<=8.0a0',
-    'tensorflow-gpu-base-1.7.0-py36h8a131e3_0.tar.bz2': 'cudnn >=7.1.2,<=8.0a0',
-    'tensorflow-gpu-base-1.7.0-py36had95abb_0.tar.bz2': 'cudnn >=7.0.5,<=8.0a0',
-    'tensorflow-gpu-base-1.7.0-py36hcdda91b_1.tar.bz2': 'cudnn >=7.1.2,<=8.0a0',
-}
-
-WIN_64_CUDNN_CHANGES = {
-    # package: correct cudnn dependency
-    'cupy-4.0.0-py35h137e5fc_0.tar.bz2': 'cudnn >=7.1.4,<8.0a1',
-    'cupy-4.0.0-py36h137e5fc_0.tar.bz2': 'cudnn >=7.1.4,<8.0a1',
-    'cupy-4.1.0-py35h137e5fc_0.tar.bz2': 'cudnn >=7.1.4,<8.0a1',
-    'cupy-4.1.0-py35hf0bd78d_0.tar.bz2': 'cudnn >=7.1.4,<8.0a1',
-    'cupy-4.1.0-py36h137e5fc_0.tar.bz2': 'cudnn >=7.1.4,<8.0a1',
-    'cupy-4.1.0-py36hf0bd78d_0.tar.bz2': 'cudnn >=7.1.4,<8.0a1',
-    'libmxnet-1.2.1-gpu_mkl_hc8d6281_1.tar.bz2': 'cudnn >=7.1.4,<8.0a1',
-    'libmxnet-1.2.1-gpu_mkl_hdf6cc24_1.tar.bz2': 'cudnn >=7.1.4,<8.0a1',
-    'tensorflow-base-1.10.0-gpu_py35h6e53903_0.tar.bz2': 'cudnn >=7.1.4,<8.0a1',
-    'tensorflow-base-1.10.0-gpu_py36h6e53903_0.tar.bz2': 'cudnn >=7.1.4,<8.0a1',
-    'tensorflow-base-1.11.0-gpu_py36h6e53903_0.tar.bz2': 'cudnn >=7.1.4,<8.0a1',
-    'tensorflow-base-1.12.0-gpu_py36h6e53903_0.tar.bz2': 'cudnn >=7.1.4,<8.0a1',
-    'tensorflow-base-1.9.0-gpu_py35h6e53903_0.tar.bz2': 'cudnn >=7.1.4,<8.0a1',
-    'tensorflow-base-1.9.0-gpu_py36h6e53903_0.tar.bz2': 'cudnn >=7.1.4,<8.0a1',
-    'tensorflow-gpu-base-1.8.0-py35h376609f_0.tar.bz2': 'cudnn >=7.1.4,<8.0a1',
-    'tensorflow-gpu-base-1.8.0-py36h376609f_0.tar.bz2': 'cudnn >=7.1.4,<8.0a1',
-}
-
 
 def _replace_vc_features_with_vc_pkg_deps(fn, record, instructions):
     python_vc_deps = {
@@ -408,17 +242,46 @@ def _fix_nomkl_features(fn, record, instructions):
             instructions["packages"][fn]["features"] = record['features']
 
 
-def _fix_cudnn_depends(fn, record, instructions, new_cudnn_dep):
+def _fix_cudnn_depends(fn, record, instructions, subdir):
     if fn in instructions['packages']:
         depends = instructions['packages'][fn]['depends']
     else:
         depends = record['depends']
-    old_cudnn_dep = [i for i in depends if i.startswith('cudnn')]
-    if len(old_cudnn_dep) != 1:
-        raise Exception("Incorrect number of cudnn entries, expected 1.")
-    idx = depends.index(old_cudnn_dep[0])
-    depends[idx] = new_cudnn_dep
-    instructions["packages"][fn]["depends"] = depends
+    for dep in depends:
+        if dep.startswith('cudnn'):
+            original_cudnn_depend = dep
+        if dep.startswith('cudatoolkit'):
+            cudatoolkit_depend = dep
+    is_seven_star = (original_cudnn_depend.startswith('cudnn 7*') or
+                     original_cudnn_depend.startswith('cudnn 7.*'))
+    if subdir.startswith("win-"):
+        # all packages prior to 2019-01-24 built with cudnn 7.1.4
+        correct_cudnn_depends = 'cudnn >=7.1.4,<8.0a0'
+    else:
+        if original_cudnn_depend.startswith('cudnn 7.0'):
+            correct_cudnn_depends = 'cudnn >=7.0.0,<=8.0a0'
+        elif original_cudnn_depend.startswith('cudnn 7.1.*'):
+            correct_cudnn_depends = 'cudnn >=7.1.0,<=8.0a0'
+        elif original_cudnn_depend.startswith('cudnn 7.2.*'):
+            correct_cudnn_depends = 'cudnn >=7.2.0,<=8.0a0'
+        # these packages express a dependeny of 7* or 7.* which is correct for
+        # the cudnn package versions available in defaults but are be rewritten
+        # to be more precise.
+        # Prior to 2019-01-24 all packages were build against:
+        # cudatoolkit 8.0 : cudnn 7.0.5
+        # cudatoolkit 9.0 : cudnn 7.1.2
+        # cudatoolkit 9.2 : cudnn 7.2.1
+        elif is_seven_star and cudatoolkit_depend.startswith('cudatoolkit 8.0'):
+            correct_cudnn_depends = 'cudnn >=7.0.5,<=8.0a0'
+        elif is_seven_star and cudatoolkit_depend.startswith('cudatoolkit 9.0'):
+            correct_cudnn_depends = 'cudnn >=7.1.2,<=8.0a0'
+        elif is_seven_star and cudatoolkit_depend.startswith('cudatoolkit 9.2'):
+            correct_cudnn_depends = 'cudnn >=7.2.1,<=8.0a0'
+        else:
+            raise Exception("unknown cudnn depedency")
+    idx = depends.index(original_cudnn_depend)
+    depends[idx] = correct_cudnn_depends
+    instructions['packages'][fn]['depends'] = depends
 
 
 def _patch_repodata(repodata, subdir):
@@ -553,18 +416,15 @@ def _patch_repodata(repodata, subdir):
             record["depends"] = new_deps
             instructions["packages"][fn]["depends"] = record["depends"]
 
+        if any(dep.startswith('cudnn 7') for dep in record['depends']):
+            _fix_cudnn_depends(fn, record, instructions, subdir)
+
 
         if subdir.startswith("win-"):
             _replace_vc_features_with_vc_pkg_deps(fn, record, instructions)
-            if fn in WIN_64_CUDNN_CHANGES:
-                new_cudnn_dep = WIN_64_CUDNN_CHANGES[fn]
-                _fix_cudnn_depends(fn, record, instructions, new_cudnn_dep)
 
         elif subdir.startswith("linux-"):
             _fix_linux_runtime_bounds(fn, record, instructions)
-            if fn in LINUX_64_CUDNN_CHANGES:
-                new_cudnn_dep = LINUX_64_CUDNN_CHANGES[fn]
-                _fix_cudnn_depends(fn, record, instructions, new_cudnn_dep)
 
         if record['name'] == 'anaconda' and record['version'] in ["5.3.0", "5.3.1"]:
             mkl_version = [i for i in record['depends'] if "mkl" == i.split()[0] and "2019" in i.split()[1]]
