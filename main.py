@@ -47,7 +47,9 @@ REMOVALS = {
         # early vs2017 packages used wrong version numbers
         "vs2017_win-*-15.5.2*",
         "vs2017*h590f102_0*",
-        "vs2017*hb4ce483_0*"
+        "vs2017*hb4ce483_0*",
+        # libtiff has incorrect build number and incorrect requirements
+        "libtiff-4.0.10-*_1001.tar.bz2",
     }
 }
 
