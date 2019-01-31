@@ -2,6 +2,7 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 from collections import defaultdict
+import copy
 import json
 import os
 from os.path import join, dirname, isfile, isdir
@@ -121,12 +122,13 @@ NAMESPACE_OVERRIDES = {
 
 
 def flip_mutex_from_anacondar_to_mro(fn, record, instructions):
+    rec_copy = copy.deepcopy(record)
     if 'anacondar' in record['build'] and record.get('track_features'):
-        record['track_features'] = None
-        instructions['packages'][fn] = record
+        rec_copy['track_features'] = None
+        instructions['packages'][fn] = rec_copy
     elif 'mro' in record['build'] and not record.get('track_features'):
-        record['track_features'] = 'mro_is_not_default'
-        instructions['packages'][fn] = record
+        rec_copy['track_features'] = 'mro_is_not_default'
+        instructions['packages'][fn] = rec_copy
 
 
 def _patch_repodata(repodata, subdir):
