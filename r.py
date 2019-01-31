@@ -120,6 +120,15 @@ NAMESPACE_OVERRIDES = {
 }
 
 
+def flip_mutex_from_anacondar_to_mro(fn, record, instructions):
+    if 'anacondar' in record['build'] and record.get('track_features'):
+        record['track_features'] = None
+        instructions['packages'][fn] = record
+    elif 'mro' in record['build'] and not record.get('track_features'):
+        record['track_features'] = 'mro_is_not_default'
+        instructions['packages'][fn] = record
+
+
 def _patch_repodata(repodata, subdir):
     instructions = {
         "patch_instructions_version": 1,
@@ -167,6 +176,8 @@ def _patch_repodata(repodata, subdir):
                 if "_r-mutex 1.* mro_2" not in record['depends']:
                     record['depends'].append("_r-mutex 1.* mro_2")
                 instructions["packages"][fn]["depends"] = record['depends']
+        elif record_name == "_r-mutex":
+            flip_mutex_from_anacondar_to_mro(fn, record, instructions)
         # None of the 3.1.2 builds used r-base, and none of them have the mutex
         elif record_name == "r" and record['version'] == "3.1.2":
             # less than build 3 was an actual package; no r-base connection.  These need the mutex.
