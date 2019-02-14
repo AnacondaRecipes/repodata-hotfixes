@@ -17,6 +17,7 @@ diff_context_keyword = {'unified': 'n',
 
 channel_map = {
     'main': 'https://repo.anaconda.com/pkgs/main',
+    'free': 'https://repo.anaconda.com/pkgs/free',
     'r': 'https://repo.anaconda.com/pkgs/r',
 }
 
