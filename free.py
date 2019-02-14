@@ -32,6 +32,32 @@ def _patch_repodata(repodata, subdir):
         "remove": [],
     }
 
+    if subdir== "linux-64":
+        fn = 'openblas-0.2.19-0.tar.bz2'
+        if fn in index:
+            record = index[fn]
+            depends = []
+            for dep in record['depends']:
+                if dep == 'libgfortran':
+                    depends.append('libgfortran 3.0.0')
+                else:
+                    depends.append(dep)
+            instructions["packages"][fn]['depends'] = depends
+            # the pyculib packages in the linux-64 subdir also have unpinned
+            # libgfortran dependencies but contain no DSOs
+
+    if subdir == "osx-64":
+        fn = 'openblas-0.2.19-1.tar.bz2'
+        if fn in index:
+            record = index[fn]
+            depends = []
+            for dep in record['depends']:
+                if dep == 'libgfortran':
+                    depends.append('libgfortran 3.0.0')
+                else:
+                    depends.append(dep)
+            instructions["packages"][fn]['depends'] = depends
+
     if subdir == "noarch":
         instructions["external_dependencies"] = {
             "msys2-conda-epoch": "global:msys2-conda-epoch",  # ninja, the-silver-searcher
