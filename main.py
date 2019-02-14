@@ -233,6 +233,18 @@ def _fix_linux_runtime_bounds(fn, record, instructions):
         instructions["packages"][fn]["depends"] = deps
 
 
+def _fix_osx_libgfortan_bounds(fn, record, instructions):
+    if any(dep == 'libgfortran >=3.0.1' for dep in record.get('depends', [])):
+        deps = []
+        for dep in record['depends']:
+            if dep == 'libgfortran >=3.0.1':
+                # add an upper bound
+                deps.append('libgfortran >=3.0.1,<4.0.0.a0')
+            else:
+                deps.append(dep)
+        instructions["packages"][fn]["depends"] = deps
+
+
 def _fix_nomkl_features(fn, record, instructions):
     if "nomkl" == record["features"]:
         del record['features']
@@ -429,6 +441,9 @@ def _patch_repodata(repodata, subdir):
 
         elif subdir.startswith("linux-"):
             _fix_linux_runtime_bounds(fn, record, instructions)
+
+        elif subdir.startswith("osx-64"):
+            _fix_osx_libgfortan_bounds(fn, record, instructions)
 
         if record['name'] == 'anaconda' and record['version'] in ["5.3.0", "5.3.1"]:
             mkl_version = [i for i in record['depends'] if "mkl" == i.split()[0] and "2019" in i.split()[1]]
