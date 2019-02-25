@@ -441,9 +441,16 @@ def _patch_repodata(repodata, subdir):
 
         elif subdir.startswith("linux-"):
             _fix_linux_runtime_bounds(fn, record, instructions)
+            if subdir.startswith("linux-ppc64le"):
+                # set the build_number of the blas-1.0-openblas.tar.bz2 package
+                # to 7 to match the package in free
+                # https://github.com/conda/conda/issues/8302
+                if fn == 'blas-1.0-openblas.tar.bz2':
+                    instructions["packages"][fn]["build_number"] = 7
 
         elif subdir.startswith("osx-64"):
             _fix_osx_libgfortan_bounds(fn, record, instructions)
+
 
         if record['name'] == 'anaconda' and record['version'] in ["5.3.0", "5.3.1"]:
             mkl_version = [i for i in record['depends'] if "mkl" == i.split()[0] and "2019" in i.split()[1]]
