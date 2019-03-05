@@ -258,6 +258,25 @@ def _fix_nomkl_features(fn, record, instructions):
             instructions["packages"][fn]["features"] = record['features']
 
 
+def _fix_numpy_base_constrains(record, index, instructions):
+    # numpy-base packages should have run constrains on the corresponding numpy package
+    base_pkgs = [d for d in record['depends'] if d.startswith('numpy-base')]
+    if not base_pkgs:
+        # no base package, no hotfixing needed
+        return
+    base_pkg = base_pkgs[0]
+    try:
+        name, ver, build_str = base_pkg.split()
+    except ValueError:
+        # base package pinning not to version + build, no modification needed
+        return
+    base_pkg_fn = '%s-%s-%s.tar.bz2' % (name, ver, build_str)
+    if 'constrains' in index[base_pkg_fn]:
+        return
+    req = '%s %s %s' % (record['name'], record['version'], record['build'])
+    instructions["packages"][base_pkg_fn]["constrains"] = [req]
+
+
 def _fix_cudnn_depends(fn, record, instructions, subdir):
     if fn in instructions['packages']:
         depends = instructions['packages'][fn]['depends']
@@ -388,6 +407,9 @@ def _patch_repodata(repodata, subdir):
             # use _tflow_select as the mutex/selector not _tflow_180_select, etc
             depends = [TFLOW_SUBS[d] if d in TFLOW_SUBS else d for d in record['depends']]
             instructions["packages"][fn]["depends"] = depends
+
+        if record['name'] == 'numpy':
+            _fix_numpy_base_constrains(record, index, instructions)
 
         if fn == 'cupti-9.0.176-0.tar.bz2':
             # depends in package is set as cudatoolkit 9.*, should be 9.0.*
