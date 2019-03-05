@@ -389,6 +389,24 @@ def _patch_repodata(repodata, subdir):
             depends = [TFLOW_SUBS[d] if d in TFLOW_SUBS else d for d in record['depends']]
             instructions["packages"][fn]["depends"] = depends
 
+        # numpy-base packages should have run constrains on the corresponding numpy package
+        if record['name'] == 'numpy':
+            base_pkgs = [d for d in record['depends'] if d.startswith('numpy-base')]
+            if not base_pkgs:
+                # no base package, no hotfixing needed
+                continue
+            base_pkg = base_pkgs[0]
+            try:
+                name, ver, build_str = base_pkg.split()
+            except ValueError:
+                # base package pinning not to version + build, no modification needed
+                continue
+            base_pkg_fn = '%s-%s-%s.tar.bz2' % (name, ver, build_str)
+            if 'constrains' in index[base_pkg_fn]:
+                continue
+            req = '%s %s %s' % (record['name'], record['version'], record['build'])
+            instructions["packages"][base_pkg_fn]["constrains"] = [req]
+
         if fn == 'cupti-9.0.176-0.tar.bz2':
             # depends in package is set as cudatoolkit 9.*, should be 9.0.*
             instructions["packages"][fn]["depends"] = ['cudatoolkit 9.0.*']
