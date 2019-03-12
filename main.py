@@ -411,6 +411,14 @@ def _patch_repodata(repodata, subdir):
         if record['name'] == 'numpy':
             _fix_numpy_base_constrains(record, index, instructions)
 
+        if record['name'] == 'notebook':
+            # notebook <5.7.6 will not work with tornado 6, see:
+            # https://github.com/jupyter/notebook/issues/4439
+            if 'tornado >=4' in record['depends']:
+                t4_index = record['depends'].index('tornado >=4')
+                record['depends'][t4_index]= 'tornado >=4,<6'
+                instructions["packages"][fn]["depends"] = record["depends"]
+
         if fn == 'cupti-9.0.176-0.tar.bz2':
             # depends in package is set as cudatoolkit 9.*, should be 9.0.*
             instructions["packages"][fn]["depends"] = ['cudatoolkit 9.0.*']
