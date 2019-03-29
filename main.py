@@ -216,10 +216,14 @@ def _apply_namespace_overrides(fn, record, instructions):
 
 def _fix_linux_runtime_bounds(fn, record, instructions):
     linux_runtime_re = re.compile(r"lib(\w+)-ng\s(?:>=)?([\d\.]+\d)(?:$|\.\*)")
-    if any(dep.split()[0] in ("libgcc-ng", "libstdcxx-ng", "libgfortran-ng")
-           for dep in record.get('depends', [])):
+    record_depends = record.get('depends', [])
+    if fn in instructions['packages']:
+        # the package may have already been patched
+        record_depends = instructions['packages'][fn].get('depends', [])
+    runtime_depends = ("libgcc-ng", "libstdcxx-ng", "libgfortran-ng")
+    if any(dep.split()[0] in runtime_depends for dep in record_depends):
         deps = []
-        for dep in record['depends']:
+        for dep in record_depends:
             match = linux_runtime_re.match(dep)
             if match:
                 dep = "lib{}-ng >={}".format(match.group(1), match.group(2))
