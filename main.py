@@ -108,12 +108,6 @@ TFLOW_SUBS = {
     # 1.11.0+ needs no fixing
 }
 
-CUDATK_SUBS = {
-    "cudatoolkit >=9.0,<10.0a0": "cudatoolkit >=9.0,<9.1.0a0",
-    "cudatoolkit >=9.2,<10.0a0": "cudatoolkit >=9.2,<9.3.0a0",
-    "cudatoolkit >=10.0.130,<11.0a0": "cudatoolkit >=10.0.130,<10.1.0a0",
-}
-
 
 def _replace_vc_features_with_vc_pkg_deps(fn, record, instructions):
     python_vc_deps = {
@@ -222,14 +216,10 @@ def _apply_namespace_overrides(fn, record, instructions):
 
 def _fix_linux_runtime_bounds(fn, record, instructions):
     linux_runtime_re = re.compile(r"lib(\w+)-ng\s(?:>=)?([\d\.]+\d)(?:$|\.\*)")
-    record_depends = record.get('depends', [])
-    if fn in instructions['packages']:
-        # the package may have already been patched
-        record_depends = instructions['packages'][fn].get('depends', [])
-    runtime_depends = ("libgcc-ng", "libstdcxx-ng", "libgfortran-ng")
-    if any(dep.split()[0] in runtime_depends for dep in record_depends):
+    if any(dep.split()[0] in ("libgcc-ng", "libstdcxx-ng", "libgfortran-ng")
+           for dep in record.get('depends', [])):
         deps = []
-        for dep in record_depends:
+        for dep in record['depends']:
             match = linux_runtime_re.match(dep)
             if match:
                 dep = "lib{}-ng >={}".format(match.group(1), match.group(2))
@@ -416,12 +406,6 @@ def _patch_repodata(repodata, subdir):
                 continue
             # use _tflow_select as the mutex/selector not _tflow_180_select, etc
             depends = [TFLOW_SUBS[d] if d in TFLOW_SUBS else d for d in record['depends']]
-            instructions["packages"][fn]["depends"] = depends
-
-        # cudatoolkit should be pinning to major.minor not just major
-        if record['name'] == 'cupy' or record['name'] == 'nccl':
-            depends = [CUDATK_SUBS[d] if d in CUDATK_SUBS else d for d in record['depends']]
-            #import pdb; pdb.set_trace()
             instructions["packages"][fn]["depends"] = depends
 
         if record['name'] == 'numpy':
