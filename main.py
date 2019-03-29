@@ -224,8 +224,9 @@ def _fix_linux_runtime_bounds(fn, record, instructions):
     linux_runtime_re = re.compile(r"lib(\w+)-ng\s(?:>=)?([\d\.]+\d)(?:$|\.\*)")
     record_depends = record.get('depends', [])
     if fn in instructions['packages']:
-        # the package may have already been patched
-        record_depends = instructions['packages'][fn].get('depends', [])
+        if 'depends' in instructions['packages'][fn]
+            # the package depends have already been patched
+            record_depends = instructions['packages'][fn]
     runtime_depends = ("libgcc-ng", "libstdcxx-ng", "libgfortran-ng")
     if any(dep.split()[0] in runtime_depends for dep in record_depends):
         deps = []
