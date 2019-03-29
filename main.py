@@ -220,13 +220,19 @@ def _apply_namespace_overrides(fn, record, instructions):
         instructions["packages"][fn]['namespace'] = namespace_overrides[record_name]
 
 
-def _fix_linux_runtime_bounds(fn, record, instructions):
-    linux_runtime_re = re.compile(r"lib(\w+)-ng\s(?:>=)?([\d\.]+\d)(?:$|\.\*)")
+def _get_record_depends(fn, record, instructions):
+    """ Return the depends information for a record, including any patching. """
     record_depends = record.get('depends', [])
     if fn in instructions['packages']:
         if 'depends' in instructions['packages'][fn]:
             # the package depends have already been patched
-            record_depends = instructions['packages'][fn]
+            record_depends = instructions['packages'][fn]['depends']
+    return record_depends
+
+
+def _fix_linux_runtime_bounds(fn, record, instructions):
+    linux_runtime_re = re.compile(r"lib(\w+)-ng\s(?:>=)?([\d\.]+\d)(?:$|\.\*)")
+    record_depends = _get_record_depends(fn, record, instructions)
     runtime_depends = ("libgcc-ng", "libstdcxx-ng", "libgfortran-ng")
     if any(dep.split()[0] in runtime_depends for dep in record_depends):
         deps = []
