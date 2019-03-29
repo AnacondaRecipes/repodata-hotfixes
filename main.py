@@ -427,9 +427,10 @@ def _patch_repodata(repodata, subdir):
 
         # cudatoolkit should be pinning to major.minor not just major
         if record['name'] == 'cupy' or record['name'] == 'nccl':
-            depends = [CUDATK_SUBS[d] if d in CUDATK_SUBS else d for d in record['depends']]
-            #import pdb; pdb.set_trace()
-            instructions["packages"][fn]["depends"] = depends
+            record_depends = _get_record_depends(fn, record, instructions)
+            depends = [CUDATK_SUBS[d] if d in CUDATK_SUBS else d for d in record_depends]
+            if depends != record_depends:
+                instructions["packages"][fn]["depends"] = depends
 
         if record['name'] == 'numpy':
             _fix_numpy_base_constrains(record, index, instructions)
