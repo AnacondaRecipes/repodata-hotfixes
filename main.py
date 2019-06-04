@@ -395,7 +395,7 @@ def _patch_repodata(repodata, subdir):
         # reset dependencies for nomkl to the blas metapkg and remove any
         #      track_features (these are attached to the metapkg instead)
         if record['name'] == 'nomkl' and not subdir.startswith("win-"):
-            record['depends'] = ["blas * openblas"]
+            instructions["packages"][fn]['depends'] = ["blas * openblas"]
             if 'track_features' in record:
                 instructions["packages"][fn]["track_features"] = None
 
