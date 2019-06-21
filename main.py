@@ -435,7 +435,17 @@ def _patch_repodata(repodata, subdir):
         if record['name'] == 'numpy':
             _fix_numpy_base_constrains(record, index, instructions)
 
-        if record['name'] == 'notebook':
+        if record['name'] == 'sparkmagic':
+            # sparkmagic <=0.12.7 has issues with ipykernel >4.10
+            # see: https://github.com/AnacondaRecipes/sparkmagic-feedstock/pull/3
+            if record['version'] not in ['0.12.1', '0.12.5', '0.12.6', '0.12.7']:
+                continue
+            if 'ipykernel >=4.2.2' in record['depends']:
+                ipy_index = record['depends'].index('ipykernel >=4.2.2')
+                record['depends'][ipy_index] = 'ipykernel >=4.2.2,<4.10.0'
+                instructions["packages"][fn]["depends"] = record["depends"]
+
+        if record['name'] == 'sparkmagic':
             # notebook <5.7.6 will not work with tornado 6, see:
             # https://github.com/jupyter/notebook/issues/4439
             if 'tornado >=4' in record['depends']:
