@@ -122,13 +122,10 @@ NAMESPACE_OVERRIDES = {
 
 
 def flip_mutex_from_anacondar_to_mro(fn, record, instructions):
-    rec_copy = copy.deepcopy(record)
     if 'anacondar' in record['build'] and record.get('track_features'):
-        rec_copy['track_features'] = None
-        instructions['packages'][fn] = rec_copy
+        instructions['packages'][fn] = {'track_features': None}
     elif 'mro' in record['build'] and not record.get('track_features'):
-        rec_copy['track_features'] = 'mro_is_not_default'
-        instructions['packages'][fn] = rec_copy
+        instructions['packages'][fn] = {'track_features': 'mro_is_not_default'}
 
 
 def _patch_repodata(repodata, subdir):
