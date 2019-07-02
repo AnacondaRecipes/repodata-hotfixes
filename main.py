@@ -481,6 +481,11 @@ def _patch_repodata(repodata, subdir):
                 record["depends"].append("blas * openblas")
             instructions["packages"][fn]["depends"] = record["depends"]
 
+        # Add mutex package for libgcc-ng
+        if record['name'] == 'libgcc-ng':
+            record['depends'].append('_libgcc_mutex * main')
+            instructions["packages"][fn]["depends"] = record["depends"]
+
         # some of these got hard-coded to overly restrictive values
         if record['name'] in ('scikit-learn', 'pytorch'):
             new_deps = []
