@@ -93,7 +93,7 @@ TFLOW_SUBS = {
     # 1.8.0, eigen is the default variant
     '_tflow_180_select ==1.0 gpu': '_tflow_select ==1.1.0 gpu',
     '_tflow_180_select ==2.0 mkl': '_tflow_select ==1.2.0 mkl',
-    '_tflow_180_select ==3.0 eigen': '_tflow_select ==1.2.0 eigen',
+    '_tflow_180_select ==3.0 eigen': '_tflow_select ==1.3.0 eigen',
 
     # 1.9.0, mkl is the default variant
     '_tflow_190_select ==0.0.1 gpu': '_tflow_select ==2.1.0 gpu',
