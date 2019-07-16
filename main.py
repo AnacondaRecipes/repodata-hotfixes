@@ -539,6 +539,8 @@ def _patch_repodata(repodata, subdir):
         if record['name'] == 'libarchive':
             version = record['version']
             if version == '3.3.2' or (version == '3.3.3' and record['build_number'] == 0):
+                if fn in instructions["packages"]:
+                    record['depends'] = instructions["packages"][fn]["depends"]
                 # libarchive 3.3.2 and 3.3.3 build 0 are missing zstd support.
                 # De-prioritize these packages with a track_feature (via _low_priority)
                 # so they are not installed unless explicitly requested
