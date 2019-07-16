@@ -536,6 +536,15 @@ def _patch_repodata(repodata, subdir):
                 raise Exception("Found multiple mkl entries, expected only 1.")
             instructions["packages"][fn]["depends"] = record["depends"]
 
+        if record['name'] == 'libarchive':
+            version = record['version']
+            if version == '3.3.2' or (version == '3.3.3' and record['build_number'] == 0):
+                # libarchive 3.3.2 and 3.3.3 build 0 are missing zstd support.
+                # De-prioritize these packages with a track_feature (via _low_priority)
+                # so they are not installed unless explicitly requested
+                record['depends'].append('_low_priority')
+                instructions["packages"][fn]["depends"] = record["depends"]
+
     instructions['remove'].sort()
     instructions['revoke'].sort()
     return instructions
