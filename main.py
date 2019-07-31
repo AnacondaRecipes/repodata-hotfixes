@@ -336,6 +336,12 @@ def _fix_cudnn_depends(fn, record, instructions, subdir):
     instructions['packages'][fn]['depends'] = depends
 
 
+def _fix_missing_blas_metapkg_in_mkl_addons(fn, record, instructions):
+    if not any(re.match('blas\s.*\smkl', dep) for dep in record['depends']):
+        record['depends'].append("blas * mkl")
+        instructions['packages'][fn]['depends'] = record['depends']
+
+
 def _patch_repodata(repodata, subdir):
     index = repodata["packages"]
     instructions = {
@@ -376,6 +382,9 @@ def _patch_repodata(repodata, subdir):
 
         if "features" in record:
             _fix_nomkl_features(fn, record, instructions)
+
+        if record["name"] in ("mkl_random", "mkl_fft"):
+            _fix_missing_blas_metapkg_in_mkl_addons(fn, record, instructions, subdir)
 
         # this was a not-very-successful approach at fixing features
         blas_req_feature = record.get('requires_features', {}).get("blas")
