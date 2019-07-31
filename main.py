@@ -384,7 +384,7 @@ def _patch_repodata(repodata, subdir):
             _fix_nomkl_features(fn, record, instructions)
 
         if record["name"] in ("mkl_random", "mkl_fft"):
-            _fix_missing_blas_metapkg_in_mkl_addons(fn, record, instructions, subdir)
+            _fix_missing_blas_metapkg_in_mkl_addons(fn, record, instructions)
 
         # this was a not-very-successful approach at fixing features
         blas_req_feature = record.get('requires_features', {}).get("blas")
