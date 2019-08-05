@@ -50,6 +50,8 @@ REMOVALS = {
         "vs2017*hb4ce483_0*",
         # libtiff has incorrect build number and incorrect requirements
         "libtiff-4.0.10-*_1001.tar.bz2",
+        # incorrect requirements leading to import failures
+        "libarchive-3.3.3-*_0",
     }
 }
 
@@ -85,7 +87,6 @@ REVOKED = {
         "spyder-kernels-1.0.1-*_0",
     ],
     "any": [
-        "libarchive-3.3.3-*_0",
     ]
 }
 
