@@ -79,12 +79,14 @@ REVOKED = {
         "libssh2 1.8.0 h1218725_2",
         ],
     "win-32": [
-        "spyder-kernels-1.0.1-*_0"
+        "spyder-kernels-1.0.1-*_0",
     ],
     "win-64": [
-        "spyder-kernels-1.0.1-*_0"
+        "spyder-kernels-1.0.1-*_0",
     ],
-    "any": []
+    "any": [
+        "libarchive-3.3.3-*_0",
+    ]
 }
 
 BLAS_USING_PKGS = {"numpy", "numpy-base", "scipy", "numexpr", "scikit-learn", "libmxnet"}
