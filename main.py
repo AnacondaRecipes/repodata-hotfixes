@@ -537,12 +537,16 @@ def _patch_repodata(repodata, subdir):
 
         elif subdir.startswith("osx-64"):
             _fix_osx_libgfortan_bounds(fn, record, instructions)
-            # fix clang_osx-64 package to include dependencies, see:
+            # fix clang_osx-64 and clangcxx_osx-64 packages to include dependencies, see:
             # https://github.com/AnacondaRecipes/aggregate/pull/164
             if record['name'] == 'clang_osx-64' and record['version'] == '4.0.1':
                 if int(record['build_number']) < 17:
                     clang_401_deps = ['cctools', 'clang 4.0.1.*', 'compiler-rt 4.0.1.*', 'ld64']
                     instructions["packages"][fn]["depends"] = clang_401_deps
+            if record['name'] == 'clangxx_osx-64' and record['version'] == '4.0.1':
+                if int(record['build_number']) < 17:
+                    clangxx_401_deps = ['clang_osx-64 >=4.0.1,<4.0.2.0a0', 'clangxx', 'libcxx']
+                    instructions["packages"][fn]["depends"] = clangxx_401_deps
 
 
         if record['name'] == 'anaconda' and record['version'] in ["5.3.0", "5.3.1"]:
