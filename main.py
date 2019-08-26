@@ -447,6 +447,12 @@ def _patch_repodata(repodata, subdir):
                 record['depends'][sip_index]= 'sip >=4.19.4,<=4.19.8'
                 instructions["packages"][fn]["depends"] = record["depends"]
 
+        if record['name'] == 'torchvision' and record['version'] == '0.3.0':
+            # torchvision pytorch depends needs to be fixed to 1.1
+                pytorch_dep = record['depends'].index('pytorch >=1.1.0')
+                record['depends'][pytorch_dep]= 'pytorch 1.1.*'
+                instructions["packages"][fn]["depends"] = record["depends"]
+
         if record['name'] in ['tensorflow', 'tensorflow-gpu', 'tensorflow-eigen', 'tensorflow-mkl']:
             if record['version'] not in ['1.8.0', '1.9.0', '1.10.0']:
                 continue
