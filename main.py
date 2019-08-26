@@ -341,6 +341,8 @@ def _fix_cudnn_depends(fn, record, instructions, subdir):
             correct_cudnn_depends = 'cudnn >=7.1.2,<=8.0a0'
         elif is_seven_star and cudatoolkit_depend.startswith('cudatoolkit 9.2'):
             correct_cudnn_depends = 'cudnn >=7.2.1,<=8.0a0'
+        elif original_cudnn_depend == 'cudnn 7.3.*':
+            correct_cudnn_depends = 'cudnn >=7.3.0,<=8.0a0'
         else:
             raise Exception("unknown cudnn depedency")
     idx = depends.index(original_cudnn_depend)
