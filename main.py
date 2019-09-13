@@ -440,6 +440,11 @@ def _patch_repodata(repodata, subdir):
             record["depends"].append("_anaconda_depends")
             instructions["packages"][fn]["depends"] = record["depends"]
 
+        if (record['name'] == 'constructor' and
+            int(record["version"][0]) < 3):
+            record["depends"].append("conda <4.6.0a0")
+            instructions["packages"][fn]["depends"] = record["depends"]
+
         if record['name'] == 'pyqt' and record['version'] == '5.9.2':
             # pyqt needs an upper limit of sip, build 2 has this already
             if 'sip >=4.19.4' in record['depends']:
