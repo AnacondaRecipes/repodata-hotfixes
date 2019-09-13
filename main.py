@@ -436,7 +436,9 @@ def _patch_repodata(repodata, subdir):
 
         if (record['name'] == 'constructor' and
             int(record["version"][0]) < 3):
-            record["depends"].append("conda <4.6.0a0")
+            if "conda" in record["depends"]:
+                record["depends"].remove("conda")
+                record["depends"].append("conda <4.6.0a0")
             instructions["packages"][fn]["depends"] = record["depends"]
 
         if record['name'] == 'pyqt' and record['version'] == '5.9.2':
