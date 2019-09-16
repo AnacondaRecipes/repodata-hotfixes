@@ -590,7 +590,7 @@ def _patch_repodata(repodata, subdir):
                 record['depends'].append('_low_priority')
                 instructions["packages"][fn]["depends"] = record["depends"]
 
-        if record_name == "conda-build" and record['version'].startswith('3.18'):
+        if record['name'] == "conda-build" and record['version'].startswith('3.18'):
             new_deps = []
             for dep in record['depends']:
                 parts = dep.split()
