@@ -147,19 +147,6 @@ def _replace_vc_features_with_vc_pkg_deps(fn, record, instructions):
         # remove the track_features key
         if 'track_features' in record:
             instructions["packages"][fn]['track_features'] = None
-    elif record_name == "conda-build" and record['version'].startswith('3.18'):
-        new_deps = []
-        for dep in record['depends']:
-            parts = dep.split()
-            if parts[0] == 'conda' and "4.3" in parts[1]:
-                new_deps.append("conda >=4.5")
-            else:
-                new_deps.append(dep)
-        # CPH 1.5 has a statically linked libarchive and doesn't depend on python-libarchive-c
-        #    we were implicitly depending on it, and it goes missing.
-        if "python-libarchive-c" not in new_deps:
-            new_deps.append('python-libarchive-c')
-        instructions["packages"][fn]['depends'] = new_deps
     elif record['name'] == "yasm":
         # remove vc from the features key
         vc_version = _extract_and_remove_vc_feature(record)
@@ -602,6 +589,20 @@ def _patch_repodata(repodata, subdir):
                 # so they are not installed unless explicitly requested
                 record['depends'].append('_low_priority')
                 instructions["packages"][fn]["depends"] = record["depends"]
+
+        if record_name == "conda-build" and record['version'].startswith('3.18'):
+            new_deps = []
+            for dep in record['depends']:
+                parts = dep.split()
+                if parts[0] == 'conda' and "4.3" in parts[1]:
+                    new_deps.append("conda >=4.5")
+                else:
+                    new_deps.append(dep)
+            # CPH 1.5 has a statically linked libarchive and doesn't depend on python-libarchive-c
+            #    we were implicitly depending on it, and it goes missing.
+            if "python-libarchive-c" not in new_deps:
+                new_deps.append('python-libarchive-c')
+            instructions["packages"][fn]['depends'] = new_deps
 
     instructions['remove'].sort()
     instructions['revoke'].sort()
