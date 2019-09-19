@@ -52,6 +52,9 @@ REMOVALS = {
         "libtiff-4.0.10-*_1001.tar.bz2",
         # incorrect requirements leading to import failures
         "libarchive-3.3.3-*_0",
+        # cph 1.5.0 replaces \r\n in files with \n on windows but does not
+        # truncate the file.  This results in corrupt packages.
+        "conda-package-handling-1.5.0*",
     }
 }
 
