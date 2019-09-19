@@ -55,6 +55,9 @@ REMOVALS = {
         # cph 1.5.0 replaces \r\n in files with \n on windows but does not
         # truncate the file.  This results in corrupt packages.
         "conda-package-handling-1.5.0*",
+        # segfaults in 2019.5 that need work to understand.  To be restored soon.
+        "mkl*-2019.5*",
+        "daal*-2019.5*",
     }
 }
 
@@ -436,7 +439,9 @@ def _patch_repodata(repodata, subdir):
 
         if (record['name'] == 'constructor' and
             int(record["version"][0]) < 3):
-            record["depends"].append("conda <4.6.0a0")
+            if "conda" in record["depends"]:
+                record["depends"].remove("conda")
+                record["depends"].append("conda <4.6.0a0")
             instructions["packages"][fn]["depends"] = record["depends"]
 
         if record['name'] == 'pyqt' and record['version'] == '5.9.2':
