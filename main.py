@@ -55,6 +55,9 @@ REMOVALS = {
         # cph 1.5.0 replaces \r\n in files with \n on windows but does not
         # truncate the file.  This results in corrupt packages.
         "conda-package-handling-1.5.0*",
+        # segfaults in 2019.5 that need work to understand.  To be restored soon.
+        "mkl*-2019.5*",
+        "daal*-2019.5*",
     }
 }
 
