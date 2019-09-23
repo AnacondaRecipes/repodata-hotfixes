@@ -58,6 +58,7 @@ REMOVALS = {
         # segfaults in 2019.5 that need work to understand.  To be restored soon.
         "mkl*-2019.5*",
         "daal*-2019.5*",
+        "intel-openmp*-2019.5*",
     }
 }
 
