@@ -59,6 +59,8 @@ REMOVALS = {
         "mkl*-2019.5*",
         "daal*-2019.5*",
         "intel-openmp*-2019.5*",
+        # missing dependencies
+        "numpy-devel-1.14.3*"
     }
 }
 
