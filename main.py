@@ -305,6 +305,13 @@ def _fix_numpy_base_constrains(record, index, instructions):
     req = '%s %s %s' % (record['name'], record['version'], record['build'])
     instructions["packages"][base_pkg_fn]["constrains"] = [req]
 
+def _add_tbb4py_to_mkl_build(fn, record, index, instructions):
+    if fn in instructions['packages']:
+        depends = instructions['packages'][fn]['depends']
+    else:
+        depends = record['depends']
+    depends.append('tbb4py')
+    instructions['packages'][fn]['depends'] = depends
 
 def _fix_cudnn_depends(fn, record, instructions, subdir):
     if fn in instructions['packages']:
@@ -426,6 +433,10 @@ def _patch_repodata(repodata, subdir):
             if not any(d.startswith('python') for d in record['depends']):
                 instructions["packages"][fn]["namespace"] = "python"
 
+        # https://github.com/ContinuumIO/anaconda-issues/issues/11315
+        if subdir.startswith('win') and record['name'] == 'jupyterlab' and 'pywin32' not in record['depends']:
+            instructions["packages"][fn]["depends"] = record['depends'] + ['pywin32']
+
         if record['name'] == 'openblas-devel' and not any(d.startswith('blas ') for d in record['depends']):
             record["depends"].append("blas * openblas")
             instructions["packages"][fn]["depends"] = record["depends"]
@@ -484,6 +495,9 @@ def _patch_repodata(repodata, subdir):
 
         if record['name'] == 'numpy':
             _fix_numpy_base_constrains(record, index, instructions)
+
+        if record['name'] == 'numpy-base' and any(_.startswith('mkl >=2018') for _ in record.get('depends', [])):
+            _add_tbb4py_to_mkl_build(fn, record, index, instructions)
 
         if record['name'] == 'sparkmagic':
             # sparkmagic <=0.12.7 has issues with ipykernel >4.10
