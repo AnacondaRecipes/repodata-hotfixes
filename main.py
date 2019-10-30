@@ -306,10 +306,10 @@ def _fix_numpy_base_constrains(record, index, instructions):
     instructions["packages"][base_pkg_fn]["constrains"] = [req]
 
 def _add_tbb4py_to_mkl_build(fn, record, index, instructions):
-    if fn in instructions['packages']:
+    if fn in instructions['packages'] and 'depends' in instructions['packages'][fn]:
         depends = instructions['packages'][fn]['depends']
     else:
-        depends = record['depends']
+        depends = record.get('depends', [])
     depends.append('tbb4py')
     instructions['packages'][fn]['depends'] = depends
 
