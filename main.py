@@ -642,7 +642,7 @@ def _patch_repodata(repodata, subdir):
                 new_deps.append('python-libarchive-c')
             instructions["packages"][fn]['depends'] = new_deps
 
-        if record['name'] == 'keras':
+        if record['name'] == 'keras' and record['version'] < '2.3':
             new_deps = []
             for dep in record['depends']:
                 if dep.startswith('tensorflow'):
