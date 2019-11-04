@@ -642,6 +642,17 @@ def _patch_repodata(repodata, subdir):
                 new_deps.append('python-libarchive-c')
             instructions["packages"][fn]['depends'] = new_deps
 
+        if record['name'] == 'keras':
+            new_deps = []
+            for dep in record['depends']:
+                if dep.startswith('tensorflow'):
+                    # breaking changes in tensorflow 2.0
+                    new_deps.append('tensorflow <2.0')
+                else:
+                    new_deps.append(dep)
+            instructions["packages"][fn]['depends'] = new_deps
+
+
     instructions['remove'].sort()
     instructions['revoke'].sort()
     return instructions
