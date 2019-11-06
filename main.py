@@ -568,6 +568,19 @@ def _patch_repodata(repodata, subdir):
         if any(dep.startswith('cudnn 7') for dep in record['depends']):
             _fix_cudnn_depends(fn, record, instructions, subdir)
 
+        if any(dep.startswith('glib >=') for dep in record['depends']):
+            if record['name'] == 'anaconda':
+                continue
+            def fix_glib_dep(dep):
+                if dep.startswith('glib >='):
+                    return dep.split(',')[0] + ',<3.0a0'
+                else:
+                    return dep
+            record_depends = _get_record_depends(fn, record, instructions)
+            depends = [fix_glib_dep(dep) for dep in record_depends]
+            if depends != record_depends:
+                instructions["packages"][fn]["depends"] = depends
+
 
         if subdir.startswith("win-"):
             _replace_vc_features_with_vc_pkg_deps(fn, record, instructions)
