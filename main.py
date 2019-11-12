@@ -643,7 +643,7 @@ def _patch_repodata(repodata, subdir):
             instructions["packages"][fn]['depends'] = new_deps
 
         if record['name'] == 'keras':
-            version_parts = record[version].split('.')
+            version_parts = record['version'].split('.')
             if int(version_parts[0]) <= 2 and int(version_parts[1]) < 3:
                 new_deps = []
                 for dep in record['depends']:
