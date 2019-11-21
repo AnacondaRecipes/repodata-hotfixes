@@ -171,7 +171,12 @@ NP_BASE_LOOSE_PIN = {
         'numpy-base-1.15.1-py35h74e8950_0.tar.bz2',
         'numpy-base-1.15.1-py36h74e8950_0.tar.bz2',
         'numpy-base-1.15.1-py37h74e8950_0.tar.bz2',
-    ]
+    ],
+    "noarch": [],
+    "linux-32": [],
+    "linux-aarch64": [],
+    "linux-armv6l": [],
+    "linux-armv7l": [],
 }
 
 BLAS_USING_PKGS = {"numpy", "numpy-base", "scipy", "numexpr", "scikit-learn", "libmxnet"}
