@@ -99,6 +99,81 @@ REVOKED = {
     ]
 }
 
+# This is a list of numpy-base packages for each subdir which multiple numpy
+# packages depend on. Since multiple numpy packages depend on these the
+# constrain entry added to them should be to the numpy version not the version
+# and build as the later would make some numpy packages un-installable.
+NP_BASE_LOOSE_PIN = {
+    'linux-64': [
+        'numpy-base-1.11.3-py27h2b20989_8.tar.bz2',
+        'numpy-base-1.11.3-py27hdbf6ddf_8.tar.bz2',
+        'numpy-base-1.11.3-py36h2b20989_8.tar.bz2',
+        'numpy-base-1.11.3-py36hdbf6ddf_8.tar.bz2',
+        'numpy-base-1.11.3-py37h2b20989_8.tar.bz2',
+        'numpy-base-1.11.3-py37hdbf6ddf_8.tar.bz2',
+        'numpy-base-1.15.1-py27h74e8950_0.tar.bz2',
+        'numpy-base-1.15.1-py27h81de0dd_0.tar.bz2',
+        'numpy-base-1.15.1-py35h74e8950_0.tar.bz2',
+        'numpy-base-1.15.1-py35h81de0dd_0.tar.bz2',
+        'numpy-base-1.15.1-py36h74e8950_0.tar.bz2',
+        'numpy-base-1.15.1-py36h81de0dd_0.tar.bz2',
+        'numpy-base-1.15.1-py37h74e8950_0.tar.bz2',
+        'numpy-base-1.15.1-py37h81de0dd_0.tar.bz2',
+        'numpy-base-1.9.3-py27h2b20989_7.tar.bz2',
+        'numpy-base-1.9.3-py27hdbf6ddf_7.tar.bz2',
+        'numpy-base-1.9.3-py35h2b20989_7.tar.bz2',
+        'numpy-base-1.9.3-py35hdbf6ddf_7.tar.bz2',
+        'numpy-base-1.9.3-py36h2b20989_7.tar.bz2',
+        'numpy-base-1.9.3-py36hdbf6ddf_7.tar.bz2',
+        'numpy-base-1.9.3-py37h2b20989_7.tar.bz2',
+        'numpy-base-1.9.3-py37hdbf6ddf_7.tar.bz2',
+        ],
+    'osx-64': [
+        'numpy-base-1.11.3-py27h9797aa9_8.tar.bz2',
+        'numpy-base-1.11.3-py27ha9ae307_8.tar.bz2',
+        'numpy-base-1.11.3-py36h9797aa9_8.tar.bz2',
+        'numpy-base-1.11.3-py36ha9ae307_8.tar.bz2',
+        'numpy-base-1.11.3-py37h9797aa9_8.tar.bz2',
+        'numpy-base-1.11.3-py37ha9ae307_8.tar.bz2',
+        'numpy-base-1.15.1-py27h42e5f7b_0.tar.bz2',
+        'numpy-base-1.15.1-py27h8a80b8c_0.tar.bz2',
+        'numpy-base-1.15.1-py35h42e5f7b_0.tar.bz2',
+        'numpy-base-1.15.1-py35h8a80b8c_0.tar.bz2',
+        'numpy-base-1.15.1-py36h42e5f7b_0.tar.bz2',
+        'numpy-base-1.15.1-py36h8a80b8c_0.tar.bz2',
+        'numpy-base-1.15.1-py37h42e5f7b_0.tar.bz2',
+        'numpy-base-1.15.1-py37h8a80b8c_0.tar.bz2',
+        'numpy-base-1.9.3-py27h9797aa9_7.tar.bz2',
+        'numpy-base-1.9.3-py27ha9ae307_7.tar.bz2',
+        'numpy-base-1.9.3-py35h9797aa9_7.tar.bz2',
+        'numpy-base-1.9.3-py35ha9ae307_7.tar.bz2',
+        'numpy-base-1.9.3-py36h9797aa9_7.tar.bz2',
+        'numpy-base-1.9.3-py36ha9ae307_7.tar.bz2',
+        'numpy-base-1.9.3-py37h9797aa9_7.tar.bz2',
+        'numpy-base-1.9.3-py37ha9ae307_7.tar.bz2',
+        ],
+    'win-64': [
+        'numpy-base-1.15.1-py27h2753ae9_0.tar.bz2',
+        'numpy-base-1.15.1-py35h8128ebf_0.tar.bz2',
+        'numpy-base-1.15.1-py36h8128ebf_0.tar.bz2',
+        'numpy-base-1.15.1-py37h8128ebf_0.tar.bz2',
+        ],
+    'win-32': [
+        'numpy-base-1.15.1-py27h2753ae9_0.tar.bz2',
+        'numpy-base-1.15.1-py35h8128ebf_0.tar.bz2',
+        'numpy-base-1.15.1-py36h8128ebf_0.tar.bz2',
+        'numpy-base-1.15.1-py37h8128ebf_0.tar.bz2',
+        ],
+    'linux-ppc64le': [
+        'numpy-base-1.11.3-py27h2b20989_8.tar.bz2',
+        'numpy-base-1.11.3-py36h2b20989_8.tar.bz2',
+        'numpy-base-1.15.1-py27h74e8950_0.tar.bz2',
+        'numpy-base-1.15.1-py35h74e8950_0.tar.bz2',
+        'numpy-base-1.15.1-py36h74e8950_0.tar.bz2',
+        'numpy-base-1.15.1-py37h74e8950_0.tar.bz2',
+    ]
+}
+
 BLAS_USING_PKGS = {"numpy", "numpy-base", "scipy", "numexpr", "scikit-learn", "libmxnet"}
 
 TFLOW_SUBS = {
@@ -287,7 +362,7 @@ def _fix_nomkl_features(fn, record, instructions):
             instructions["packages"][fn]["features"] = record['features']
 
 
-def _fix_numpy_base_constrains(record, index, instructions):
+def _fix_numpy_base_constrains(record, index, instructions, subdir):
     # numpy-base packages should have run constrains on the corresponding numpy package
     base_pkgs = [d for d in record['depends'] if d.startswith('numpy-base')]
     if not base_pkgs:
@@ -302,8 +377,16 @@ def _fix_numpy_base_constrains(record, index, instructions):
     base_pkg_fn = '%s-%s-%s.tar.bz2' % (name, ver, build_str)
     if 'constrains' in index[base_pkg_fn]:
         return
-    req = '%s %s %s' % (record['name'], record['version'], record['build'])
+    if base_pkg_fn in NP_BASE_LOOSE_PIN[subdir]:
+        # base package is a requirement of multiple numpy packages,
+        # constrain to only the version
+        req = '%s %s' % (record['name'], record['version'])
+    else:
+        # base package is a requirement of a single numpy package,
+        # constrain to the exact build
+        req = '%s %s %s' % (record['name'], record['version'], record['build'])
     instructions["packages"][base_pkg_fn]["constrains"] = [req]
+
 
 def _add_tbb4py_to_mkl_build(fn, record, index, instructions):
     if fn in instructions['packages'] and 'depends' in instructions['packages'][fn]:
@@ -494,7 +577,7 @@ def _patch_repodata(repodata, subdir):
                 instructions["packages"][fn]["depends"] = depends
 
         if record['name'] == 'numpy':
-            _fix_numpy_base_constrains(record, index, instructions)
+            _fix_numpy_base_constrains(record, index, instructions, subdir)
 
         if record['name'] == 'numpy-base' and any(_.startswith('mkl >=2018') for _ in record.get('depends', [])):
             _add_tbb4py_to_mkl_build(fn, record, index, instructions)
