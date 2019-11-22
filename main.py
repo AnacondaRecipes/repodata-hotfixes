@@ -605,6 +605,13 @@ def _patch_repodata(repodata, subdir):
                 record['depends'][t4_index]= 'tornado >=4,<6'
                 instructions["packages"][fn]["depends"] = record["depends"]
 
+        # tensorboard 2.0.0 build 0 should have a requirement on setuptools >=41.0.0
+        # see: https://github.com/AnacondaRecipes/tensorflow_recipes/issues/20
+        if record['name'] == 'tensorboard' and record['version'] == '2.0.0':
+            if record['build_number'] == 0:
+                record['depends'].append('setuptools >=41.0.0')
+                instructions["packages"][fn]["depends"] = record["depends"]
+
         if fn == 'cupti-9.0.176-0.tar.bz2':
             # depends in package is set as cudatoolkit 9.*, should be 9.0.*
             instructions["packages"][fn]["depends"] = ['cudatoolkit 9.0.*']
