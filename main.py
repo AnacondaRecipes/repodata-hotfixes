@@ -616,6 +616,13 @@ def _patch_repodata(repodata, subdir):
             # depends in package is set as cudatoolkit 9.*, should be 9.0.*
             instructions["packages"][fn]["depends"] = ['cudatoolkit 9.0.*']
 
+        if fn == 'dask-2.7.0-py_0.tar.bz2':
+            deps = ['python >=3.6' if d.startswith('python ') else d for d in record["depends"]]
+            instructions["packages"][fn]["depends"] = deps
+
+        if fn == "dask-core-2.7.0-py_0.tar.bz2":
+            instructions["packages"][fn]["depends"] = ['python >=3.6']
+
         if any(dep.split()[0] == 'mkl' for dep in record['depends']):
             for dep in record['depends']:
                 if dep.split()[0] == 'mkl' and len(dep.split()) > 1 and mkl_version_2018_re.match(dep.split()[1]):
