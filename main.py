@@ -612,6 +612,13 @@ def _patch_repodata(repodata, subdir):
                 record['depends'].append('setuptools >=41.0.0')
                 instructions["packages"][fn]["depends"] = record["depends"]
 
+        # IPython >=7,<7.10 should have an upper bound on prompt_toolkit
+        if record['name'] == 'ipython' and record['version'].startswith('7.'):
+            if 'prompt_toolkit >=2.0.0' in record['depends']:
+                ptk_index = record['depends'].index('prompt_toolkit >=2.0.0')
+                record['depends'][ptk_index]= 'prompt_toolkit >=2.0.0,<3'
+                instructions["packages"][fn]["depends"] = record["depends"]
+
         if fn == 'cupti-9.0.176-0.tar.bz2':
             # depends in package is set as cudatoolkit 9.*, should be 9.0.*
             instructions["packages"][fn]["depends"] = ['cudatoolkit 9.0.*']
