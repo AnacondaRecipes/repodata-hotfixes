@@ -619,6 +619,13 @@ def _patch_repodata(repodata, subdir):
                 record['depends'][ptk_index]= 'prompt_toolkit >=2.0.0,<3'
                 instructions["packages"][fn]["depends"] = record["depends"]
 
+        # setuptools should not appear in both depends and constrains
+        # https://github.com/conda/conda/issues/9337
+        if record["name"] == "conda":
+            if 'setuptools >=31.0.1' in record.get("constrains", []):
+                new = [req for req in record["constrains"] if not req.startswith("setuptools")]
+                instructions["packages"][fn]["constrains"] = new
+
         if fn == 'cupti-9.0.176-0.tar.bz2':
             # depends in package is set as cudatoolkit 9.*, should be 9.0.*
             instructions["packages"][fn]["depends"] = ['cudatoolkit 9.0.*']
