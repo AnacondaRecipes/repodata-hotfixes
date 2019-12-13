@@ -40,7 +40,7 @@ REMOVALS = {
               ],
     "linux-64": [
         "numba-0.46.0-py38h962f231_0.tar.bz2",
-    ]
+    ],
     "any": {
         # early efforts on splitting numpy recipe did not pin numpy-base exactly.
         #     These led to bad builds (built against newest numpy)
