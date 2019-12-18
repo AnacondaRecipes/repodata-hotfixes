@@ -672,6 +672,16 @@ def _patch_repodata(repodata, subdir):
             record['depends'].append('_libgcc_mutex * main')
             instructions["packages"][fn]["depends"] = record["depends"]
 
+        # loosen binutils_impl dependency on gcc_impl_ packages
+        if record['name'].startswith('gcc_impl_'):
+            for i, dep in enumerate(record['depends']):
+                if dep.startswith('binutils_impl_'):
+                    dep_parts = dep.split()
+                    if len(dep_parts) == 3:
+                        correct_dep = "{} >={},<3".format(*dep_parts[:2])
+                        record["depends"][i] = correct_dep
+                        instructions["packages"][fn]["depends"] = record["depends"]
+
         # some of these got hard-coded to overly restrictive values
         if record['name'] in ('scikit-learn', 'pytorch'):
             new_deps = []
