@@ -625,6 +625,13 @@ def _patch_repodata(repodata, subdir):
                 record['depends'][ptk_index]= 'prompt_toolkit >=2.0.0,<3'
                 instructions["packages"][fn]["depends"] = record["depends"]
 
+        # jupyter_console 5.2.0 has bounded dependency on prompt_toolkit
+        if record['name'] == 'jupyter_console' and record['version'] == "5.2.0":
+            if 'prompt_toolkit' in record['depends']:
+                idx = record['depends'].index('prompt_toolkit')
+                record['depends'][idx] = 'prompt_toolkit >=1.0.0,<2'
+                instructions["packages"][fn]["depends"] = record["depends"]
+
         # setuptools should not appear in both depends and constrains
         # https://github.com/conda/conda/issues/9337
         if record["name"] == "conda":
