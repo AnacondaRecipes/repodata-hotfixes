@@ -632,6 +632,12 @@ def _patch_repodata(repodata, subdir):
                 record['depends'][idx] = 'prompt_toolkit >=1.0.0,<2'
                 instructions["packages"][fn]["depends"] = record["depends"]
 
+        # numba 0.46.0 and 0.47.0 are missing a dependency on setuptools
+        # https://github.com/numba/numba/issues/5134
+        if record["name"] == "numba" and record["version"] in ["0.46.0", "0.47.0"]:
+            record["depends"].append("setuptools")
+            instructions["packages"][fn]["depends"] = record["depends"]
+
         # setuptools should not appear in both depends and constrains
         # https://github.com/conda/conda/issues/9337
         if record["name"] == "conda":
