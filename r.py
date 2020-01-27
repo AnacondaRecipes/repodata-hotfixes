@@ -128,6 +128,16 @@ def flip_mutex_from_anacondar_to_mro(fn, record, instructions):
         instructions['packages'][fn] = {'track_features': 'mro_is_not_default'}
 
 
+def _get_record_depends(fn, record, instructions):
+    """ Return the depends information for a record, including any patching. """
+    record_depends = record.get('depends', [])
+    if fn in instructions['packages']:
+        if 'depends' in instructions['packages'][fn]:
+            # the package depends have already been patched
+            record_depends = instructions['packages'][fn]['depends']
+    return record_depends
+
+
 def _patch_repodata(repodata, subdir):
     instructions = {
         "patch_instructions_version": 1,
@@ -238,6 +248,19 @@ def _patch_repodata(repodata, subdir):
             ub = '.'.join(ub.split('.')[:2] + ['0'])
             deps.append("r-base >={},<{}a0".format(lb, ub))
             instructions["packages"][fn]["depends"] = deps
+
+        if any(dep.startswith('glib >=') for dep in record['depends']):
+            if record['name'] == 'anaconda':
+                continue
+            def fix_glib_dep(dep):
+                if dep.startswith('glib >='):
+                    return dep.split(',')[0] + ',<3.0a0'
+                else:
+                    return dep
+            record_depends = _get_record_depends(fn, record, instructions)
+            depends = [fix_glib_dep(dep) for dep in record_depends]
+            if depends != record_depends:
+                instructions["packages"][fn]["depends"] = depends
 
     return instructions
 
