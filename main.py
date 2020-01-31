@@ -559,6 +559,13 @@ def _patch_repodata(repodata, subdir):
                 record['depends'][sip_index]= 'sip >=4.19.4,<=4.19.8'
                 instructions["packages"][fn]["depends"] = record["depends"]
 
+        # three pyqt packages were built against sip 4.19.13
+        # first filename is linux-64, second is win-64 and win-32
+        if fn in ["pyqt-5.9.2-py38h05f1152_4.tar.bz2", "pyqt-5.9.2-py38ha925a31_4.tar.bz2"]:
+            sip_index = [dep.startswith("sip") for dep in record["depends"]].index(True)
+            record['depends'][sip_index]= 'sip >=4.19.13,<=4.19.14'
+            instructions["packages"][fn]["depends"] = record["depends"]
+
         if record['name'] == 'torchvision' and record['version'] == '0.3.0':
             if 'pytorch >=1.1.0' in record['depends']:
                 # torchvision pytorch depends needs to be fixed to 1.1
