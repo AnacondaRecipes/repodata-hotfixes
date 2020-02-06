@@ -664,10 +664,15 @@ def _patch_repodata(repodata, subdir):
             instructions["packages"][fn]["depends"] = ['python >=3.6']
 
         if any(dep.split()[0] == 'mkl' for dep in record['depends']):
-            for dep in record['depends']:
+            for idx, dep in enumerate(record['depends']):
                 if dep.split()[0] == 'mkl' and len(dep.split()) > 1 and mkl_version_2018_re.match(dep.split()[1]):
                     record['depends'].remove(dep)
                     record['depends'].append(mkl_version_2018_extended_rc.sub('%s,<2019.0a0'%(dep.split()[1]), dep))
+                # mkl 2020.x is compatible with 2019.x
+                # so mkl >=2019.x,<2020.0a0 becomes mkl >=2019.x,<2021.0a0
+                if dep.startswith("mkl >=2019") and dep.endswith(",<2020.0a0"):
+                    expanded_dep = dep.replace(",<2020.0a0", ",<2021.0a0")
+                    record['depends'][idx] = expanded_dep
             instructions["packages"][fn]["depends"] = record["depends"]
 
         # openssl uses funnny version numbers, 1.1.1, 1.1.1a, 1.1.1b, etc
