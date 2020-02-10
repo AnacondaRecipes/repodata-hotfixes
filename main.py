@@ -670,9 +670,16 @@ def _patch_repodata(repodata, subdir):
                     record['depends'].append(mkl_version_2018_extended_rc.sub('%s,<2019.0a0'%(dep.split()[1]), dep))
                 # mkl 2020.x is compatible with 2019.x
                 # so mkl >=2019.x,<2020.0a0 becomes mkl >=2019.x,<2021.0a0
+                # except on osx-64, older macOS release have problems...
                 if dep.startswith("mkl >=2019") and dep.endswith(",<2020.0a0"):
-                    expanded_dep = dep.replace(",<2020.0a0", ",<2021.0a0")
-                    record['depends'][idx] = expanded_dep
+                    if subdir != 'osx-64':
+                        expanded_dep = dep.replace(",<2020.0a0", ",<2021.0a0")
+                        record['depends'][idx] = expanded_dep
+                # undo macos-x hotfixes if they exist
+                if dep.startswith("mkl >=2019") and dep.endswith(",<2021.0a0"):
+                    if subdir == 'osx-64':
+                        compact_dep = dep.replace(",<2021.0a0", ",<2020.0a0")
+                        record['depends'][idx] = compact_dep
             instructions["packages"][fn]["depends"] = record["depends"]
 
         # openssl uses funnny version numbers, 1.1.1, 1.1.1a, 1.1.1b, etc
