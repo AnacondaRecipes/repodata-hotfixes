@@ -818,6 +818,9 @@ def _patch_repodata(repodata, subdir):
                         new_deps.append(dep)
                 instructions["packages"][fn]['depends'] = new_deps
 
+        if record['name'] == 'basemap':
+            instructions["packages"][fn]['constrains'] = ["proj4 <6"]
+
 
     instructions['remove'].sort()
     instructions['revoke'].sort()
