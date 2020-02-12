@@ -834,7 +834,9 @@ def _patch_repodata(repodata, subdir):
                 instructions["packages"][fn]['depends'] = new_deps
 
         if record['name'] == 'basemap':
-            instructions["packages"][fn]['constrains'] = ["proj4 <6"]
+            # basemap is incompatible with proj/proj4 >=6
+            # https://github.com/ContinuumIO/anaconda-issues/issues/11590
+            instructions["packages"][fn]['constrains'] = ["proj4 <6", "proj <6"]
 
 
     instructions['remove'].sort()
