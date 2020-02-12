@@ -618,6 +618,22 @@ def _patch_repodata(repodata, subdir):
                 record['depends'][t4_index]= 'tornado >=4,<6'
                 instructions["packages"][fn]["depends"] = record["depends"]
 
+        # spyder 4.0.0 and 4.0.1 should include a lower bound on psutil of 5.2
+        # and should pin parso to 0.5.2.
+        # https://github.com/conda-forge/spyder-feedstock/pull/73
+        # https://github.com/conda-forge/spyder-feedstock/pull/74
+        if record['name'] == 'spyder' and record['version'] in ['4.0.0', '4.0.1']:
+            add_parso_dep = True
+            for idx, dep in enumerate(record['depends']):
+                if dep.startswith('parso'):
+                    add_parso_dep = False
+                    has_parso_dep = True
+                if dep.startswith('psutil'):
+                    record['depends'][idx] = "psutil >=5.2"
+            if add_parso_dep:
+                record['depends'].append("parso 0.5.2.*")
+            instructions["packages"][fn]["depends"] = record["depends"]
+
         # tensorboard 2.0.0 build 0 should have a requirement on setuptools >=41.0.0
         # see: https://github.com/AnacondaRecipes/tensorflow_recipes/issues/20
         if record['name'] == 'tensorboard' and record['version'] == '2.0.0':
