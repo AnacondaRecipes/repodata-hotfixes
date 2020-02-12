@@ -627,7 +627,6 @@ def _patch_repodata(repodata, subdir):
             for idx, dep in enumerate(record['depends']):
                 if dep.startswith('parso'):
                     add_parso_dep = False
-                    has_parso_dep = True
                 if dep.startswith('psutil'):
                     record['depends'][idx] = "psutil >=5.2"
             if add_parso_dep:
