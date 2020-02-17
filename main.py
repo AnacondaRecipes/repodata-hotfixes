@@ -697,6 +697,12 @@ def _patch_repodata(repodata, subdir):
                         record['depends'][idx] = compact_dep
             instructions["packages"][fn]["depends"] = record["depends"]
 
+        # intel-openmp 2020.0 seems to be incompatible with older versions of mkl
+        # issues have only been reported on macOS and Windows but
+        # add the constrains on all platforms to be safe
+        if record['name'] == 'intel-openmp' and record['version'] == '2020.0':
+            instructions["packages"][fn]['constrains'] = ["mkl >=2020.0"]
+
         # openssl uses funnny version numbers, 1.1.1, 1.1.1a, 1.1.1b, etc
         # openssl >=1.1.1,<1.1.2.0a0 -> >=1.1.1a,<1.1.2a
         if any(dep == 'openssl >=1.1.1,<1.1.2.0a0' for dep in record['depends']):
