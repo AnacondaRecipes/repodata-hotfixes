@@ -360,6 +360,18 @@ def _fix_osx_libgfortan_bounds(fn, record, instructions):
         instructions["packages"][fn]["depends"] = deps
 
 
+def _fix_libnetcdf_upper_bound(fn, record, instructions):
+    if any(dep == "libnetcdf >=4.6.1,<5.0a0" for dep in record.get('depends', [])):
+        deps = []
+        for dep in record['depends']:
+            if dep == "libnetcdf >=4.6.1,<5.0a0":
+                # add an upper bound
+                deps.append("libnetcdf >=4.6.1,<4.7.0a0")
+            else:
+                deps.append(dep)
+        instructions["packages"][fn]["depends"] = deps
+
+
 def _fix_nomkl_features(fn, record, instructions):
     if "nomkl" == record["features"]:
         del record['features']
@@ -792,6 +804,7 @@ def _patch_repodata(repodata, subdir):
                     clangxx_401_deps = ['clang_osx-64 >=4.0.1,<4.0.2.0a0', 'clangxx', 'libcxx']
                     instructions["packages"][fn]["depends"] = clangxx_401_deps
 
+        _fix_libnetcdf_upper_bound(fn, record, instructions)
 
         if record['name'] == 'anaconda' and record['version'] in ["5.3.0", "5.3.1"]:
             mkl_version = [i for i in record['depends'] if "mkl" == i.split()[0] and "2019" in i.split()[1]]
