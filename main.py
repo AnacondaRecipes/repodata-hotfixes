@@ -723,6 +723,12 @@ def _patch_repodata(repodata, subdir):
                     record['depends'][idx] = 'openssl >=1.1.1a,<1.1.2a'
             instructions["packages"][fn]["depends"] = record["depends"]
 
+        # kealib 1.4.8 changed sonames, add new upper bound to existing packages
+        if any(dep == 'kealib >=1.4.7,<1.5.0a0' for dep in record['depends']):
+            kealib_idx = record['depends'].index('kealib >=1.4.7,<1.5.0a0')
+            record["depends"][kealib_idx] = "kealib >=1.4.7,<1.4.8.0a0"
+            instructions["packages"][fn]["depends"] = record["depends"]
+
         # add in blas mkl metapkg for mutex behavior on packages that have just mkl deps
         if (record['name'] in BLAS_USING_PKGS and not
                    any(dep.split()[0] == "blas" for dep in record['depends'])):
