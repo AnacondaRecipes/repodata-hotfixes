@@ -641,6 +641,10 @@ def _patch_repodata(repodata, subdir):
                     add_parso_dep = False
                 if dep.startswith('psutil'):
                     record['depends'][idx] = "psutil >=5.2"
+                # spyder-kernels needs to be pinned to <=1.9.0, see:
+                # https://github.com/conda-forge/spyder-feedstock/pull/76
+                if dep.startswith('spyder-kernels'):
+                    record['depends'][idx] = 'spyder-kernels >=1.8.1,<1.9.0'
             if add_parso_dep:
                 record['depends'].append("parso 0.5.2.*")
             instructions["packages"][fn]["depends"] = record["depends"]
