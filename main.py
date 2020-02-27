@@ -213,77 +213,6 @@ CUDATK_SUBS = {
 }
 
 
-_cb_pin_regex = re.compile(r"^>=(?P<lower>\d(\.\d+)*a?),<(?P<upper>\d(\.\d+)*)a0$")
-
-
-def _has_dep(record, name):
-    return any(dep.split(' ')[0] == name for dep in record.get('depends', ()))
-
-
-def _get_python_abi(version, subdir):
-    if version.startswith("2.7"):
-        if subdir.startswith("linux"):
-            return "cp27mu"
-        return "cp27m"
-    elif version.startswith("2.6"):
-        if subdir.startswith("linux"):
-            return "cp26mu"
-        return "cp26m"
-    elif version.startswith("3.4"):
-        return "cp34m"
-    elif version.startswith("3.5"):
-        return "cp35m"
-    elif version.startswith("3.6"):
-        return "cp36m"
-    elif version.startswith("3.7"):
-        return "cp37m"
-    elif version.startswith("3.8"):
-        return "cp38"
-    return None
-
-
-def _add_python_abi(record, subdir):
-    record_name = record['name']
-    # Make existing python and python-dependent packages conflict with pypy
-    if record_name == "python":
-        version = record['version']
-        new_constrains = record.get('constrains', [])
-        python_abi = _get_python_abi(version, subdir)
-        new_constrains.append(f"python_abi * *_{python_abi}")
-        record['constrains'] = new_constrains
-        return
-
-    if _has_dep(record, 'python') and not _has_dep(record, 'pypy') and not _has_dep(record, 'python_abi'):
-        python_abi = None
-        new_constrains = record.get('constrains', [])
-
-        for dep in record.get('depends', []):
-            dep_split = dep.split(' ')
-            if dep_split[0] != 'python':
-                continue
-            # If python is pinned exactly, don't do anything
-            if len(dep_split) == 3:
-                continue
-            # If there's no version constraint, ignore
-            if len(dep_split) == 1:
-                continue
-            if dep_split[1].startswith(">="):
-                m = _cb_pin_regex.match(dep_split[1])
-                if m == None:
-                    continue
-                lower = m.group("lower").split(".")[:2]
-                upper = m.group("upper").split(".")[:2]
-                if lower[0] == upper[0] and int(lower[1]) + 1 == int(upper[1]):
-                    python_abi = _get_python_abi(m.group("lower"), subdir)
-                else:
-                    continue
-            else:
-                python_abi = _get_python_abi(dep_split[1], subdir)
-            if python_abi:
-                new_constrains.append(f"python_abi * *_{python_abi}")
-        record['constrains'] = new_constrains
-
-
 def _replace_vc_features_with_vc_pkg_deps(fn, record, instructions):
     python_vc_deps = {
         '2.6': 'vc 9.*',
@@ -580,9 +509,6 @@ def _patch_repodata(repodata, subdir):
 
         if "features" in record:
             _fix_nomkl_features(fn, record, instructions)
-
-        if subdir != 'noarch':
-            _add_python_abi(record, subdir)
 
         if record["name"] in ("mkl_random", "mkl_fft"):
             _fix_missing_blas_metapkg_in_mkl_addons(fn, record, instructions)
