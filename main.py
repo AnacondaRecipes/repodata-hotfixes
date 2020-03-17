@@ -867,6 +867,14 @@ def _patch_repodata(repodata, subdir):
             # https://github.com/ContinuumIO/anaconda-issues/issues/11590
             instructions["packages"][fn]['constrains'] = ["proj4 <6", "proj <6"]
 
+        # python-language-server should contrains ujson <=1.35
+        # see https://github.com/conda-forge/cf-mark-broken/pull/20
+        # https://github.com/conda-forge/python-language-server-feedstock/pull/48
+        if record['name'] == 'python-language-server':
+            if record['version'] in ['0.31.2', '0.31.7']:
+                ujson_idx = record['depends'].index('ujson')
+                record['depends'][ujson_idx] = 'ujson <=1.35'
+                instructions["packages"][fn]["depends"] = record["depends"]
 
     instructions['remove'].sort()
     instructions['revoke'].sort()
