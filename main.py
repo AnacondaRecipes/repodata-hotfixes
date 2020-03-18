@@ -670,6 +670,12 @@ def _patch_repodata(repodata, subdir):
                 record['depends'][idx] = 'prompt_toolkit >=1.0.0,<2'
                 instructions["packages"][fn]["depends"] = record["depends"]
 
+        # jupyter_client 6.0.0 should have lower bound of 3.5 on python
+        if record['name'] == 'jupyter_client' and record['version'] == "6.0.0":
+            idx = record['depends'].index('python')
+            record['depends'][idx] = 'python >=3.5'
+            instructions["packages"][fn]["depends"] = record["depends"]
+
         # numba 0.46.0 and 0.47.0 are missing a dependency on setuptools
         # https://github.com/numba/numba/issues/5134
         if record["name"] == "numba" and record["version"] in ["0.46.0", "0.47.0"]:
