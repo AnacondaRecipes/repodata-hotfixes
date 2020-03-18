@@ -877,7 +877,7 @@ def _patch_repodata(repodata, subdir):
         # see https://github.com/conda-forge/cf-mark-broken/pull/20
         # https://github.com/conda-forge/python-language-server-feedstock/pull/48
         if record['name'] == 'python-language-server':
-            if record['version'] in ['0.31.2', '0.31.7']:
+            if 'ujson' in record['depends'] and record['version'] in ['0.31.2', '0.31.7']:
                 ujson_idx = record['depends'].index('ujson')
                 record['depends'][ujson_idx] = 'ujson <=1.35'
                 instructions["packages"][fn]["depends"] = record["depends"]
