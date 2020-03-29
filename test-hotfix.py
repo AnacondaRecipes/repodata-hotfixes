@@ -23,11 +23,15 @@ channel_map = {
 
 
 def clone_subdir(channel_base_url, subdir):
-    out_file = os.path.join(channel_base_url.rsplit('/', 1)[-1], subdir, 'repodata-clone.json')
+    out_file = os.path.join(channel_base_url.rsplit('/', 1)[-1], subdir, 'reference_repodata.json')
     url = "%s/%s/repodata.json" % (channel_base_url, subdir)
     print("downloading repodata from {}".format(url))
     urllib.request.urlretrieve(url, out_file)
 
+    out_file = os.path.join(channel_base_url.rsplit('/', 1)[-1], subdir, 'repodata_from_packages.json')
+    url = "%s/%s/repodata_from_packages.json" % (channel_base_url, subdir)
+    print("downloading repodata from {}".format(url))
+    urllib.request.urlretrieve(url, out_file)
 
 if __name__ == "__main__":
     import argparse
@@ -46,8 +50,9 @@ if __name__ == "__main__":
         channel_base_url = channel_map[args.channel]
     clone_subdir(channel_base_url, args.subdir)
     subprocess.check_call(['python', args.channel + '.py'])
-    repodata_file = os.path.join(args.channel, args.subdir, 'repodata-clone.json')
-    with open(repodata_file) as f:
+    raw_repodata_file = os.path.join(args.channel, args.subdir, 'repodata_from_packages.json')
+    ref_repodata_file = os.path.join(args.channel, args.subdir, 'reference_repodata.json')
+    with open(raw_repodata_file) as f:
         repodata = json.load(f)
     out_instructions = os.path.join(args.channel, args.subdir, 'patch_instructions.json')
     with open(out_instructions) as f:
@@ -56,4 +61,4 @@ if __name__ == "__main__":
     patched_repodata_file = os.path.join(args.channel, args.subdir, 'repodata-patched.json')
     with open(patched_repodata_file, 'w') as f:
         json.dump(patched_repodata, f, indent=2, sort_keys=True, separators=(',', ': '))
-    subprocess.call(['diff', repodata_file, patched_repodata_file])
+    subprocess.call(['colordiff', ref_repodata_file, patched_repodata_file])

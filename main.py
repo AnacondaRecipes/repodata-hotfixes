@@ -946,7 +946,7 @@ def do_hotfixes(base_dir):
     # Step 1. Collect initial repodata for all subdirs.
     repodatas = {}
     for subdir in SUBDIRS:
-        repodata_path = join(base_dir, subdir, 'repodata-clone.json')
+        repodata_path = join(base_dir, subdir, 'repodata_from_packages.json')
         if isfile(repodata_path):
             with open(repodata_path) as fh:
                 repodatas[subdir] = json.load(fh)
