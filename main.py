@@ -421,7 +421,7 @@ def _add_tbb4py_to_mkl_build(fn, record, index, instructions):
 
 
 def _fix_cudatoolkit_constrains(fn, record, instructions, subdir):
-    # numpy-base packages should have run constrains on the corresponding numpy package
+    # cudatoolkit packages should have run constrains on the CUDA version
     base_pkgs = [d for d in record['depends'] if d.startswith('cudatoolkit')]
     if not base_pkgs:
         # no base package, no hotfixing needed
