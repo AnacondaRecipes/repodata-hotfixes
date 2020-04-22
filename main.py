@@ -884,12 +884,13 @@ def _patch_repodata(repodata, subdir):
 
         # libffi broke ABI compatibility in 3.3
         if 'libffi >=3.2.1,<4.0a0' in record['depends'] or 'libffi' in record['depends']:
-            if 'libffi >=3.2.1,<4.0a0' in record['depends']:
-                libffi_idx = record['depends'].index('libffi >=3.2.1,<4.0a0')
+            record_depends = _get_record_depends(fn, record, instructions)
+            if 'libffi >=3.2.1,<4.0a0' in record_depends:
+                libffi_idx = record_depends.index('libffi >=3.2.1,<4.0a0')
             else:
-                libffi_idx = record['depends'].index('libffi')
-            record['depends'][libffi_idx] = 'libffi >=3.2.1,<3.3a0'
-            instructions["packages"][fn]["depends"] = record["depends"]
+                libffi_idx = record_depends.index('libffi')
+            record_depends[libffi_idx] = 'libffi >=3.2.1,<3.3a0'
+            instructions["packages"][fn]["depends"] = record_depends
 
     instructions['remove'].sort()
     instructions['revoke'].sort()
