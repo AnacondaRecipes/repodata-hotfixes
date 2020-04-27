@@ -419,15 +419,6 @@ def _add_tbb4py_to_mkl_build(fn, record, index, instructions):
     depends.append('tbb4py')
     instructions['packages'][fn]['depends'] = depends
 
-
-def _fix_cudatoolkit_constrains(fn, record, instructions, subdir):
-    # cudatoolkit packages should have run constrains on the CUDA version
-    if record['name'] == 'cudatoolkit' and 'constrains' not in record:
-        major, minor = record['version'].split('.')[:2]
-        req = f"__cuda >={major}.{minor}"
-        instructions["packages"][fn]["constrains"] = [req]
-
-
 def _fix_cudnn_depends(fn, record, instructions, subdir):
     if fn in instructions['packages']:
         depends = instructions['packages'][fn]['depends']
@@ -614,9 +605,6 @@ def _patch_repodata(repodata, subdir):
             depends = [CUDATK_SUBS[d] if d in CUDATK_SUBS else d for d in record_depends]
             if depends != record_depends:
                 instructions["packages"][fn]["depends"] = depends
-
-        if record['name'] == 'cudatoolkit':
-            _fix_cudatoolkit_constrains(record, index, instructions, subdir)
 
         if record['name'] == 'numpy':
             _fix_numpy_base_constrains(record, index, instructions, subdir)
