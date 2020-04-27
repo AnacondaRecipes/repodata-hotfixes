@@ -892,6 +892,13 @@ def _patch_repodata(repodata, subdir):
             record_depends[libffi_idx] = 'libffi >=3.2.1,<3.3a0'
             instructions["packages"][fn]["depends"] = record_depends
 
+        # add run constrains on __cuda virtual package to cudatoolkit package
+        # see https://github.com/conda/conda/issues/9115
+        if record['name'] == 'cudatoolkit' and 'constrains' not in record:
+            major, minor = record['version'].split('.')[:2]
+            req = f"__cuda >={major}.{minor}"
+            instructions["packages"][fn]["constrains"] = [req]
+
     instructions['remove'].sort()
     instructions['revoke'].sort()
     return instructions
