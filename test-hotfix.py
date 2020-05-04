@@ -55,7 +55,6 @@ if __name__ == "__main__":
             clone_subdir(channel_base_url, subdir)
     subprocess.check_call(['python', args.channel + '.py'])
     for subdir in args.subdirs:
-        print(subdir, "\n---------------")
         raw_repodata_file = os.path.join(args.channel, subdir, 'repodata_from_packages.json')
         ref_repodata_file = os.path.join(args.channel, subdir, 'reference_repodata.json')
         with open(raw_repodata_file) as f:
@@ -67,4 +66,4 @@ if __name__ == "__main__":
         patched_repodata_file = os.path.join(args.channel, subdir, 'repodata-patched.json')
         with open(patched_repodata_file, 'w') as f:
             json.dump(patched_repodata, f, indent=2, sort_keys=True, separators=(',', ': '))
-        subprocess.call(['colordiff', ref_repodata_file, patched_repodata_file])
+        subprocess.call(['colordiff', '-w', ref_repodata_file, patched_repodata_file])
