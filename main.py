@@ -489,6 +489,10 @@ def _patch_repodata(repodata, subdir):
         }
 
     for fn, record in index.items():
+        name = record['name']
+        version = record['version']
+        build_number = record['build_number']
+
         if (any(fnmatch.fnmatch(fn, rev) for rev in REVOKED.get(subdir, [])) or
                  any(fnmatch.fnmatch(fn, rev) for rev in REVOKED.get("any", []))):
             instructions['revoke'].append(fn)
@@ -504,14 +508,14 @@ def _patch_repodata(repodata, subdir):
         #
         # 2018/09/10: we're not sure why this one was necessary.  Commenting until we understand the need for it.
         #
-        # if record["name"] == "twisted" and any(dep.startswith("pyobjc-") for dep in record.get("constrains", ())):
+        # if name == "twisted" and any(dep.startswith("pyobjc-") for dep in record.get("constrains", ())):
         #         instructions["packages"][fn]['constrains'] = [dep for dep in record["constrains"]
         #                                                       if not dep.startswith("pyobjc-")]
 
         if "features" in record:
             _fix_nomkl_features(fn, record, instructions)
 
-        if record["name"] in ("mkl_random", "mkl_fft"):
+        if name in ("mkl_random", "mkl_fft"):
             _fix_missing_blas_metapkg_in_mkl_addons(fn, record, instructions)
 
         # this was a not-very-successful approach at fixing features
@@ -531,41 +535,39 @@ def _patch_repodata(repodata, subdir):
 
         # reset dependencies for nomkl to the blas metapkg and remove any
         #      track_features (these are attached to the metapkg instead)
-        if record['name'] == 'nomkl' and not subdir.startswith("win-"):
+        if name == 'nomkl' and not subdir.startswith("win-"):
             instructions["packages"][fn]['depends'] = ["blas * openblas"]
             if 'track_features' in record:
                 instructions["packages"][fn]["track_features"] = None
 
-        if record['name'] == 'conda-env':
+        if name == 'conda-env':
             if not any(d.startswith('python') for d in record['depends']):
                 instructions["packages"][fn]["namespace"] = "python"
 
         # https://github.com/ContinuumIO/anaconda-issues/issues/11315
-        if subdir.startswith('win') and record['name'] == 'jupyterlab' and 'pywin32' not in record['depends']:
+        if subdir.startswith('win') and name == 'jupyterlab' and 'pywin32' not in record['depends']:
             instructions["packages"][fn]["depends"] = record['depends'] + ['pywin32']
 
-        if record['name'] == 'openblas-devel' and not any(d.startswith('blas ') for d in record['depends']):
+        if name == 'openblas-devel' and not any(d.startswith('blas ') for d in record['depends']):
             record["depends"].append("blas * openblas")
             instructions["packages"][fn]["depends"] = record["depends"]
 
-        if record['name'] == 'mkl-devel' and not any(d.startswith('blas') for d in record['depends']):
+        if name == 'mkl-devel' and not any(d.startswith('blas') for d in record['depends']):
             record["depends"].append("blas * mkl")
             instructions["packages"][fn]["depends"] = record["depends"]
 
-        if (record['name'] == 'anaconda' and
-                record['version'] == 'custom' and
+        if (name == 'anaconda' and version == 'custom' and
                 not any(d.startswith('_anaconda_depends') for d in record['depends'])):
             record["depends"].append("_anaconda_depends")
             instructions["packages"][fn]["depends"] = record["depends"]
 
-        if (record['name'] == 'constructor' and
-            int(record["version"][0]) < 3):
+        if (name == 'constructor' and int(version[0]) < 3):
             if "conda" in record["depends"]:
                 record["depends"].remove("conda")
                 record["depends"].append("conda <4.6.0a0")
             instructions["packages"][fn]["depends"] = record["depends"]
 
-        if record['name'] == 'pyqt' and record['version'] == '5.9.2':
+        if name == 'pyqt' and version == '5.9.2':
             # pyqt needs an upper limit of sip, build 2 has this already
             if 'sip >=4.19.4' in record['depends']:
                 sip_index = record['depends'].index('sip >=4.19.4')
@@ -579,51 +581,51 @@ def _patch_repodata(repodata, subdir):
             record['depends'][sip_index]= 'sip >=4.19.13,<=4.19.14'
             instructions["packages"][fn]["depends"] = record["depends"]
 
-        if record['name'] == 'torchvision' and record['version'] == '0.3.0':
+        if name == 'torchvision' and version == '0.3.0':
             if 'pytorch >=1.1.0' in record['depends']:
                 # torchvision pytorch depends needs to be fixed to 1.1
                 pytorch_dep = record['depends'].index('pytorch >=1.1.0')
                 record['depends'][pytorch_dep]= 'pytorch 1.1.*'
                 instructions["packages"][fn]["depends"] = record["depends"]
 
-        if record['name'] == 'torchvision' and record['version'] == '0.4.0':
+        if name == 'torchvision' and version == '0.4.0':
             if 'cuda' in record['build']:
                 record['depends'].append('_pytorch_select 0.2')
             else:
                 record['depends'].append('_pytorch_select 0.1')
             instructions["packages"][fn]["depends"] = record["depends"]
 
-        if record['name'] in ['tensorflow', 'tensorflow-gpu', 'tensorflow-eigen', 'tensorflow-mkl']:
-            if record['version'] not in ['1.8.0', '1.9.0', '1.10.0']:
+        if name in ['tensorflow', 'tensorflow-gpu', 'tensorflow-eigen', 'tensorflow-mkl']:
+            if version not in ['1.8.0', '1.9.0', '1.10.0']:
                 continue
             # use _tflow_select as the mutex/selector not _tflow_180_select, etc
             depends = [TFLOW_SUBS[d] if d in TFLOW_SUBS else d for d in record['depends']]
             instructions["packages"][fn]["depends"] = depends
 
         # cudatoolkit should be pinning to major.minor not just major
-        if record['name'] == 'cupy' or record['name'] == 'nccl':
+        if name == 'cupy' or name == 'nccl':
             record_depends = _get_record_depends(fn, record, instructions)
             depends = [CUDATK_SUBS[d] if d in CUDATK_SUBS else d for d in record_depends]
             if depends != record_depends:
                 instructions["packages"][fn]["depends"] = depends
 
-        if record['name'] == 'numpy':
+        if name == 'numpy':
             _fix_numpy_base_constrains(record, index, instructions, subdir)
 
-        if record['name'] == 'numpy-base' and any(_.startswith('mkl >=2018') for _ in record.get('depends', [])):
+        if name == 'numpy-base' and any(_.startswith('mkl >=2018') for _ in record.get('depends', [])):
             _add_tbb4py_to_mkl_build(fn, record, index, instructions)
 
-        if record['name'] == 'sparkmagic':
+        if name == 'sparkmagic':
             # sparkmagic <=0.12.7 has issues with ipykernel >4.10
             # see: https://github.com/AnacondaRecipes/sparkmagic-feedstock/pull/3
-            if record['version'] not in ['0.12.1', '0.12.5', '0.12.6', '0.12.7']:
+            if version not in ['0.12.1', '0.12.5', '0.12.6', '0.12.7']:
                 continue
             if 'ipykernel >=4.2.2' in record['depends']:
                 ipy_index = record['depends'].index('ipykernel >=4.2.2')
                 record['depends'][ipy_index] = 'ipykernel >=4.2.2,<4.10.0'
                 instructions["packages"][fn]["depends"] = record["depends"]
 
-        if record['name'] == 'notebook':
+        if name == 'notebook':
             # notebook <5.7.6 will not work with tornado 6, see:
             # https://github.com/jupyter/notebook/issues/4439
             if 'tornado >=4' in record['depends']:
@@ -635,7 +637,7 @@ def _patch_repodata(repodata, subdir):
         # and should pin parso to 0.5.2.
         # https://github.com/conda-forge/spyder-feedstock/pull/73
         # https://github.com/conda-forge/spyder-feedstock/pull/74
-        if record['name'] == 'spyder' and record['version'] in ['4.0.0', '4.0.1']:
+        if name == 'spyder' and version in ['4.0.0', '4.0.1']:
             add_parso_dep = True
             for idx, dep in enumerate(record['depends']):
                 if dep.startswith('parso'):
@@ -652,40 +654,40 @@ def _patch_repodata(repodata, subdir):
 
         # tensorboard 2.0.0 build 0 should have a requirement on setuptools >=41.0.0
         # see: https://github.com/AnacondaRecipes/tensorflow_recipes/issues/20
-        if record['name'] == 'tensorboard' and record['version'] == '2.0.0':
-            if record['build_number'] == 0:
+        if name == 'tensorboard' and version == '2.0.0':
+            if build_number == 0:
                 record['depends'].append('setuptools >=41.0.0')
                 instructions["packages"][fn]["depends"] = record["depends"]
 
         # IPython >=7,<7.10 should have an upper bound on prompt_toolkit
-        if record['name'] == 'ipython' and record['version'].startswith('7.'):
+        if name == 'ipython' and version.startswith('7.'):
             if 'prompt_toolkit >=2.0.0' in record['depends']:
                 ptk_index = record['depends'].index('prompt_toolkit >=2.0.0')
                 record['depends'][ptk_index]= 'prompt_toolkit >=2.0.0,<3'
                 instructions["packages"][fn]["depends"] = record["depends"]
 
         # jupyter_console 5.2.0 has bounded dependency on prompt_toolkit
-        if record['name'] == 'jupyter_console' and record['version'] == "5.2.0":
+        if name == 'jupyter_console' and version == "5.2.0":
             if 'prompt_toolkit' in record['depends']:
                 idx = record['depends'].index('prompt_toolkit')
                 record['depends'][idx] = 'prompt_toolkit >=1.0.0,<2'
                 instructions["packages"][fn]["depends"] = record["depends"]
 
         # jupyter_client 6.0.0 should have lower bound of 3.5 on python
-        if record['name'] == 'jupyter_client' and record['version'] == "6.0.0":
+        if name == 'jupyter_client' and version == "6.0.0":
             idx = record['depends'].index('python')
             record['depends'][idx] = 'python >=3.5'
             instructions["packages"][fn]["depends"] = record["depends"]
 
         # numba 0.46.0 and 0.47.0 are missing a dependency on setuptools
         # https://github.com/numba/numba/issues/5134
-        if record["name"] == "numba" and record["version"] in ["0.46.0", "0.47.0"]:
+        if name == "numba" and version in ["0.46.0", "0.47.0"]:
             record["depends"].append("setuptools")
             instructions["packages"][fn]["depends"] = record["depends"]
 
         # setuptools should not appear in both depends and constrains
         # https://github.com/conda/conda/issues/9337
-        if record["name"] == "conda":
+        if name == "conda":
             if 'setuptools >=31.0.1' in record.get("constrains", []):
                 new = [req for req in record["constrains"] if not req.startswith("setuptools")]
                 instructions["packages"][fn]["constrains"] = new
@@ -723,7 +725,7 @@ def _patch_repodata(repodata, subdir):
         # intel-openmp 2020.0 seems to be incompatible with older versions of mkl
         # issues have only been reported on macOS and Windows but
         # add the constrains on all platforms to be safe
-        if record['name'] == 'intel-openmp' and record['version'] == '2020.0':
+        if name == 'intel-openmp' and version == '2020.0':
             instructions["packages"][fn]['constrains'] = ["mkl >=2020.0"]
 
         # openssl uses funnny version numbers, 1.1.1, 1.1.1a, 1.1.1b, etc
@@ -741,7 +743,7 @@ def _patch_repodata(repodata, subdir):
             instructions["packages"][fn]["depends"] = record["depends"]
 
         # add in blas mkl metapkg for mutex behavior on packages that have just mkl deps
-        if (record['name'] in BLAS_USING_PKGS and not
+        if (name in BLAS_USING_PKGS and not
                    any(dep.split()[0] == "blas" for dep in record['depends'])):
             if any(dep.split()[0] == 'mkl' for dep in record['depends']):
                 record["depends"].append("blas * mkl")
@@ -750,12 +752,12 @@ def _patch_repodata(repodata, subdir):
             instructions["packages"][fn]["depends"] = record["depends"]
 
         # Add mutex package for libgcc-ng
-        if record['name'] == 'libgcc-ng':
+        if name == 'libgcc-ng':
             record['depends'].append('_libgcc_mutex * main')
             instructions["packages"][fn]["depends"] = record["depends"]
 
         # loosen binutils_impl dependency on gcc_impl_ packages
-        if record['name'].startswith('gcc_impl_'):
+        if name.startswith('gcc_impl_'):
             for i, dep in enumerate(record['depends']):
                 if dep.startswith('binutils_impl_'):
                     dep_parts = dep.split()
@@ -765,7 +767,7 @@ def _patch_repodata(repodata, subdir):
                         instructions["packages"][fn]["depends"] = record["depends"]
 
         # some of these got hard-coded to overly restrictive values
-        if record['name'] in ('scikit-learn', 'pytorch'):
+        if name in ('scikit-learn', 'pytorch'):
             new_deps = []
             for dep in record['depends']:
                 if dep.startswith('mkl 2018'):
@@ -783,7 +785,7 @@ def _patch_repodata(repodata, subdir):
             _fix_cudnn_depends(fn, record, instructions, subdir)
 
         if any(dep.startswith('glib >=') for dep in record['depends']):
-            if record['name'] == 'anaconda':
+            if name == 'anaconda':
                 continue
             def fix_glib_dep(dep):
                 if dep.startswith('glib >='):
@@ -812,18 +814,18 @@ def _patch_repodata(repodata, subdir):
             _fix_osx_libgfortan_bounds(fn, record, instructions)
             # fix clang_osx-64 and clangcxx_osx-64 packages to include dependencies, see:
             # https://github.com/AnacondaRecipes/aggregate/pull/164
-            if record['name'] == 'clang_osx-64' and record['version'] == '4.0.1':
-                if int(record['build_number']) < 17:
+            if name == 'clang_osx-64' and version == '4.0.1':
+                if int(build_number) < 17:
                     clang_401_deps = ['cctools', 'clang 4.0.1.*', 'compiler-rt 4.0.1.*', 'ld64']
                     instructions["packages"][fn]["depends"] = clang_401_deps
-            if record['name'] == 'clangxx_osx-64' and record['version'] == '4.0.1':
-                if int(record['build_number']) < 17:
+            if name == 'clangxx_osx-64' and version == '4.0.1':
+                if int(build_number) < 17:
                     clangxx_401_deps = ['clang_osx-64 >=4.0.1,<4.0.2.0a0', 'clangxx', 'libcxx']
                     instructions["packages"][fn]["depends"] = clangxx_401_deps
 
         _fix_libnetcdf_upper_bound(fn, record, instructions)
 
-        if record['name'] == 'anaconda' and record['version'] in ["5.3.0", "5.3.1"]:
+        if name == 'anaconda' and version in ["5.3.0", "5.3.1"]:
             mkl_version = [i for i in record['depends'] if "mkl" == i.split()[0] and "2019" in i.split()[1]]
             if len(mkl_version) == 1:
                 record['depends'].remove(mkl_version[0])
@@ -832,9 +834,8 @@ def _patch_repodata(repodata, subdir):
                 raise Exception("Found multiple mkl entries, expected only 1.")
             instructions["packages"][fn]["depends"] = record["depends"]
 
-        if record['name'] == 'libarchive':
-            version = record['version']
-            if version == '3.3.2' or (version == '3.3.3' and record['build_number'] == 0):
+        if name == 'libarchive':
+            if version == '3.3.2' or (version == '3.3.3' and build_number == 0):
                 if fn in instructions["packages"]:
                     record['depends'] = instructions["packages"][fn]["depends"]
                 # libarchive 3.3.2 and 3.3.3 build 0 are missing zstd support.
@@ -843,7 +844,7 @@ def _patch_repodata(repodata, subdir):
                 record['depends'].append('_low_priority')
                 instructions["packages"][fn]["depends"] = record["depends"]
 
-        if record['name'] == "conda-build" and record['version'].startswith('3.18'):
+        if name == "conda-build" and version.startswith('3.18'):
             new_deps = []
             for dep in record['depends']:
                 parts = dep.split()
@@ -857,8 +858,8 @@ def _patch_repodata(repodata, subdir):
                 new_deps.append('python-libarchive-c')
             instructions["packages"][fn]['depends'] = new_deps
 
-        if record['name'] == 'keras':
-            version_parts = record['version'].split('.')
+        if name == 'keras':
+            version_parts = version.split('.')
             if int(version_parts[0]) <= 2 and int(version_parts[1]) < 3:
                 new_deps = []
                 for dep in record['depends']:
@@ -869,7 +870,7 @@ def _patch_repodata(repodata, subdir):
                         new_deps.append(dep)
                 instructions["packages"][fn]['depends'] = new_deps
 
-        if record['name'] == 'basemap':
+        if name == 'basemap':
             # basemap is incompatible with proj/proj4 >=6
             # https://github.com/ContinuumIO/anaconda-issues/issues/11590
             instructions["packages"][fn]['constrains'] = ["proj4 <6", "proj <6"]
@@ -877,8 +878,8 @@ def _patch_repodata(repodata, subdir):
         # python-language-server should contrains ujson <=1.35
         # see https://github.com/conda-forge/cf-mark-broken/pull/20
         # https://github.com/conda-forge/python-language-server-feedstock/pull/48
-        if record['name'] == 'python-language-server':
-            if 'ujson' in record['depends'] and record['version'] in ['0.31.2', '0.31.7']:
+        if name == 'python-language-server':
+            if 'ujson' in record['depends'] and version in ['0.31.2', '0.31.7']:
                 ujson_idx = record['depends'].index('ujson')
                 record['depends'][ujson_idx] = 'ujson <=1.35'
                 instructions["packages"][fn]["depends"] = record["depends"]
@@ -895,15 +896,17 @@ def _patch_repodata(repodata, subdir):
 
         # add run constrains on __cuda virtual package to cudatoolkit package
         # see https://github.com/conda/conda/issues/9115
-        if record['name'] == 'cudatoolkit' and 'constrains' not in record:
-            major, minor = record['version'].split('.')[:2]
+        if name == 'cudatoolkit' and 'constrains' not in record:
+            major, minor = version.split('.')[:2]
             req = f"__cuda >={major}.{minor}"
             instructions["packages"][fn]["constrains"] = [req]
 
+
+
         # pylint 2.5.0 build 0 had incorrect astroid pinning and were missing a
         # dependency on toml >=0.7.1
-        if record['name'] == 'pylint' and record['version'] == "2.5.0":
-            if record['build_number'] == 0:
+        if name == 'pylint' and version == "2.5.0":
+            if build_number == 0:
                 record_depends = _get_record_depends(fn, record, instructions)
                 if 'astroid >=2.3.0,<2.4' in record_depends:
                     idx = record_depends.index('astroid >=2.3.0,<2.4')
