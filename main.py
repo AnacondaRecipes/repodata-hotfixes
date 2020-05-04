@@ -966,6 +966,16 @@ def do_hotfixes(base_dir):
     patch_instructions = {}
     for subdir in SUBDIRS:
         instructions = _patch_repodata(repodatas[subdir], subdir)
+        # TODO remove this
+        conda_instructions = {}
+        for pkg, info in instructions["packages"].items():
+            if "features" in info and info["features"] == None:
+                conda_info = info.copy()
+                conda_info['features'] = "nomkl"
+                conda_pkg = pkg.replace('.tar.bz2', '.conda')
+                conda_instructions[conda_pkg] = conda_info
+                #import pdb; pdb.set_trace()
+        instructions["packages.conda"] = conda_instructions
         patch_instructions_path = join(base_dir, subdir, "patch_instructions.json")
         with open(patch_instructions_path, 'w') as fh:
             json.dump(instructions, fh, indent=2, sort_keys=True, separators=(',', ': '))
