@@ -951,7 +951,7 @@ def do_hotfixes(base_dir):
             with open(repodata_path) as fh:
                 repodatas[subdir] = json.load(fh)
         else:
-            repodata_url = "/".join((CHANNEL_ALIAS, CHANNEL_NAME, subdir, "repodata.json"))
+            repodata_url = "/".join((CHANNEL_ALIAS, CHANNEL_NAME, subdir, "repodata_from_packages.json"))
             response = requests.get(repodata_url)
             response.raise_for_status()
             repodatas[subdir] = response.json()
