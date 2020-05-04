@@ -623,76 +623,6 @@ def patch_record(fn, record, subdir, instructions, index):
     if name == 'numpy-base' and any(_.startswith('mkl >=2018') for _ in record.get('depends', [])):
         _add_tbb4py_to_mkl_build(fn, record, index, instructions)
 
-    if name == 'sparkmagic':
-        # sparkmagic <=0.12.7 has issues with ipykernel >4.10
-        # see: https://github.com/AnacondaRecipes/sparkmagic-feedstock/pull/3
-        if version not in ['0.12.1', '0.12.5', '0.12.6', '0.12.7']:
-            return
-        if 'ipykernel >=4.2.2' in depends:
-            ipy_index = depends.index('ipykernel >=4.2.2')
-            depends[ipy_index] = 'ipykernel >=4.2.2,<4.10.0'
-            instructions["packages"][fn]["depends"] = depends
-
-    if name == 'notebook':
-        # notebook <5.7.6 will not work with tornado 6, see:
-        # https://github.com/jupyter/notebook/issues/4439
-        if 'tornado >=4' in depends:
-            t4_index = depends.index('tornado >=4')
-            depends[t4_index]= 'tornado >=4,<6'
-            instructions["packages"][fn]["depends"] = depends
-
-    # spyder 4.0.0 and 4.0.1 should include a lower bound on psutil of 5.2
-    # and should pin parso to 0.5.2.
-    # https://github.com/conda-forge/spyder-feedstock/pull/73
-    # https://github.com/conda-forge/spyder-feedstock/pull/74
-    if name == 'spyder' and version in ['4.0.0', '4.0.1']:
-        add_parso_dep = True
-        for idx, dep in enumerate(depends):
-            if dep.startswith('parso'):
-                add_parso_dep = False
-            if dep.startswith('psutil'):
-                depends[idx] = "psutil >=5.2"
-            # spyder-kernels needs to be pinned to <=1.9.0, see:
-            # https://github.com/conda-forge/spyder-feedstock/pull/76
-            if dep.startswith('spyder-kernels'):
-                depends[idx] = 'spyder-kernels >=1.8.1,<1.9.0'
-        if add_parso_dep:
-            depends.append("parso 0.5.2.*")
-        instructions["packages"][fn]["depends"] = depends
-
-    # tensorboard 2.0.0 build 0 should have a requirement on setuptools >=41.0.0
-    # see: https://github.com/AnacondaRecipes/tensorflow_recipes/issues/20
-    if name == 'tensorboard' and version == '2.0.0':
-        if build_number == 0:
-            depends.append('setuptools >=41.0.0')
-            instructions["packages"][fn]["depends"] = depends
-
-    # IPython >=7,<7.10 should have an upper bound on prompt_toolkit
-    if name == 'ipython' and version.startswith('7.'):
-        if 'prompt_toolkit >=2.0.0' in depends:
-            ptk_index = depends.index('prompt_toolkit >=2.0.0')
-            depends[ptk_index]= 'prompt_toolkit >=2.0.0,<3'
-            instructions["packages"][fn]["depends"] = depends
-
-    # jupyter_console 5.2.0 has bounded dependency on prompt_toolkit
-    if name == 'jupyter_console' and version == "5.2.0":
-        if 'prompt_toolkit' in depends:
-            idx = depends.index('prompt_toolkit')
-            depends[idx] = 'prompt_toolkit >=1.0.0,<2'
-            instructions["packages"][fn]["depends"] = depends
-
-    # jupyter_client 6.0.0 should have lower bound of 3.5 on python
-    if name == 'jupyter_client' and version == "6.0.0":
-        idx = depends.index('python')
-        depends[idx] = 'python >=3.5'
-        instructions["packages"][fn]["depends"] = depends
-
-    # numba 0.46.0 and 0.47.0 are missing a dependency on setuptools
-    # https://github.com/numba/numba/issues/5134
-    if name == "numba" and version in ["0.46.0", "0.47.0"]:
-        depends.append("setuptools")
-        instructions["packages"][fn]["depends"] = depends
-
     # setuptools should not appear in both depends and constrains
     # https://github.com/conda/conda/issues/9337
     if name == "conda":
@@ -735,43 +665,6 @@ def patch_record(fn, record, subdir, instructions, index):
     # add the constrains on all platforms to be safe
     if name == 'intel-openmp' and version == '2020.0':
         instructions["packages"][fn]['constrains'] = ["mkl >=2020.0"]
-
-    # openssl uses funnny version numbers, 1.1.1, 1.1.1a, 1.1.1b, etc
-    # openssl >=1.1.1,<1.1.2.0a0 -> >=1.1.1a,<1.1.2a
-    if any(dep == 'openssl >=1.1.1,<1.1.2.0a0' for dep in depends):
-        for idx, dep in enumerate(depends):
-            if dep == 'openssl >=1.1.1,<1.1.2.0a0':
-                depends[idx] = 'openssl >=1.1.1a,<1.1.2a'
-        instructions["packages"][fn]["depends"] = depends
-
-    # kealib 1.4.8 changed sonames, add new upper bound to existing packages
-    if any(dep == 'kealib >=1.4.7,<1.5.0a0' for dep in depends):
-        kealib_idx = depends.index('kealib >=1.4.7,<1.5.0a0')
-        depends[kealib_idx] = "kealib >=1.4.7,<1.4.8.0a0"
-        instructions["packages"][fn]["depends"] = depends
-
-    # add in blas mkl metapkg for mutex behavior on packages that have just mkl deps
-    if (name in BLAS_USING_PKGS and not any(dep.split()[0] == "blas" for dep in depends)):
-        if any(dep.split()[0] == 'mkl' for dep in depends):
-            depends.append("blas * mkl")
-        elif any(dep.split()[0] in ('openblas', "libopenblas") for dep in depends):
-            depends.append("blas * openblas")
-        instructions["packages"][fn]["depends"] = depends
-
-    # Add mutex package for libgcc-ng
-    if name == 'libgcc-ng':
-        depends.append('_libgcc_mutex * main')
-        instructions["packages"][fn]["depends"] = depends
-
-    # loosen binutils_impl dependency on gcc_impl_ packages
-    if name.startswith('gcc_impl_'):
-        for i, dep in enumerate(depends):
-            if dep.startswith('binutils_impl_'):
-                dep_parts = dep.split()
-                if len(dep_parts) == 3:
-                    correct_dep = "{} >={},<3".format(*dep_parts[:2])
-                    depends[i] = correct_dep
-                    instructions["packages"][fn]["depends"] = depends
 
     # some of these got hard-coded to overly restrictive values
     if name in ('scikit-learn', 'pytorch'):
@@ -832,24 +725,7 @@ def patch_record(fn, record, subdir, instructions, index):
 
     _fix_libnetcdf_upper_bound(fn, record, instructions)
 
-    if name == 'anaconda' and version in ["5.3.0", "5.3.1"]:
-        mkl_version = [i for i in depends if "mkl" == i.split()[0] and "2019" in i.split()[1]]
-        if len(mkl_version) == 1:
-            depends.remove(mkl_version[0])
-            depends.append('mkl 2018.0.3 1')
-        elif len(mkl_version) > 1:
-            raise Exception("Found multiple mkl entries, expected only 1.")
-        instructions["packages"][fn]["depends"] = depends
 
-    if name == 'libarchive':
-        if version == '3.3.2' or (version == '3.3.3' and build_number == 0):
-            if fn in instructions["packages"]:
-                depends = instructions["packages"][fn]["depends"]
-            # libarchive 3.3.2 and 3.3.3 build 0 are missing zstd support.
-            # De-prioritize these packages with a track_feature (via _low_priority)
-            # so they are not installed unless explicitly requested
-            depends.append('_low_priority')
-            instructions["packages"][fn]["depends"] = depends
 
     if name == "conda-build" and version.startswith('3.18'):
         new_deps = []
@@ -882,25 +758,6 @@ def patch_record(fn, record, subdir, instructions, index):
         # https://github.com/ContinuumIO/anaconda-issues/issues/11590
         instructions["packages"][fn]['constrains'] = ["proj4 <6", "proj <6"]
 
-    # python-language-server should contrains ujson <=1.35
-    # see https://github.com/conda-forge/cf-mark-broken/pull/20
-    # https://github.com/conda-forge/python-language-server-feedstock/pull/48
-    if name == 'python-language-server':
-        if 'ujson' in depends and version in ['0.31.2', '0.31.7']:
-            ujson_idx = depends.index('ujson')
-            depends[ujson_idx] = 'ujson <=1.35'
-            instructions["packages"][fn]["depends"] = depends
-
-    # libffi broke ABI compatibility in 3.3
-    if 'libffi >=3.2.1,<4.0a0' in depends or 'libffi' in depends:
-        record_depends = _get_record_depends(fn, record, instructions)
-        if 'libffi >=3.2.1,<4.0a0' in record_depends:
-            libffi_idx = record_depends.index('libffi >=3.2.1,<4.0a0')
-        else:
-            libffi_idx = record_depends.index('libffi')
-        record_depends[libffi_idx] = 'libffi >=3.2.1,<3.3a0'
-        instructions["packages"][fn]["depends"] = record_depends
-
     # add run constrains on __cuda virtual package to cudatoolkit package
     # see https://github.com/conda/conda/issues/9115
     if name == 'cudatoolkit' and 'constrains' not in record:
@@ -909,18 +766,149 @@ def patch_record(fn, record, subdir, instructions, index):
         instructions["packages"][fn]["constrains"] = [req]
 
 
+    record_depends = _get_record_depends(fn, record, instructions)
+    original = record_depends.copy()
+    patch_depends(name, version, build_number, record_depends)
+    if record_depends != original:
+        instructions["packages"][fn]["depends"] = record_depends
+
+
+def patch_depends(name, version, build_number, depends):
+    """ Patch depends information in-place. """
+
+    if name == 'sparkmagic':
+        # sparkmagic <=0.12.7 has issues with ipykernel >4.10
+        # see: https://github.com/AnacondaRecipes/sparkmagic-feedstock/pull/3
+        if version not in ['0.12.1', '0.12.5', '0.12.6', '0.12.7']:
+            return
+        if 'ipykernel >=4.2.2' in depends:
+            ipy_index = depends.index('ipykernel >=4.2.2')
+            depends[ipy_index] = 'ipykernel >=4.2.2,<4.10.0'
+
+    if name == 'notebook':
+        # notebook <5.7.6 will not work with tornado 6, see:
+        # https://github.com/jupyter/notebook/issues/4439
+        if 'tornado >=4' in depends:
+            t4_index = depends.index('tornado >=4')
+            depends[t4_index]= 'tornado >=4,<6'
+
+    # spyder 4.0.0 and 4.0.1 should include a lower bound on psutil of 5.2
+    # and should pin parso to 0.5.2.
+    # https://github.com/conda-forge/spyder-feedstock/pull/73
+    # https://github.com/conda-forge/spyder-feedstock/pull/74
+    if name == 'spyder' and version in ['4.0.0', '4.0.1']:
+        add_parso_dep = True
+        for idx, dep in enumerate(depends):
+            if dep.startswith('parso'):
+                add_parso_dep = False
+            if dep.startswith('psutil'):
+                depends[idx] = "psutil >=5.2"
+            # spyder-kernels needs to be pinned to <=1.9.0, see:
+            # https://github.com/conda-forge/spyder-feedstock/pull/76
+            if dep.startswith('spyder-kernels'):
+                depends[idx] = 'spyder-kernels >=1.8.1,<1.9.0'
+        if add_parso_dep:
+            depends.append("parso 0.5.2.*")
+
+    # IPython >=7,<7.10 should have an upper bound on prompt_toolkit
+    if name == 'ipython' and version.startswith('7.'):
+        if 'prompt_toolkit >=2.0.0' in depends:
+            ptk_index = depends.index('prompt_toolkit >=2.0.0')
+            depends[ptk_index]= 'prompt_toolkit >=2.0.0,<3'
+
+    # jupyter_console 5.2.0 has bounded dependency on prompt_toolkit
+    if name == 'jupyter_console' and version == "5.2.0":
+        if 'prompt_toolkit' in depends:
+            idx = depends.index('prompt_toolkit')
+            depends[idx] = 'prompt_toolkit >=1.0.0,<2'
+
+    # jupyter_client 6.0.0 should have lower bound of 3.5 on python
+    if name == 'jupyter_client' and version == "6.0.0":
+        idx = depends.index('python')
+        depends[idx] = 'python >=3.5'
+
+    # numba 0.46.0 and 0.47.0 are missing a dependency on setuptools
+    # https://github.com/numba/numba/issues/5134
+    if name == "numba" and version in ["0.46.0", "0.47.0"]:
+        depends.append("setuptools")
+
+    # tensorboard 2.0.0 build 0 should have a requirement on setuptools >=41.0.0
+    # see: https://github.com/AnacondaRecipes/tensorflow_recipes/issues/20
+    if name == 'tensorboard' and version == '2.0.0':
+        if build_number == 0:
+            depends.append('setuptools >=41.0.0')
+
+    # openssl uses funnny version numbers, 1.1.1, 1.1.1a, 1.1.1b, etc
+    # openssl >=1.1.1,<1.1.2.0a0 -> >=1.1.1a,<1.1.2a
+    if any(dep == 'openssl >=1.1.1,<1.1.2.0a0' for dep in depends):
+        for idx, dep in enumerate(depends):
+            if dep == 'openssl >=1.1.1,<1.1.2.0a0':
+                depends[idx] = 'openssl >=1.1.1a,<1.1.2a'
+
+    # loosen binutils_impl dependency on gcc_impl_ packages
+    if name.startswith('gcc_impl_'):
+        for i, dep in enumerate(depends):
+            if dep.startswith('binutils_impl_'):
+                dep_parts = dep.split()
+                if len(dep_parts) == 3:
+                    correct_dep = "{} >={},<3".format(*dep_parts[:2])
+                    depends[i] = correct_dep
+
+    # kealib 1.4.8 changed sonames, add new upper bound to existing packages
+    if any(dep == 'kealib >=1.4.7,<1.5.0a0' for dep in depends):
+        kealib_idx = depends.index('kealib >=1.4.7,<1.5.0a0')
+        depends[kealib_idx] = "kealib >=1.4.7,<1.4.8.0a0"
+
+    # add in blas mkl metapkg for mutex behavior on packages that have just mkl deps
+    if (name in BLAS_USING_PKGS and not any(dep.split()[0] == "blas" for dep in depends)):
+        if any(dep.split()[0] == 'mkl' for dep in depends):
+            depends.append("blas * mkl")
+        elif any(dep.split()[0] in ('openblas', "libopenblas") for dep in depends):
+            depends.append("blas * openblas")
+
+    # Add mutex package for libgcc-ng
+    if name == 'libgcc-ng':
+        depends.append('_libgcc_mutex * main')
+
+    if name == 'anaconda' and version in ["5.3.0", "5.3.1"]:
+        mkl_version = [i for i in depends if "mkl" == i.split()[0] and "2019" in i.split()[1]]
+        if len(mkl_version) == 1:
+            depends.remove(mkl_version[0])
+            depends.append('mkl 2018.0.3 1')
+        elif len(mkl_version) > 1:
+            raise Exception("Found multiple mkl entries, expected only 1.")
+
+    if name == 'libarchive':
+        if version == '3.3.2' or (version == '3.3.3' and build_number == 0):
+            # libarchive 3.3.2 and 3.3.3 build 0 are missing zstd support.
+            # De-prioritize these packages with a track_feature (via _low_priority)
+            # so they are not installed unless explicitly requested
+            depends.append('_low_priority')
+
+    # python-language-server should contrains ujson <=1.35
+    # see https://github.com/conda-forge/cf-mark-broken/pull/20
+    # https://github.com/conda-forge/python-language-server-feedstock/pull/48
+    if name == 'python-language-server':
+        if 'ujson' in depends and version in ['0.31.2', '0.31.7']:
+            ujson_idx = depends.index('ujson')
+            depends[ujson_idx] = 'ujson <=1.35'
+
+    # libffi broke ABI compatibility in 3.3
+    if 'libffi >=3.2.1,<4.0a0' in depends or 'libffi' in depends:
+        if 'libffi >=3.2.1,<4.0a0' in depends:
+            libffi_idx = depends.index('libffi >=3.2.1,<4.0a0')
+        else:
+            libffi_idx = depends.index('libffi')
+        depends[libffi_idx] = 'libffi >=3.2.1,<3.3a0'
 
     # pylint 2.5.0 build 0 had incorrect astroid pinning and were missing a
     # dependency on toml >=0.7.1
-    if name == 'pylint' and version == "2.5.0":
-        if build_number == 0:
-            record_depends = _get_record_depends(fn, record, instructions)
-            if 'astroid >=2.3.0,<2.4' in record_depends:
-                idx = record_depends.index('astroid >=2.3.0,<2.4')
-                record_depends[idx] = 'astroid >=2.4.0,<2.5'
-            if 'toml >=0.7.1' not in record_depends:
-                record_depends.append('toml >=0.7.1')
-            instructions["packages"][fn]["depends"] = record_depends
+    if name == 'pylint' and version == "2.5.0" and build_number == 0:
+        if 'astroid >=2.3.0,<2.4' in depends:
+            idx = depends.index('astroid >=2.3.0,<2.4')
+            depends[idx] = 'astroid >=2.4.0,<2.5'
+        if 'toml >=0.7.1' not in depends:
+            depends.append('toml >=0.7.1')
 
 
 
