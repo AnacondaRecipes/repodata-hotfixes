@@ -375,6 +375,7 @@ def _fix_libnetcdf_upper_bound(fn, record, instructions):
 def _fix_nomkl_features(fn, record, instructions):
     if "nomkl" == record["features"]:
         del record['features']
+        instructions["packages"][fn]["features"] = None
         if not any(d.startswith("blas ") for d in record["depends"]):
             instructions["packages"][fn]["depends"] = record['depends'] + ["blas * openblas"]
     elif "nomkl" in record["features"]:
