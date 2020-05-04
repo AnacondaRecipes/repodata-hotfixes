@@ -489,6 +489,13 @@ def _patch_repodata(repodata, subdir):
         }
 
     for fn, record in index.items():
+        if (any(fnmatch.fnmatch(fn, rev) for rev in REVOKED.get(subdir, [])) or
+                    any(fnmatch.fnmatch(fn, rev) for rev in REVOKED.get("any", []))):
+            instructions['revoke'].append(fn)
+        if (any(fnmatch.fnmatch(fn, rev) for rev in REMOVALS.get(subdir, [])) or
+                    any(fnmatch.fnmatch(fn, rev) for rev in REMOVALS.get("any", []))):
+            instructions['remove'].append(fn)
+        _apply_namespace_overrides(fn, record, instructions)
         patch_record(fn, record, subdir, instructions, index)
     instructions['remove'].sort()
     instructions['revoke'].sort()
@@ -501,13 +508,6 @@ def patch_record(fn, record, subdir, instructions, index):
     build_number = record['build_number']
     depends = record['depends']
 
-    if (any(fnmatch.fnmatch(fn, rev) for rev in REVOKED.get(subdir, [])) or
-                any(fnmatch.fnmatch(fn, rev) for rev in REVOKED.get("any", []))):
-        instructions['revoke'].append(fn)
-    if (any(fnmatch.fnmatch(fn, rev) for rev in REMOVALS.get(subdir, [])) or
-                any(fnmatch.fnmatch(fn, rev) for rev in REMOVALS.get("any", []))):
-        instructions['remove'].append(fn)
-    _apply_namespace_overrides(fn, record, instructions)
     if fn.startswith("numba-0.36.1") and record.get('timestamp') != 1512604800000:
         # set a specific timestamp
         instructions["packages"][fn]['timestamp'] = 1512604800000
