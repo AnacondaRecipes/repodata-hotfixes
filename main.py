@@ -899,6 +899,18 @@ def _patch_repodata(repodata, subdir):
             req = f"__cuda >={major}.{minor}"
             instructions["packages"][fn]["constrains"] = [req]
 
+        # pylint 2.5.0 build 0 had incorrect astroid pinning and were missing a
+        # dependency on toml >=0.7.1
+        if record['name'] == 'pylint' and record['version'] == "2.5.0":
+            if record['build_number'] == 0:
+                record_depends = _get_record_depends(fn, record, instructions)
+                if 'astroid >=2.3.0,<2.4' in record_depends:
+                    idx = record_depends.index('astroid >=2.3.0,<2.4')
+                    record_depends[idx] = 'astroid >=2.4.0,<2.5'
+                if 'toml >=0.7.1' not in record_depends:
+                    record_depends.append('toml >=0.7.1')
+                instructions["packages"][fn]["depends"] = record_depends
+
     instructions['remove'].sort()
     instructions['revoke'].sort()
     return instructions
