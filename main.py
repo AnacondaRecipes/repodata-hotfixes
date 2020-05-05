@@ -218,7 +218,7 @@ LINUX_RUNTIME_RE = re.compile(r"lib(\w+)-ng\s(?:>=)?([\d\.]+\d)(?:$|\.\*)")
 LINUX_RUNTIME_DEPS = ("libgcc-ng", "libstdcxx-ng", "libgfortran-ng")
 
 
-def _replace_vc_features_with_vc_pkg_deps(fn, record, instructions):
+def _replace_vc_features_with_vc_pkg_deps(name, record, depends):
     python_vc_deps = {
         '2.6': 'vc 9.*',
         '2.7': 'vc 9.*',
@@ -233,51 +233,36 @@ def _replace_vc_features_with_vc_pkg_deps(fn, record, instructions):
         10: 'vs2010_runtime',
         14: 'vs2015_runtime',
     }
-    record_name = record['name']
-    if record_name == 'python':
+    if name == 'python':
         # remove the track_features key
         if 'track_features' in record:
-            instructions["packages"][fn]['track_features'] = None
+            record['track_features'] = None
         # add a vc dependency
-        if not any(d.startswith('vc') for d in record['depends']):
-            depends = record['depends']
+        if not any(d.startswith('vc') for d in depends):
             depends.append(python_vc_deps[record['version'][:3]])
-            instructions["packages"][fn]['depends'] = depends
-    elif record_name == "vs2015_win-64":
+    elif name == "vs2015_win-64":
         # remove the track_features key
         if 'track_features' in record:
-            instructions["packages"][fn]['track_features'] = None
+            record['track_features'] = None
     elif record['name'] == "yasm":
         # remove vc from the features key
         vc_version = _extract_and_remove_vc_feature(record)
         if vc_version:
-            instructions["packages"][fn]['features'] = record.get('features') or ""
+            record['features'] = record.get('features') or ""
             # add a vs20XX_runtime dependency
             if not any(d.startswith('vs2') for d in record['depends']):
-                depends = record['depends']
                 depends.append(vs_runtime_deps[vc_version])
-                instructions["packages"][fn]['depends'] = depends
-    elif record_name == "git":
+    elif name == "git":
         # remove any vc dependency, as git does not depend on a specific one
-        depends = [dep for dep in record['depends'] if not dep.startswith('vc ')]
-        if len(depends) != (record['depends']):
-            instructions["packages"][fn]['depends'] = depends
+        depends[:] = [dep for dep in depends if not dep.startswith('vc ')]
     elif 'vc' in record.get('features', ''):
         # remove vc from the features key
         vc_version = _extract_and_remove_vc_feature(record)
         if vc_version:
-            instructions["packages"][fn]['features'] = record.get('features') or ""
+            record['features'] = record.get('features') or ""
             # add a vc dependency
-            if not any(d.startswith('vc') for d in record['depends']):
-                instructions["packages"][fn]['depends'] = record["depends"] + ['vc %d.*' % vc_version]
-    # elif record["name"] == "vc" and "vc" not in record.get("track_features", ""):
-    #     tf = record.get("track_features", "") + " vc" + record["version"]
-    #     instructions["packages"][fn]["track_features"] = tf.strip()
-    # elif record.get("track_features", "").startswith("vc"):
-    #     vc_feats = (f for f in record["track_features"].split() if f.startswith("vc"))
-    #     for feat in vc_feats:
-    #         xtractd = record["track_features"] = _extract_track_feature(record, feat)
-    #         instructions["packages"][fn]["track_features"] = xtractd
+            if not any(d.startswith('vc') for d in depends):
+                depends.append('vc %d.*' % vc_version)
 
 
 def _apply_namespace_overrides(fn, record, instructions):
@@ -385,6 +370,7 @@ def _fix_nomkl_features(record, depends):
         if not any(d.startswith("blas ") for d in depends):
             depends[:] = depends + ["blas * openblas"]
 
+
 def _fix_numpy_base_constrains(record, index, instructions, subdir):
     # numpy-base packages should have run constrains on the corresponding numpy package
     base_pkgs = [d for d in record['depends'] if d.startswith('numpy-base')]
@@ -418,6 +404,7 @@ def _add_tbb4py_to_mkl_build(fn, record, index, instructions):
         depends = record.get('depends', [])
     depends.append('tbb4py')
     instructions['packages'][fn]['depends'] = depends
+
 
 def _fix_cudnn_depends(depends, subdir):
     for dep in depends:
@@ -505,18 +492,9 @@ def patch_record(fn, record, subdir, instructions, index):
                 depends.append(MKL_VERSION_2018_EXTENDED_RC.sub('%s,<2019.0a0'%(dep.split()[1]), dep))
         instructions["packages"][fn]["depends"] = depends
 
-    # functions
-    if name == 'numpy':
-        _fix_numpy_base_constrains(record, index, instructions, subdir)
-
-    if subdir.startswith("win-"):
-        _replace_vc_features_with_vc_pkg_deps(fn, record, instructions)
-
-
     # store changes to dependencies up to this point
     # TODO this is not needed once the above is merged into patch_record_in_place
-    depends = _get_record_depends(fn, record, instructions)
-    record['depends'] = depends
+    record['depends'] = _get_record_depends(fn, record, instructions)
 
     # create a copy of the record, patch in-place and add keys that change
     # to the patch instructions
@@ -535,6 +513,8 @@ def patch_record(fn, record, subdir, instructions, index):
     _fix_libnetcdf_upper_bound(fn, record, instructions)
 
     # One-off patches that do not fit in with others
+    if name == 'numpy':
+        _fix_numpy_base_constrains(record, index, instructions, subdir)
 
     # set a specific timestamp for numba-0.36.1
     if fn.startswith("numba-0.36.1") and record.get('timestamp') != 1512604800000:
@@ -547,7 +527,6 @@ def patch_record(fn, record, subdir, instructions, index):
         instructions["packages"][fn]["build_number"] = 7
 
 
-
 def patch_record_in_place(fn, record, subdir):
     """ Patch record in place """
     name = record['name']
@@ -555,6 +534,9 @@ def patch_record_in_place(fn, record, subdir):
     build_number = record['build_number']
     depends = record['depends']
     constrains = record.get("constrains", [])
+
+    if subdir.startswith("win-"):
+        _replace_vc_features_with_vc_pkg_deps(name, record, depends)
 
     if "features" in record:
         _fix_nomkl_features(record, depends)
