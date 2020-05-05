@@ -374,20 +374,16 @@ def _fix_libnetcdf_upper_bound(fn, record, instructions):
                 deps.append(dep)
         instructions["packages"][fn]["depends"] = deps
 
-
-def _fix_nomkl_features(fn, record, instructions):
+def _fix_nomkl_features(record, depends):
     if "nomkl" == record["features"]:
-        del record['features']
-        instructions["packages"][fn]["features"] = None
-        if not any(d.startswith("blas ") for d in record["depends"]):
-            instructions["packages"][fn]["depends"] = record['depends'] + ["blas * openblas"]
+        record['features'] = None
+        if not any(d.startswith("blas ") for d in depends):
+            depends[:] = depends + ["blas * openblas"]
     elif "nomkl" in record["features"]:
         # remove nomkl feature
         record['features'].remove('nomkl')
-        if not any(d.startswith("blas ") for d in record["depends"]):
-            instructions["packages"][fn]["depends"] = record['depends'] + ["blas * openblas"]
-            instructions["packages"][fn]["features"] = record['features']
-
+        if not any(d.startswith("blas ") for d in depends):
+            depends[:] = depends + ["blas * openblas"]
 
 def _fix_numpy_base_constrains(record, index, instructions, subdir):
     # numpy-base packages should have run constrains on the corresponding numpy package
@@ -494,19 +490,7 @@ def _patch_repodata(repodata, subdir):
 
 def patch_record(fn, record, subdir, instructions, index):
     name = record['name']
-    version = record['version']
-    build_number = record['build_number']
     depends = record['depends']
-
-    # functions
-    if "features" in record:
-        _fix_nomkl_features(fn, record, instructions)
-
-    if name == 'numpy':
-        _fix_numpy_base_constrains(record, index, instructions, subdir)
-
-    if subdir.startswith("win-"):
-        _replace_vc_features_with_vc_pkg_deps(fn, record, instructions)
 
     # must come before next block or tbb4py show up in different order from mkl
     if name == 'numpy-base' and any(_.startswith('mkl >=2018') for _ in record.get('depends', [])):
@@ -520,6 +504,14 @@ def patch_record(fn, record, subdir, instructions, index):
                 depends.remove(dep)  # <- TODO changes order
                 depends.append(MKL_VERSION_2018_EXTENDED_RC.sub('%s,<2019.0a0'%(dep.split()[1]), dep))
         instructions["packages"][fn]["depends"] = depends
+
+    # functions
+    if name == 'numpy':
+        _fix_numpy_base_constrains(record, index, instructions, subdir)
+
+    if subdir.startswith("win-"):
+        _replace_vc_features_with_vc_pkg_deps(fn, record, instructions)
+
 
     # store changes to dependencies up to this point
     # TODO this is not needed once the above is merged into patch_record_in_place
@@ -563,6 +555,9 @@ def patch_record_in_place(fn, record, subdir):
     build_number = record['build_number']
     depends = record['depends']
     constrains = record.get("constrains", [])
+
+    if "features" in record:
+        _fix_nomkl_features(record, depends)
 
     # reset dependencies for nomkl to the blas metapkg and remove any
     #      track_features (these are attached to the metapkg instead)
