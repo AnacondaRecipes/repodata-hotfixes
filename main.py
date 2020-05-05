@@ -350,9 +350,10 @@ def _fix_linux_runtime_bounds(depends):
 
 
 def _fix_osx_libgfortan_bounds(fn, record, instructions):
-    if any(dep == 'libgfortran >=3.0.1' for dep in record.get('depends', [])):
+    depends = _get_record_depends(fn, record, instructions)
+    if any(dep == 'libgfortran >=3.0.1' for dep in depends):
         deps = []
-        for dep in record['depends']:
+        for dep in depends:
             if dep == 'libgfortran >=3.0.1':
                 # add an upper bound
                 deps.append('libgfortran >=3.0.1,<4.0.0.a0')
@@ -460,12 +461,6 @@ def _fix_cudnn_depends(depends, subdir):
     depends[idx] = correct_cudnn_depends
 
 
-def _fix_missing_blas_metapkg_in_mkl_addons(fn, record, instructions):
-    if not any(re.match('blas\s.*\smkl', dep) for dep in record['depends']):
-        record['depends'].append("blas * mkl")
-        instructions['packages'][fn]['depends'] = record['depends']
-
-
 def _patch_repodata(repodata, subdir):
     index = repodata["packages"]
     instructions = {
@@ -558,8 +553,6 @@ def patch_record(fn, record, subdir, instructions, index):
             instructions["packages"][fn]["build_number"] = 7
 
     # functions
-    if name in ("mkl_random", "mkl_fft"):
-        _fix_missing_blas_metapkg_in_mkl_addons(fn, record, instructions)
 
     if "features" in record:
         _fix_nomkl_features(fn, record, instructions)
@@ -567,31 +560,14 @@ def patch_record(fn, record, subdir, instructions, index):
     if name == 'numpy':
         _fix_numpy_base_constrains(record, index, instructions, subdir)
 
-    if name == 'numpy-base' and any(_.startswith('mkl >=2018') for _ in record.get('depends', [])):
-        _add_tbb4py_to_mkl_build(fn, record, index, instructions)
-
-
     if subdir.startswith("win-"):
         _replace_vc_features_with_vc_pkg_deps(fn, record, instructions)
 
-    # check
-    if any(dep.startswith('glib >=') for dep in depends):
-        if name == 'anaconda':
-            return
-        def fix_glib_dep(dep):
-            if dep.startswith('glib >='):
-                return dep.split(',')[0] + ',<3.0a0'
-            else:
-                return dep
-        record_depends = _get_record_depends(fn, record, instructions)
-        depends = [fix_glib_dep(dep) for dep in record_depends]
-        if depends != record_depends:
-            instructions["packages"][fn]["depends"] = depends
+    # must come before next block or tbb4py show up in different order from mkl
+    if name == 'numpy-base' and any(_.startswith('mkl >=2018') for _ in record.get('depends', [])):
+        _add_tbb4py_to_mkl_build(fn, record, index, instructions)
 
-
-
-    # later
-    # TODO this changes the order of the depends
+    # TODO this changes the order of depends, must be before _get_record_depends
     depends = _get_record_depends(fn, record, instructions)
     if any(dep.split()[0] == 'mkl' for dep in depends):
         for idx, dep in enumerate(depends):
@@ -612,12 +588,11 @@ def patch_record(fn, record, subdir, instructions, index):
                     depends[idx] = compact_dep
         instructions["packages"][fn]["depends"] = depends
 
-    # order matters
+    # ???
     if subdir == "osx-64":
         _fix_osx_libgfortan_bounds(fn, record, instructions)
 
-
-    # good
+    # FOOBAR
     depends = _get_record_depends(fn, record, instructions)
     original = depends.copy()
     patch_depends(fn, name, version, build_number, depends, record, subdir)
@@ -630,6 +605,18 @@ def patch_record(fn, record, subdir, instructions, index):
 
 def patch_depends(fn, name, version, build_number, depends, record, subdir):
     """ Patch depends information in-place. """
+
+    if any(dep.startswith('glib >=') for dep in depends):
+        # TODO this avoids all patching for the anaconda package if glib >= is in depends, not correct
+        if name == 'anaconda':
+            return
+        for i, dep in enumerate(depends):
+            if dep.startswith('glib >='):
+                depends[i] = dep.split(',')[0] + ',<3.0a0'
+
+    if name in ("mkl_random", "mkl_fft"):
+        if not any(re.match('blas\s.*\smkl', dep) for dep in record['depends']):
+            depends.append("blas * mkl")
 
     if subdir.startswith("linux-"):
         _fix_linux_runtime_bounds(depends)
