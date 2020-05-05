@@ -574,37 +574,33 @@ def patch_record(fn, record, subdir, instructions, index):
             if dep.split()[0] == 'mkl' and len(dep.split()) > 1 and MKL_VERSION_2018_RE.match(dep.split()[1]):
                 depends.remove(dep)  # <- TODO changes order
                 depends.append(MKL_VERSION_2018_EXTENDED_RC.sub('%s,<2019.0a0'%(dep.split()[1]), dep))
-            # mkl 2020.x is compatible with 2019.x
-            # so mkl >=2019.x,<2020.0a0 becomes mkl >=2019.x,<2021.0a0
-            # except on osx-64, older macOS release have problems...
-            if dep.startswith("mkl >=2019") and dep.endswith(",<2020.0a0"):
-                if subdir != 'osx-64':
-                    expanded_dep = dep.replace(",<2020.0a0", ",<2021.0a0")
-                    depends[idx] = expanded_dep
-            # undo macos-x hotfixes if they exist
-            if dep.startswith("mkl >=2019") and dep.endswith(",<2021.0a0"):
-                if subdir == 'osx-64':
-                    compact_dep = dep.replace(",<2021.0a0", ",<2020.0a0")
-                    depends[idx] = compact_dep
         instructions["packages"][fn]["depends"] = depends
 
-    # ???
-    if subdir == "osx-64":
-        _fix_osx_libgfortan_bounds(fn, record, instructions)
-
-    # FOOBAR
+    #
     depends = _get_record_depends(fn, record, instructions)
     original = depends.copy()
     patch_depends(fn, name, version, build_number, depends, record, subdir)
     if depends != original:
         instructions["packages"][fn]["depends"] = depends
 
+    if subdir == "osx-64":
+        _fix_osx_libgfortan_bounds(fn, record, instructions)
     # TODO this un-does libgfortran fixes needs to be after _fix_osx_libgfortan_bounds
     _fix_libnetcdf_upper_bound(fn, record, instructions)
 
 
+
 def patch_depends(fn, name, version, build_number, depends, record, subdir):
     """ Patch depends information in-place. """
+
+    # mkl 2020.x is compatible with 2019.x
+    # so mkl >=2019.x,<2020.0a0 becomes mkl >=2019.x,<2021.0a0
+    # except on osx-64, older macOS release have problems...
+    for i, dep in enumerate(depends):
+        if dep.startswith("mkl >=2019") and dep.endswith(",<2020.0a0"):
+            if subdir != 'osx-64':
+                expanded_dep = dep.replace(",<2020.0a0", ",<2021.0a0")
+                depends[i] = expanded_dep
 
     if any(dep.startswith('glib >=') for dep in depends):
         # TODO this avoids all patching for the anaconda package if glib >= is in depends, not correct
