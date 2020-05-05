@@ -8,6 +8,7 @@ import os
 from os.path import join, dirname, isfile, isdir
 import re
 import sys
+import copy
 
 import requests
 
@@ -578,10 +579,16 @@ def patch_record(fn, record, subdir, instructions, index):
 
     #
     depends = _get_record_depends(fn, record, instructions)
-    original = depends.copy()
-    patch_depends(fn, name, version, build_number, depends, record, subdir)
-    if depends != original:
-        instructions["packages"][fn]["depends"] = depends
+    record['depends'] = depends
+
+    original_record = copy.deepcopy(record)
+    patch_record_in_place(fn, record, subdir)
+
+    # TODO copy more keys over if they differ
+    keys_to_check = ['depends']  # TODO add more keys here
+    for key in keys_to_check:
+        if record.get(key) != original_record.get(key):
+            instructions["packages"][fn][key] = record.get(key)
 
     if subdir == "osx-64":
         _fix_osx_libgfortan_bounds(fn, record, instructions)
@@ -590,8 +597,12 @@ def patch_record(fn, record, subdir, instructions, index):
 
 
 
-def patch_depends(fn, name, version, build_number, depends, record, subdir):
-    """ Patch depends information in-place. """
+def patch_record_in_place(fn, record, subdir):
+    """ Patch record in place """
+    name = record['name']
+    version = record['version']
+    build_number = record['build_number']
+    depends = record['depends']
 
     # mkl 2020.x is compatible with 2019.x
     # so mkl >=2019.x,<2020.0a0 becomes mkl >=2019.x,<2021.0a0
