@@ -213,6 +213,8 @@ CUDATK_SUBS = {
 }
 MKL_VERSION_2018_RE = re.compile(r">=2018(.\d){0,2}$")
 MKL_VERSION_2018_EXTENDED_RC = re.compile(r">=2018(.\d){0,2}")
+LINUX_RUNTIME_RE = re.compile(r"lib(\w+)-ng\s(?:>=)?([\d\.]+\d)(?:$|\.\*)")
+LINUX_RUNTIME_DEPS = ("libgcc-ng", "libstdcxx-ng", "libgfortran-ng")
 
 
 def _replace_vc_features_with_vc_pkg_deps(fn, record, instructions):
@@ -330,24 +332,21 @@ def _get_record_depends(fn, record, instructions):
     return record_depends
 
 
-def _fix_linux_runtime_bounds(fn, record, instructions):
-    linux_runtime_re = re.compile(r"lib(\w+)-ng\s(?:>=)?([\d\.]+\d)(?:$|\.\*)")
-    record_depends = _get_record_depends(fn, record, instructions)
-    runtime_depends = ("libgcc-ng", "libstdcxx-ng", "libgfortran-ng")
-    if any(dep.split()[0] in runtime_depends for dep in record_depends):
-        deps = []
-        for dep in record_depends:
-            match = linux_runtime_re.match(dep)
-            if match:
-                dep = "lib{}-ng >={}".format(match.group(1), match.group(2))
-                if match.group(1) == "gfortran":
-                    # this is adding an upper bound
-                    lower_bound = int(match.group(2)[0])
-                    # ABI break at gfortran 8
-                    if lower_bound < 8:
-                        dep += ",<8.0a0"
-            deps.append(dep)
-        instructions["packages"][fn]["depends"] = deps
+def _fix_linux_runtime_bounds(depends):
+    for i, dep in enumerate(depends):
+        if dep.split()[0] not in LINUX_RUNTIME_DEPS:
+            continue
+        match = LINUX_RUNTIME_RE.match(dep)
+        if not match:
+            continue
+        dep = "lib{}-ng >={}".format(match.group(1), match.group(2))
+        if match.group(1) == "gfortran":
+            # this is adding an upper bound
+            lower_bound = int(match.group(2)[0])
+            # ABI break at gfortran 8
+            if lower_bound < 8:
+                dep += ",<8.0a0"
+        depends[i] = dep
 
 
 def _fix_osx_libgfortan_bounds(fn, record, instructions):
@@ -422,11 +421,7 @@ def _add_tbb4py_to_mkl_build(fn, record, index, instructions):
     depends.append('tbb4py')
     instructions['packages'][fn]['depends'] = depends
 
-def _fix_cudnn_depends(fn, record, instructions, subdir):
-    if fn in instructions['packages']:
-        depends = instructions['packages'][fn]['depends']
-    else:
-        depends = record['depends']
+def _fix_cudnn_depends(depends, subdir):
     for dep in depends:
         if dep.startswith('cudnn'):
             original_cudnn_depend = dep
@@ -463,7 +458,6 @@ def _fix_cudnn_depends(fn, record, instructions, subdir):
             raise Exception("unknown cudnn depedency")
     idx = depends.index(original_cudnn_depend)
     depends[idx] = correct_cudnn_depends
-    instructions['packages'][fn]['depends'] = depends
 
 
 def _fix_missing_blas_metapkg_in_mkl_addons(fn, record, instructions):
@@ -595,12 +589,6 @@ def patch_record(fn, record, subdir, instructions, index):
             instructions["packages"][fn]["depends"] = depends
 
 
-    # order matters
-    if subdir == "osx-64":
-        _fix_osx_libgfortan_bounds(fn, record, instructions)
-
-    # TODO this un-does libgfortran fixes needs to be after _fix_linux_runtime_bounds
-    _fix_libnetcdf_upper_bound(fn, record, instructions)
 
     # later
     # TODO this changes the order of the depends
@@ -624,13 +612,10 @@ def patch_record(fn, record, subdir, instructions, index):
                     depends[idx] = compact_dep
         instructions["packages"][fn]["depends"] = depends
 
+    # order matters
+    if subdir == "osx-64":
+        _fix_osx_libgfortan_bounds(fn, record, instructions)
 
-    # refactor
-    if subdir.startswith("linux-"):
-        _fix_linux_runtime_bounds(fn, record, instructions)
-
-    if any(dep.startswith('cudnn 7') for dep in depends):
-        _fix_cudnn_depends(fn, record, instructions, subdir)
 
     # good
     depends = _get_record_depends(fn, record, instructions)
@@ -639,9 +624,18 @@ def patch_record(fn, record, subdir, instructions, index):
     if depends != original:
         instructions["packages"][fn]["depends"] = depends
 
+    # TODO this un-does libgfortran fixes needs to be after _fix_osx_libgfortan_bounds
+    _fix_libnetcdf_upper_bound(fn, record, instructions)
+
 
 def patch_depends(fn, name, version, build_number, depends, record, subdir):
     """ Patch depends information in-place. """
+
+    if subdir.startswith("linux-"):
+        _fix_linux_runtime_bounds(depends)
+
+    if any(dep.startswith('cudnn 7') for dep in depends):
+        _fix_cudnn_depends(depends, subdir)
 
     # some of these got hard-coded to overly restrictive values
     if name in ('scikit-learn', 'pytorch'):
