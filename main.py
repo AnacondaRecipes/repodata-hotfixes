@@ -776,21 +776,15 @@ def patch_record(fn, record, subdir, instructions, index):
 def patch_depends(name, version, build_number, depends):
     """ Patch depends information in-place. """
 
-    if name == 'sparkmagic':
-        # sparkmagic <=0.12.7 has issues with ipykernel >4.10
-        # see: https://github.com/AnacondaRecipes/sparkmagic-feedstock/pull/3
-        if version not in ['0.12.1', '0.12.5', '0.12.6', '0.12.7']:
-            return
-        if 'ipykernel >=4.2.2' in depends:
-            ipy_index = depends.index('ipykernel >=4.2.2')
-            depends[ipy_index] = 'ipykernel >=4.2.2,<4.10.0'
+    # sparkmagic <=0.12.7 has issues with ipykernel >4.10
+    # see: https://github.com/AnacondaRecipes/sparkmagic-feedstock/pull/3
+    if name == 'sparkmagic' and version in ['0.12.1', '0.12.5', '0.12.6', '0.12.7']:
+        replace_dep(depends, 'ipykernel >=4.2.2', 'ipykernel >=4.2.2,<4.10.0')
 
+    # notebook <5.7.6 will not work with tornado 6, see:
+    # https://github.com/jupyter/notebook/issues/4439
     if name == 'notebook':
-        # notebook <5.7.6 will not work with tornado 6, see:
-        # https://github.com/jupyter/notebook/issues/4439
-        if 'tornado >=4' in depends:
-            t4_index = depends.index('tornado >=4')
-            depends[t4_index]= 'tornado >=4,<6'
+        replace_dep(depends, 'tornado >=4', 'tornado >=4,<6')
 
     # spyder 4.0.0 and 4.0.1 should include a lower bound on psutil of 5.2
     # and should pin parso to 0.5.2.
@@ -812,20 +806,15 @@ def patch_depends(name, version, build_number, depends):
 
     # IPython >=7,<7.10 should have an upper bound on prompt_toolkit
     if name == 'ipython' and version.startswith('7.'):
-        if 'prompt_toolkit >=2.0.0' in depends:
-            ptk_index = depends.index('prompt_toolkit >=2.0.0')
-            depends[ptk_index]= 'prompt_toolkit >=2.0.0,<3'
+        replace_dep(depends, 'prompt_toolkit >=2.0.0', 'prompt_toolkit >=2.0.0,<3')
 
     # jupyter_console 5.2.0 has bounded dependency on prompt_toolkit
     if name == 'jupyter_console' and version == "5.2.0":
-        if 'prompt_toolkit' in depends:
-            idx = depends.index('prompt_toolkit')
-            depends[idx] = 'prompt_toolkit >=1.0.0,<2'
+        replace_dep(depends, 'prompt_toolkit', 'prompt_toolkit >=1.0.0,<2')
 
     # jupyter_client 6.0.0 should have lower bound of 3.5 on python
     if name == 'jupyter_client' and version == "6.0.0":
-        idx = depends.index('python')
-        depends[idx] = 'python >=3.5'
+        replace_dep(depends, 'python', 'python >=3.5')
 
     # numba 0.46.0 and 0.47.0 are missing a dependency on setuptools
     # https://github.com/numba/numba/issues/5134
@@ -834,16 +823,12 @@ def patch_depends(name, version, build_number, depends):
 
     # tensorboard 2.0.0 build 0 should have a requirement on setuptools >=41.0.0
     # see: https://github.com/AnacondaRecipes/tensorflow_recipes/issues/20
-    if name == 'tensorboard' and version == '2.0.0':
-        if build_number == 0:
+    if name == 'tensorboard' and version == '2.0.0' and build_number == 0:
             depends.append('setuptools >=41.0.0')
 
     # openssl uses funnny version numbers, 1.1.1, 1.1.1a, 1.1.1b, etc
     # openssl >=1.1.1,<1.1.2.0a0 -> >=1.1.1a,<1.1.2a
-    if any(dep == 'openssl >=1.1.1,<1.1.2.0a0' for dep in depends):
-        for idx, dep in enumerate(depends):
-            if dep == 'openssl >=1.1.1,<1.1.2.0a0':
-                depends[idx] = 'openssl >=1.1.1a,<1.1.2a'
+    replace_dep(depends, 'openssl >=1.1.1,<1.1.2.0a0', 'openssl >=1.1.1a,<1.1.2a')
 
     # loosen binutils_impl dependency on gcc_impl_ packages
     if name.startswith('gcc_impl_'):
@@ -855,9 +840,7 @@ def patch_depends(name, version, build_number, depends):
                     depends[i] = correct_dep
 
     # kealib 1.4.8 changed sonames, add new upper bound to existing packages
-    if any(dep == 'kealib >=1.4.7,<1.5.0a0' for dep in depends):
-        kealib_idx = depends.index('kealib >=1.4.7,<1.5.0a0')
-        depends[kealib_idx] = "kealib >=1.4.7,<1.4.8.0a0"
+    replace_dep(depends, 'kealib >=1.4.7,<1.5.0a0', 'kealib>=1.4.7,<1.4.8.0a0')
 
     # add in blas mkl metapkg for mutex behavior on packages that have just mkl deps
     if (name in BLAS_USING_PKGS and not any(dep.split()[0] == "blas" for dep in depends)):
@@ -878,20 +861,17 @@ def patch_depends(name, version, build_number, depends):
         elif len(mkl_version) > 1:
             raise Exception("Found multiple mkl entries, expected only 1.")
 
-    if name == 'libarchive':
-        if version == '3.3.2' or (version == '3.3.3' and build_number == 0):
-            # libarchive 3.3.2 and 3.3.3 build 0 are missing zstd support.
-            # De-prioritize these packages with a track_feature (via _low_priority)
-            # so they are not installed unless explicitly requested
-            depends.append('_low_priority')
+    # libarchive 3.3.2 and 3.3.3 build 0 are missing zstd support.
+    # De-prioritize these packages with a track_feature (via _low_priority)
+    # so they are not installed unless explicitly requested
+    if name == 'libarchive' and (version == '3.3.2' or (version == '3.3.3' and build_number == 0)):
+        depends.append('_low_priority')
 
     # python-language-server should contrains ujson <=1.35
     # see https://github.com/conda-forge/cf-mark-broken/pull/20
     # https://github.com/conda-forge/python-language-server-feedstock/pull/48
-    if name == 'python-language-server':
-        if 'ujson' in depends and version in ['0.31.2', '0.31.7']:
-            ujson_idx = depends.index('ujson')
-            depends[ujson_idx] = 'ujson <=1.35'
+    if name == 'python-language-server' and version in ['0.31.2', '0.31.7']:
+        replace_dep(depends, 'ujson', 'ujson <=1.35')
 
     # libffi broke ABI compatibility in 3.3
     if 'libffi >=3.2.1,<4.0a0' in depends or 'libffi' in depends:
@@ -904,12 +884,16 @@ def patch_depends(name, version, build_number, depends):
     # pylint 2.5.0 build 0 had incorrect astroid pinning and were missing a
     # dependency on toml >=0.7.1
     if name == 'pylint' and version == "2.5.0" and build_number == 0:
-        if 'astroid >=2.3.0,<2.4' in depends:
-            idx = depends.index('astroid >=2.3.0,<2.4')
-            depends[idx] = 'astroid >=2.4.0,<2.5'
+        replace_dep(depends, 'astroid >=2.3.0,<2.4', 'astroid >=2.4.0,<2.5')
         if 'toml >=0.7.1' not in depends:
             depends.append('toml >=0.7.1')
 
+
+def replace_dep(depends, old, new):
+    """ Replace a old dependency with a new one. """
+    if old in depends:
+        index = depends.index(old)
+        depends[index] = new
 
 
 def _extract_and_remove_vc_feature(record):
