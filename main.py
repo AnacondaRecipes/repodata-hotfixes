@@ -498,63 +498,7 @@ def patch_record(fn, record, subdir, instructions, index):
     build_number = record['build_number']
     depends = record['depends']
 
-    # non depends
-
-    if name == 'basemap':
-        # basemap is incompatible with proj/proj4 >=6
-        # https://github.com/ContinuumIO/anaconda-issues/issues/11590
-        instructions["packages"][fn]['constrains'] = ["proj4 <6", "proj <6"]
-
-    # add run constrains on __cuda virtual package to cudatoolkit package
-    # see https://github.com/conda/conda/issues/9115
-    if name == 'cudatoolkit' and 'constrains' not in record:
-        major, minor = version.split('.')[:2]
-        req = f"__cuda >={major}.{minor}"
-        instructions["packages"][fn]["constrains"] = [req]
-
-    if fn.startswith("numba-0.36.1") and record.get('timestamp') != 1512604800000:
-        # set a specific timestamp
-        instructions["packages"][fn]['timestamp'] = 1512604800000
-
-    if record.get("track_features"):
-        for feat in record["track_features"].split():
-            if feat.startswith(("rb2", "openjdk")):
-                xtractd = record["track_features"] = _extract_track_feature(record, feat)
-                instructions["packages"][fn]["track_features"] = xtractd
-
-    # reset dependencies for nomkl to the blas metapkg and remove any
-    #      track_features (these are attached to the metapkg instead)
-    if name == 'nomkl' and not subdir.startswith("win-"):
-        instructions["packages"][fn]['depends'] = ["blas * openblas"]
-        if 'track_features' in record:
-            instructions["packages"][fn]["track_features"] = None
-
-    if name == 'conda-env':
-        if not any(d.startswith('python') for d in depends):
-            instructions["packages"][fn]["namespace"] = "python"
-
-    # setuptools should not appear in both depends and constrains
-    # https://github.com/conda/conda/issues/9337
-    if name == "conda":
-        if 'setuptools >=31.0.1' in record.get("constrains", []):
-            new = [req for req in record["constrains"] if not req.startswith("setuptools")]
-            instructions["packages"][fn]["constrains"] = new
-
-    # intel-openmp 2020.0 seems to be incompatible with older versions of mkl
-    # issues have only been reported on macOS and Windows but
-    # add the constrains on all platforms to be safe
-    if name == 'intel-openmp' and version == '2020.0':
-        instructions["packages"][fn]['constrains'] = ["mkl >=2020.0"]
-
-    if subdir == "linux-ppc64le":
-        # set the build_number of the blas-1.0-openblas.tar.bz2 package
-        # to 7 to match the package in free
-        # https://github.com/conda/conda/issues/8302
-        if fn == 'blas-1.0-openblas.tar.bz2':
-            instructions["packages"][fn]["build_number"] = 7
-
     # functions
-
     if "features" in record:
         _fix_nomkl_features(fn, record, instructions)
 
@@ -586,17 +530,29 @@ def patch_record(fn, record, subdir, instructions, index):
     # to the patch instructions
     original_record = copy.deepcopy(record)
     patch_record_in_place(fn, record, subdir)
-    keys_to_check = ['depends']  # TODO add more keys here
+    keys_to_check = ['depends', 'constrains', 'namespace', 'track_features', 'features']
     for key in keys_to_check:
         if record.get(key) != original_record.get(key):
             instructions["packages"][fn][key] = record.get(key)
 
     # these undo some changes already made.
-    # TODO reviewed the changes and undo
+    # TODO reviewed the changes and move into patch_record_in_place
     if subdir == "osx-64":
         _fix_osx_libgfortan_bounds(fn, record, instructions)
     # this un-does libgfortran fixes, needs to be after _fix_osx_libgfortan_bounds
     _fix_libnetcdf_upper_bound(fn, record, instructions)
+
+    # One-off patches that do not fit in with others
+
+    # set a specific timestamp for numba-0.36.1
+    if fn.startswith("numba-0.36.1") and record.get('timestamp') != 1512604800000:
+        instructions["packages"][fn]['timestamp'] = 1512604800000
+
+    # set the build_number of the blas-1.0-openblas.tar.bz2 package
+    # to 7 to match the package in free
+    # https://github.com/conda/conda/issues/8302
+    if subdir == "linux-ppc64le" and fn == 'blas-1.0-openblas.tar.bz2':
+        instructions["packages"][fn]["build_number"] = 7
 
 
 
@@ -606,6 +562,46 @@ def patch_record_in_place(fn, record, subdir):
     version = record['version']
     build_number = record['build_number']
     depends = record['depends']
+    constrains = record.get("constrains", [])
+
+    # reset dependencies for nomkl to the blas metapkg and remove any
+    #      track_features (these are attached to the metapkg instead)
+    if name == 'nomkl' and not subdir.startswith("win-"):
+        record['depends'] = ["blas * openblas"]
+        if 'track_features' in record:
+            record["track_features"] = None
+
+    if record.get("track_features"):
+        for feat in record["track_features"].split():
+            if feat.startswith(("rb2", "openjdk")):
+                xtractd = record["track_features"] = _extract_track_feature(record, feat)
+                record["track_features"] = xtractd
+
+    if name == 'conda-env' and not any(d.startswith('python') for d in depends):
+        record['namespace'] = "python"
+
+    # add run constrains on __cuda virtual package to cudatoolkit package
+    # see https://github.com/conda/conda/issues/9115
+    if name == 'cudatoolkit' and 'constrains' not in record:
+        major, minor = version.split('.')[:2]
+        req = f"__cuda >={major}.{minor}"
+        record["constrains"] = [req]
+
+    # setuptools should not appear in both depends and constrains
+    # https://github.com/conda/conda/issues/9337
+    if name == "conda" and 'setuptools >=31.0.1' in constrains:
+        constrains[:] = [req for req in constrains if not req.startswith("setuptools")]
+
+    # intel-openmp 2020.0 seems to be incompatible with older versions of mkl
+    # issues have only been reported on macOS and Windows but
+    # add the constrains on all platforms to be safe
+    if name == 'intel-openmp' and version == '2020.0':
+        record['constrains'] = ["mkl >=2020.0"]
+
+    # basemap is incompatible with proj/proj4 >=6
+    # https://github.com/ContinuumIO/anaconda-issues/issues/11590
+    if name == 'basemap':
+        record['constrains'] = ["proj4 <6", "proj <6"]
 
     # mkl 2020.x is compatible with 2019.x
     # so mkl >=2019.x,<2020.0a0 becomes mkl >=2019.x,<2021.0a0
