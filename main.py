@@ -577,22 +577,25 @@ def patch_record(fn, record, subdir, instructions, index):
                 depends.append(MKL_VERSION_2018_EXTENDED_RC.sub('%s,<2019.0a0'%(dep.split()[1]), dep))
         instructions["packages"][fn]["depends"] = depends
 
-    #
+    # store changes to dependencies up to this point
+    # TODO this is not needed once the above is merged into patch_record_in_place
     depends = _get_record_depends(fn, record, instructions)
     record['depends'] = depends
 
+    # create a copy of the record, patch in-place and add keys that change
+    # to the patch instructions
     original_record = copy.deepcopy(record)
     patch_record_in_place(fn, record, subdir)
-
-    # TODO copy more keys over if they differ
     keys_to_check = ['depends']  # TODO add more keys here
     for key in keys_to_check:
         if record.get(key) != original_record.get(key):
             instructions["packages"][fn][key] = record.get(key)
 
+    # these undo some changes already made.
+    # TODO reviewed the changes and undo
     if subdir == "osx-64":
         _fix_osx_libgfortan_bounds(fn, record, instructions)
-    # TODO this un-does libgfortran fixes needs to be after _fix_osx_libgfortan_bounds
+    # this un-does libgfortran fixes, needs to be after _fix_osx_libgfortan_bounds
     _fix_libnetcdf_upper_bound(fn, record, instructions)
 
 
