@@ -550,6 +550,27 @@ def patch_record(fn, record, subdir, instructions, index):
             new = [req for req in record["constrains"] if not req.startswith("setuptools")]
             instructions["packages"][fn]["constrains"] = new
 
+    # intel-openmp 2020.0 seems to be incompatible with older versions of mkl
+    # issues have only been reported on macOS and Windows but
+    # add the constrains on all platforms to be safe
+    if name == 'intel-openmp' and version == '2020.0':
+        instructions["packages"][fn]['constrains'] = ["mkl >=2020.0"]
+
+    # special
+    if any(dep.startswith('glib >=') for dep in depends):
+        if name == 'anaconda':
+            return
+        def fix_glib_dep(dep):
+            if dep.startswith('glib >='):
+                return dep.split(',')[0] + ',<3.0a0'
+            else:
+                return dep
+        record_depends = _get_record_depends(fn, record, instructions)
+        depends = [fix_glib_dep(dep) for dep in record_depends]
+        if depends != record_depends:
+            instructions["packages"][fn]["depends"] = depends
+
+
     # functions
 
     if name in ("mkl_random", "mkl_fft"):
@@ -564,10 +585,12 @@ def patch_record(fn, record, subdir, instructions, index):
     if name == 'numpy-base' and any(_.startswith('mkl >=2018') for _ in record.get('depends', [])):
         _add_tbb4py_to_mkl_build(fn, record, index, instructions)
 
+    if any(dep.startswith('cudnn 7') for dep in depends):
+        _fix_cudnn_depends(fn, record, instructions, subdir)
+
+
 
     # depends
-
-
     if any(dep.split()[0] == 'mkl' for dep in depends):
         for idx, dep in enumerate(depends):
             if dep.split()[0] == 'mkl' and len(dep.split()) > 1 and MKL_VERSION_2018_RE.match(dep.split()[1]):
@@ -587,11 +610,6 @@ def patch_record(fn, record, subdir, instructions, index):
                     depends[idx] = compact_dep
         instructions["packages"][fn]["depends"] = depends
 
-    # intel-openmp 2020.0 seems to be incompatible with older versions of mkl
-    # issues have only been reported on macOS and Windows but
-    # add the constrains on all platforms to be safe
-    if name == 'intel-openmp' and version == '2020.0':
-        instructions["packages"][fn]['constrains'] = ["mkl >=2020.0"]
 
     # some of these got hard-coded to overly restrictive values
     if name in ('scikit-learn', 'pytorch'):
@@ -607,22 +625,6 @@ def patch_record(fn, record, subdir, instructions, index):
                 new_deps.append(dep)
         depends = new_deps
         instructions["packages"][fn]["depends"] = depends
-
-    if any(dep.startswith('cudnn 7') for dep in depends):
-        _fix_cudnn_depends(fn, record, instructions, subdir)
-
-    if any(dep.startswith('glib >=') for dep in depends):
-        if name == 'anaconda':
-            return
-        def fix_glib_dep(dep):
-            if dep.startswith('glib >='):
-                return dep.split(',')[0] + ',<3.0a0'
-            else:
-                return dep
-        record_depends = _get_record_depends(fn, record, instructions)
-        depends = [fix_glib_dep(dep) for dep in record_depends]
-        if depends != record_depends:
-            instructions["packages"][fn]["depends"] = depends
 
 
     if subdir.startswith("win-"):
