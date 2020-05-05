@@ -556,7 +556,31 @@ def patch_record(fn, record, subdir, instructions, index):
     if name == 'intel-openmp' and version == '2020.0':
         instructions["packages"][fn]['constrains'] = ["mkl >=2020.0"]
 
-    # special
+    if subdir == "linux-ppc64le":
+        # set the build_number of the blas-1.0-openblas.tar.bz2 package
+        # to 7 to match the package in free
+        # https://github.com/conda/conda/issues/8302
+        if fn == 'blas-1.0-openblas.tar.bz2':
+            instructions["packages"][fn]["build_number"] = 7
+
+    # functions
+    if name in ("mkl_random", "mkl_fft"):
+        _fix_missing_blas_metapkg_in_mkl_addons(fn, record, instructions)
+
+    if "features" in record:
+        _fix_nomkl_features(fn, record, instructions)
+
+    if name == 'numpy':
+        _fix_numpy_base_constrains(record, index, instructions, subdir)
+
+    if name == 'numpy-base' and any(_.startswith('mkl >=2018') for _ in record.get('depends', [])):
+        _add_tbb4py_to_mkl_build(fn, record, index, instructions)
+
+
+    if subdir.startswith("win-"):
+        _replace_vc_features_with_vc_pkg_deps(fn, record, instructions)
+
+    # check
     if any(dep.startswith('glib >=') for dep in depends):
         if name == 'anaconda':
             return
@@ -571,30 +595,20 @@ def patch_record(fn, record, subdir, instructions, index):
             instructions["packages"][fn]["depends"] = depends
 
 
-    # functions
+    # order matters
+    if subdir == "osx-64":
+        _fix_osx_libgfortan_bounds(fn, record, instructions)
 
-    if name in ("mkl_random", "mkl_fft"):
-        _fix_missing_blas_metapkg_in_mkl_addons(fn, record, instructions)
+    # TODO this un-does libgfortran fixes needs to be after _fix_linux_runtime_bounds
+    _fix_libnetcdf_upper_bound(fn, record, instructions)
 
-    if "features" in record:
-        _fix_nomkl_features(fn, record, instructions)
-
-    if name == 'numpy':
-        _fix_numpy_base_constrains(record, index, instructions, subdir)
-
-    if name == 'numpy-base' and any(_.startswith('mkl >=2018') for _ in record.get('depends', [])):
-        _add_tbb4py_to_mkl_build(fn, record, index, instructions)
-
-    if any(dep.startswith('cudnn 7') for dep in depends):
-        _fix_cudnn_depends(fn, record, instructions, subdir)
-
-
-
-    # depends
+    # later
+    # TODO this changes the order of the depends
+    depends = _get_record_depends(fn, record, instructions)
     if any(dep.split()[0] == 'mkl' for dep in depends):
         for idx, dep in enumerate(depends):
             if dep.split()[0] == 'mkl' and len(dep.split()) > 1 and MKL_VERSION_2018_RE.match(dep.split()[1]):
-                depends.remove(dep)
+                depends.remove(dep)  # <- TODO changes order
                 depends.append(MKL_VERSION_2018_EXTENDED_RC.sub('%s,<2019.0a0'%(dep.split()[1]), dep))
             # mkl 2020.x is compatible with 2019.x
             # so mkl >=2019.x,<2020.0a0 becomes mkl >=2019.x,<2021.0a0
@@ -611,52 +625,14 @@ def patch_record(fn, record, subdir, instructions, index):
         instructions["packages"][fn]["depends"] = depends
 
 
-    # some of these got hard-coded to overly restrictive values
-    if name in ('scikit-learn', 'pytorch'):
-        new_deps = []
-        for dep in depends:
-            if dep.startswith('mkl 2018'):
-                if not any(_.startswith('mkl >') for _ in depends):
-                    new_deps.append("mkl >=2018.0.3,<2019.0a0")
-            elif dep == 'nccl':
-                # pytorch was built with nccl 1.x
-                new_deps.append('nccl <2')
-            else:
-                new_deps.append(dep)
-        depends = new_deps
-        instructions["packages"][fn]["depends"] = depends
-
-
-    if subdir.startswith("win-"):
-        _replace_vc_features_with_vc_pkg_deps(fn, record, instructions)
-
-    elif subdir.startswith("linux-"):
+    # refactor
+    if subdir.startswith("linux-"):
         _fix_linux_runtime_bounds(fn, record, instructions)
-        if subdir.startswith("linux-ppc64le"):
-            # set the build_number of the blas-1.0-openblas.tar.bz2 package
-            # to 7 to match the package in free
-            # https://github.com/conda/conda/issues/8302
-            if fn == 'blas-1.0-openblas.tar.bz2':
-                instructions["packages"][fn]["build_number"] = 7
 
-    elif subdir.startswith("osx-64"):
-        _fix_osx_libgfortan_bounds(fn, record, instructions)
-        # fix clang_osx-64 and clangcxx_osx-64 packages to include dependencies, see:
-        # https://github.com/AnacondaRecipes/aggregate/pull/164
-        if name == 'clang_osx-64' and version == '4.0.1':
-            if int(build_number) < 17:
-                clang_401_deps = ['cctools', 'clang 4.0.1.*', 'compiler-rt 4.0.1.*', 'ld64']
-                instructions["packages"][fn]["depends"] = clang_401_deps
-        if name == 'clangxx_osx-64' and version == '4.0.1':
-            if int(build_number) < 17:
-                clangxx_401_deps = ['clang_osx-64 >=4.0.1,<4.0.2.0a0', 'clangxx', 'libcxx']
-                instructions["packages"][fn]["depends"] = clangxx_401_deps
+    if any(dep.startswith('cudnn 7') for dep in depends):
+        _fix_cudnn_depends(fn, record, instructions, subdir)
 
-    _fix_libnetcdf_upper_bound(fn, record, instructions)
-
-
-
-
+    # good
     depends = _get_record_depends(fn, record, instructions)
     original = depends.copy()
     patch_depends(fn, name, version, build_number, depends, record, subdir)
@@ -666,6 +642,22 @@ def patch_record(fn, record, subdir, instructions, index):
 
 def patch_depends(fn, name, version, build_number, depends, record, subdir):
     """ Patch depends information in-place. """
+
+    # some of these got hard-coded to overly restrictive values
+    if name in ('scikit-learn', 'pytorch'):
+        for i, dep in enumerate(depends):
+            if dep.startswith('mkl 2018') and not any(_.startswith('mkl >') for _ in depends):
+                depends[i] = "mkl >=2018.0.3,<2019.0a0"
+        if "mkl 2018.*" in depends:
+            depends.pop(depends.index('mkl 2018.*'))
+
+    if subdir == "osx-64":
+        # fix clang_osx-64 and clangcxx_osx-64 packages to include dependencies, see:
+        # https://github.com/AnacondaRecipes/aggregate/pull/164
+        if name == 'clang_osx-64' and version == '4.0.1' and int(build_number) < 17:
+            depends[:] = ['cctools', 'clang 4.0.1.*', 'compiler-rt 4.0.1.*', 'ld64']
+        if name == 'clangxx_osx-64' and version == '4.0.1' and int(build_number) < 17:
+                depends[:] = ['clang_osx-64 >=4.0.1,<4.0.2.0a0', 'clangxx', 'libcxx']
 
     if name == 'openblas-devel' and not any(d.startswith('blas ') for d in depends):
         depends.append("blas * openblas")
@@ -704,6 +696,10 @@ def patch_depends(fn, name, version, build_number, depends, record, subdir):
             # torchvision pytorch depends needs to be fixed to 1.1
             pytorch_dep = depends.index('pytorch >=1.1.0')
             depends[pytorch_dep]= 'pytorch 1.1.*'
+
+    # pytorch was built with nccl 1.x
+    if name == 'pytorch':
+        replace_dep(depends, 'nccl', 'nccl <2')
 
     if name == 'torchvision' and version == '0.4.0':
         if 'cuda' in record['build']:
