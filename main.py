@@ -763,13 +763,10 @@ def patch_record_in_place(fn, record, subdir):
     # kealib 1.4.8 changed sonames, add new upper bound to existing packages
     replace_dep(depends, 'kealib >=1.4.7,<1.5.0a0', 'kealib >=1.4.7,<1.4.8.0a0')
 
-    if any(dep.startswith('glib >=') for dep in depends):
-        # TODO this avoids all patching for the anaconda package if glib >= is in depends, not correct
-        if name == 'anaconda':
-            return
-        for i, dep in enumerate(depends):
-            if dep.startswith('glib >='):
-                depends[i] = dep.split(',')[0] + ',<3.0a0'
+    # glib is compatible up to the major version
+    for i, dep in enumerate(depends):
+        if dep.startswith('glib >='):
+            depends[i] = dep.split(',')[0] + ',<3.0a0'
 
     # libffi broke ABI compatibility in 3.3
     if 'libffi >=3.2.1,<4.0a0' in depends or 'libffi' in depends:
