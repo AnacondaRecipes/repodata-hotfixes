@@ -398,15 +398,6 @@ def _fix_numpy_base_constrains(record, index, instructions, subdir):
     instructions["packages"][base_pkg_fn]["constrains"] = [req]
 
 
-def _add_tbb4py_to_mkl_build(fn, record, instructions):
-    if fn in instructions['packages'] and 'depends' in instructions['packages'][fn]:
-        depends = instructions['packages'][fn]['depends']
-    else:
-        depends = record.get('depends', [])
-    depends.append('tbb4py')
-    instructions['packages'][fn]['depends'] = depends
-
-
 def _fix_cudnn_depends(depends, subdir):
     for dep in depends:
         if dep.startswith('cudnn'):
@@ -493,26 +484,6 @@ def is_removed(fn, subdir):
 
 
 def patch_record(fn, record, subdir, instructions, index):
-    name = record['name']
-    depends = record['depends']
-
-    # must come before next block or tbb4py show up in different order from mkl
-    if name == 'numpy-base' and any(_.startswith('mkl >=2018') for _ in record.get('depends', [])):
-        _add_tbb4py_to_mkl_build(fn, record, instructions)
-
-    # TODO this changes the order of depends, must be before _get_record_depends
-    depends = _get_record_depends(fn, record, instructions)
-    if any(dep.split()[0] == 'mkl' for dep in depends):
-        for idx, dep in enumerate(depends):
-            if dep.split()[0] == 'mkl' and len(dep.split()) > 1 and MKL_VERSION_2018_RE.match(dep.split()[1]):
-                depends.remove(dep)  # <- TODO changes order
-                depends.append(MKL_VERSION_2018_EXTENDED_RC.sub('%s,<2019.0a0' % (dep.split()[1]), dep))
-        instructions["packages"][fn]["depends"] = depends
-
-    # store changes to dependencies up to this point
-    # TODO this is not needed once the above is merged into patch_record_in_place
-    record['depends'] = _get_record_depends(fn, record, instructions)
-
     # create a copy of the record, patch in-place and add keys that change
     # to the patch instructions
     original_record = copy.deepcopy(record)
@@ -524,6 +495,7 @@ def patch_record(fn, record, subdir, instructions, index):
 
     # these undo some changes already made.
     # TODO reviewed the changes and move into patch_record_in_place
+    name = record['name']
     if subdir == "osx-64":
         _fix_osx_libgfortan_bounds(fn, record, instructions)
     # this un-does libgfortran fixes, needs to be after _fix_osx_libgfortan_bounds
@@ -585,6 +557,13 @@ def patch_record_in_place(fn, record, subdir):
     #######
     # MKL #
     #######
+
+    if name == 'numpy-base' and any(_.startswith('mkl >=2018') for _ in depends):
+        depends.append('tbb4py')
+
+    for i, dep in enumerate(depends):
+        if dep.split()[0] == 'mkl' and len(dep.split()) > 1 and MKL_VERSION_2018_RE.match(dep.split()[1]):
+            depends[i] = MKL_VERSION_2018_EXTENDED_RC.sub('%s,<2019.0a0' % (dep.split()[1]), dep)
 
     # intel-openmp 2020.0 seems to be incompatible with older versions of mkl
     # issues have only been reported on macOS and Windows but
