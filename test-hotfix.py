@@ -66,4 +66,5 @@ if __name__ == "__main__":
         patched_repodata_file = os.path.join(args.channel, subdir, 'repodata-patched.json')
         with open(patched_repodata_file, 'w') as f:
             json.dump(patched_repodata, f, indent=2, sort_keys=True, separators=(',', ': '))
-        subprocess.call(['colordiff', '-w', ref_repodata_file, patched_repodata_file])
+            f.write('\n')
+        subprocess.call(['colordiff', ref_repodata_file, patched_repodata_file])
