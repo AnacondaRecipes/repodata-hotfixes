@@ -13,10 +13,12 @@ When packages are created, authors do their best to specify constraints that mak
 
 There's a script that downloads the current repodata and runs your instructions against it.  It then shows you a diff.  Example usage of this script:
 
+```
 python test-hotfix.py main --subdir linux-64 osx-64 win-64 win-32 linux-ppc64le linux-32 noarch
+```
 
-Use the --color or --show-pkgs arguments for different outputs.
+Use the `--color` or `--show-pkgs` options for different outputs.
 
-For repeated runs add --use-cache to avoid downloading the repodata files.
+For repeated runs add `--use-cache` to avoid downloading the repodata files.
 
 You should run this before merging any PRs so that you understand the effects your change may have (or not have, if you have bugs).
