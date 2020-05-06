@@ -37,7 +37,7 @@ REMOVALS = {
     "win-32": ["nomkl-*"],
     "win-64": ["nomkl-*",
                # numba 0.46 didn't actually support py38
-              "numba-0.46.0-py38hf9181ef_0.tar.bz2",
+               "numba-0.46.0-py38hf9181ef_0.tar.bz2",
               ],
     "linux-64": [
         "numba-0.46.0-py38h962f231_0.tar.bz2",
@@ -686,11 +686,7 @@ def patch_record_in_place(fn, record, subdir):
             depends.append('python-libarchive-c')
 
     if (name == 'constructor' and int(version[0]) < 3):
-        # TODO
-        # replace_dep(depends, 'conda', 'conda <4.6.0a0')
-        if "conda" in depends:
-            depends.remove("conda")
-            depends.append("conda <4.6.0a0")
+        replace_dep(depends, 'conda', 'conda <4.6.0a0')
 
     # libarchive 3.3.2 and 3.3.3 build 0 are missing zstd support.
     # De-prioritize these packages with a track_feature (via _low_priority)
