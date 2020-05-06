@@ -763,13 +763,10 @@ def patch_record_in_place(fn, record, subdir):
     # kealib 1.4.8 changed sonames, add new upper bound to existing packages
     replace_dep(depends, 'kealib >=1.4.7,<1.5.0a0', 'kealib >=1.4.7,<1.4.8.0a0')
 
-    if any(dep.startswith('glib >=') for dep in depends):
-        # TODO this avoids all patching for the anaconda package if glib >= is in depends, not correct
-        if name == 'anaconda':
-            return
-        for i, dep in enumerate(depends):
-            if dep.startswith('glib >='):
-                depends[i] = dep.split(',')[0] + ',<3.0a0'
+    # glib is compatible up to the major version
+    for i, dep in enumerate(depends):
+        if dep.startswith('glib >='):
+            depends[i] = dep.split(',')[0] + ',<3.0a0'
 
     # libffi broke ABI compatibility in 3.3
     if 'libffi >=3.2.1,<4.0a0' in depends or 'libffi' in depends:
@@ -947,15 +944,6 @@ def do_hotfixes(base_dir):
     patch_instructions = {}
     for subdir in SUBDIRS:
         instructions = _patch_repodata(repodatas[subdir], subdir)
-        # TODO remove this
-        conda_instructions = {}
-        for pkg, info in instructions["packages"].items():
-            if "features" in info and info["features"] is None:
-                conda_info = info.copy()
-                conda_info['features'] = "nomkl"
-                conda_pkg = pkg.replace('.tar.bz2', '.conda')
-                conda_instructions[conda_pkg] = conda_info
-        instructions["packages.conda"] = conda_instructions
         patch_instructions_path = join(base_dir, subdir, "patch_instructions.json")
         with open(patch_instructions_path, 'w') as fh:
             json.dump(instructions, fh, indent=2, sort_keys=True, separators=(',', ': '))

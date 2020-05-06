@@ -33,6 +33,24 @@ def clone_subdir(channel_base_url, subdir):
     print("downloading repodata from {}".format(url))
     urllib.request.urlretrieve(url, out_file)
 
+def show_pkgs(subdir, ref_repodata_file, patched_repodata_file):
+    with open(ref_repodata_file) as f:
+        reference_repodata = json.load(f)
+    with open(patched_repodata_file) as f:
+        patched_repodata = json.load(f)
+    for name, ref_pkg in reference_repodata["packages"].items():
+        new_pkg = patched_repodata["packages"][name]
+        if ref_pkg == new_pkg:
+            continue
+        print(f"{subdir}::{name}")
+        ref_lines = json.dumps(ref_pkg, indent=2).splitlines()
+        new_lines = json.dumps(new_pkg, indent=2).splitlines()
+        for l in difflib.unified_diff(ref_lines, new_lines, n=0, lineterm=''):
+            if l.startswith('+++') or l.startswith('---') or l.startswith('@@'):
+                continue
+            print(l)
+
+
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser(description='Process some integers.')
@@ -43,6 +61,8 @@ if __name__ == "__main__":
     parser.add_argument('--context-numlines', help='context lines to show around diff',
                         type=int, default=5)
     parser.add_argument('--use-cache', action='store_true', help='use cached repodata')
+    parser.add_argument('--color', action='store_true', help='use colordiff rather than diff')
+    parser.add_argument('--show-pkgs', action='store_true', help='Show packages that differ')
     args = parser.parse_args()
 
     for subdir in args.subdirs:
@@ -66,4 +86,13 @@ if __name__ == "__main__":
         patched_repodata_file = os.path.join(args.channel, subdir, 'repodata-patched.json')
         with open(patched_repodata_file, 'w') as f:
             json.dump(patched_repodata, f, indent=2, sort_keys=True, separators=(',', ': '))
-        subprocess.call(['colordiff', '-w', ref_repodata_file, patched_repodata_file])
+            f.write('\n')
+
+        if args.show_pkgs:
+            show_pkgs(subdir, ref_repodata_file, patched_repodata_file)
+        else:
+            if args.color:
+                diff_exe = 'colordiff'
+            else:
+                diff_exe = 'diff'
+            subprocess.call([diff_exe, ref_repodata_file, patched_repodata_file])
