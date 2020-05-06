@@ -43,6 +43,7 @@ if __name__ == "__main__":
     parser.add_argument('--context-numlines', help='context lines to show around diff',
                         type=int, default=5)
     parser.add_argument('--use-cache', action='store_true', help='use cached repodata')
+    parser.add_argument('--color', action='store_true', help='use colordiff rather than diff')
     args = parser.parse_args()
 
     for subdir in args.subdirs:
@@ -67,4 +68,8 @@ if __name__ == "__main__":
         with open(patched_repodata_file, 'w') as f:
             json.dump(patched_repodata, f, indent=2, sort_keys=True, separators=(',', ': '))
             f.write('\n')
-        subprocess.call(['colordiff', ref_repodata_file, patched_repodata_file])
+        if args.color:
+            diff_exe = 'colordiff'
+        else:
+            diff_exe = 'diff'
+        subprocess.call([diff_exe, ref_repodata_file, patched_repodata_file])
