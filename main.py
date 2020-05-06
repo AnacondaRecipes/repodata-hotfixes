@@ -335,31 +335,6 @@ def _fix_linux_runtime_bounds(depends):
         depends[i] = dep
 
 
-def _fix_osx_libgfortan_bounds(fn, record, instructions):
-    depends = _get_record_depends(fn, record, instructions)
-    if any(dep == 'libgfortran >=3.0.1' for dep in depends):
-        deps = []
-        for dep in depends:
-            if dep == 'libgfortran >=3.0.1':
-                # add an upper bound
-                deps.append('libgfortran >=3.0.1,<4.0.0.a0')
-            else:
-                deps.append(dep)
-        instructions["packages"][fn]["depends"] = deps
-
-
-def _fix_libnetcdf_upper_bound(fn, record, instructions):
-    if any(dep == "libnetcdf >=4.6.1,<5.0a0" for dep in record.get('depends', [])):
-        deps = []
-        for dep in record['depends']:
-            if dep == "libnetcdf >=4.6.1,<5.0a0":
-                # add an upper bound
-                deps.append("libnetcdf >=4.6.1,<4.7.0a0")
-            else:
-                deps.append(dep)
-        instructions["packages"][fn]["depends"] = deps
-
-
 def _fix_nomkl_features(record, depends):
     if record["features"] == "nomkl":
         record['features'] = None
@@ -493,16 +468,8 @@ def patch_record(fn, record, subdir, instructions, index):
         if record.get(key) != original_record.get(key):
             instructions["packages"][fn][key] = record.get(key)
 
-    # these undo some changes already made.
-    # TODO reviewed the changes and move into patch_record_in_place
-    name = record['name']
-    if subdir == "osx-64":
-        _fix_osx_libgfortan_bounds(fn, record, instructions)
-    # this un-does libgfortran fixes, needs to be after _fix_osx_libgfortan_bounds
-    _fix_libnetcdf_upper_bound(fn, record, instructions)
-
     # One-off patches that do not fit in with others
-    if name == 'numpy':
+    if record["name"] == 'numpy':
         _fix_numpy_base_constrains(record, index, instructions, subdir)
 
     # set a specific timestamp for numba-0.36.1
@@ -755,6 +722,8 @@ def patch_record_in_place(fn, record, subdir):
             libffi_idx = depends.index('libffi')
         depends[libffi_idx] = 'libffi >=3.2.1,<3.3a0'
 
+    replace_dep(depends, "libnetcdf >=4.6.1,<5.0a0", "libnetcdf >=4.6.1,<4.7.0a0")
+
     ##########################
     # single package depends #
     ##########################
@@ -845,6 +814,9 @@ def patch_record_in_place(fn, record, subdir):
 
     if subdir.startswith("linux-"):
         _fix_linux_runtime_bounds(depends)
+
+    if subdir == "osx-64":
+        replace_dep(depends, 'libgfortran >=3.0.1', 'libgfortran >=3.0.1,<4.0.0.a0')
 
     # loosen binutils_impl dependency on gcc_impl_ packages
     if name.startswith('gcc_impl_'):
