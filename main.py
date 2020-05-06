@@ -761,7 +761,7 @@ def patch_record_in_place(fn, record, subdir):
     replace_dep(depends, 'openssl >=1.1.1,<1.1.2.0a0', 'openssl >=1.1.1a,<1.1.2a')
 
     # kealib 1.4.8 changed sonames, add new upper bound to existing packages
-    replace_dep(depends, 'kealib >=1.4.7,<1.5.0a0', 'kealib>=1.4.7,<1.4.8.0a0')
+    replace_dep(depends, 'kealib >=1.4.7,<1.5.0a0', 'kealib >=1.4.7,<1.4.8.0a0')
 
     if any(dep.startswith('glib >=') for dep in depends):
         # TODO this avoids all patching for the anaconda package if glib >= is in depends, not correct
