@@ -722,6 +722,10 @@ def patch_record_in_place(fn, record, subdir):
 
     replace_dep(depends, "libnetcdf >=4.6.1,<5.0a0", "libnetcdf >=4.6.1,<4.7.0a0")
 
+    # ZeroMQ DLL includes patch number in DLL name, which limits the upper bound
+    if subdir.startswith('win-'):
+        replace_dep(depends, "zeromq >=4.3.1,<4.4.0a0", "zeromq >=4.3.1,<4.3.2.0a0")
+
     ##########################
     # single package depends #
     ##########################
