@@ -810,6 +810,11 @@ def patch_record_in_place(fn, record, subdir):
         if 'toml >=0.7.1' not in depends:
             depends.append('toml >=0.7.1')
 
+    # flask <1.0 should pin werkzeug to <1.0.0
+    if name == 'flask' and version[0] == '0':
+        replace_dep(depends, 'werkzeug', 'werkzeug <1.0.0')
+        replace_dep(depends, 'werkzeug >=0.7', 'werkzeug >=0.7,<1.0.0')
+
     ###########################
     # compilers and run times #
     ###########################
