@@ -815,6 +815,11 @@ def patch_record_in_place(fn, record, subdir):
         replace_dep(depends, 'werkzeug', 'werkzeug <1.0.0')
         replace_dep(depends, 'werkzeug >=0.7', 'werkzeug >=0.7,<1.0.0')
 
+    # package found the freetype library in the build enviroment rather than
+    # host but used the host run_export: freetype >=2.9.1,<3.0a0
+    if subdir == 'osx-64' and fn == 'harfbuzz-2.4.0-h831d699_0.tar.bz2':
+        replace_dep(depends, 'freetype >=2.9.1,<3.0a0', 'freetype >=2.10.2,<3.0a0')
+
     ###########################
     # compilers and run times #
     ###########################
