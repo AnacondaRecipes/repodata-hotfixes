@@ -707,6 +707,9 @@ def patch_record_in_place(fn, record, subdir):
     # kealib 1.4.8 changed sonames, add new upper bound to existing packages
     replace_dep(depends, 'kealib >=1.4.7,<1.5.0a0', 'kealib >=1.4.7,<1.4.8.0a0')
 
+    # zstd has been ABI compatible in the 1.4.x releases
+    replace_dep(depends, 'zstd >=1.4.4,<1.4.5.0a0', 'zstd >=1.4.4,<1.5.0a0')
+
     # glib is compatible up to the major version
     for i, dep in enumerate(depends):
         if dep.startswith('glib >='):
