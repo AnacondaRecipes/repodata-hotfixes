@@ -820,6 +820,11 @@ def patch_record_in_place(fn, record, subdir):
     if subdir == 'osx-64' and fn == 'harfbuzz-2.4.0-h831d699_0.tar.bz2':
         replace_dep(depends, 'freetype >=2.9.1,<3.0a0', 'freetype >=2.10.2,<3.0a0')
 
+    # sympy 1.6 and 1.6.1 are missing fastcache and gmpy2 depends
+    if name == "sympy" and version in ['1.6', '1.6.1']:
+        depends.append('fastcache')
+        depends.append('gmpy2 >=2.0.8')
+
     ###########################
     # compilers and run times #
     ###########################
