@@ -828,6 +828,12 @@ def patch_record_in_place(fn, record, subdir):
         depends.append('fastcache')
         depends.append('gmpy2 >=2.0.8')
 
+    if name == "pytest-openfiles" and version == "0.5.0":
+        depends[:] = ["psutil", "pytest >=4.6", "python >=3.6"]
+
+    if name == "pytest-doctestplus" and version == "0.7.0":
+        depends[:] = ["numpy >=1.10", "pytest >=4.0", "python >=3.6"]
+
     ###########################
     # compilers and run times #
     ###########################
