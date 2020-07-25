@@ -865,6 +865,31 @@ def patch_record_in_place(fn, record, subdir):
         if name == 'clangxx_osx-64' and version == '4.0.1' and int(build_number) < 17:
             depends[:] = ['clang_osx-64 >=4.0.1,<4.0.2.0a0', 'clangxx', 'libcxx']
 
+    # make sure cdts conflict with conda-forge sysroot packages due to
+    # the renamed sysroot path
+    if (
+        subdir == "noarch"
+        and (
+            name.endswith("-cos6-x86_64") or
+            name.endswith("-cos7-x86_64") or
+            name.endswith("-cos7-aarch64") or
+            name.endswith("-cos7-ppc64le")
+        )
+        and not name.startswith("sysroot-")
+        and not any(__r.startswith("sysroot_") for __r in depends)
+    ):
+        if name.endswith("x86_64"):
+            sys_subdir = "linux-64"
+        elif name.endswith("aarch64"):
+            sys_subdir = "linux-aarch64"
+        elif name.endswith("ppc64le"):
+            sys_subdir = "linux-ppc64le"
+
+        if not any(__r.startswith("sysroot_") for __r in constrains):
+            constrains.append("sysroot_" + sys_subdir + " ==99999999999")
+            if "constrains" not in record:
+                record["constrains"] = constrains
+
 
 def replace_dep(depends, old, new):
     """ Replace a old dependency with a new one. """
