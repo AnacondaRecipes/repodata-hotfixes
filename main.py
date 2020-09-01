@@ -532,13 +532,12 @@ def patch_record_in_place(fn, record, subdir):
         if dep.split()[0] == 'mkl' and len(dep.split()) > 1 and MKL_VERSION_2018_RE.match(dep.split()[1]):
             depends[i] = MKL_VERSION_2018_EXTENDED_RC.sub('%s,<2019.0a0' % (dep.split()[1]), dep)
 
-    # intel-openmp 2020.0/1 seems to be incompatible with older versions of mkl
+    # intel-openmp 2020.* seems to be incompatible with older versions of mkl
     # issues have only been reported on macOS and Windows but
     # add the constrains on all platforms to be safe
-    if name == 'intel-openmp' and version == '2020.0':
-        record['constrains'] = ["mkl >=2020.0"]
-    if name == 'intel-openmp' and version == '2020.1':
-        record['constrains'] = ["mkl >=2020.1"]
+    if name == 'intel-openmp' and version.startswith('2020'):
+        minor_version = version.split('.')[1]
+        record['constrains'] = [f"mkl >=2020.{minor_version}"]
 
     # mkl 2020.x is compatible with 2019.x
     # so mkl >=2019.x,<2020.0a0 becomes mkl >=2019.x,<2021.0a0
