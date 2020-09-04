@@ -217,6 +217,10 @@ MKL_VERSION_2018_EXTENDED_RC = re.compile(r">=2018(.\d){0,2}")
 LINUX_RUNTIME_RE = re.compile(r"lib(\w+)-ng\s(?:>=)?([\d\.]+\d)(?:$|\.\*)")
 LINUX_RUNTIME_DEPS = ("libgcc-ng", "libstdcxx-ng", "libgfortran-ng")
 
+# Packages that do *not* need to have their libffi dependencies patched
+LIBFFI_HOTFIX_EXCLUDES = [
+    "_anaconda_depends",
+]
 
 def _replace_vc_features_with_vc_pkg_deps(name, record, depends):
     python_vc_deps = {
@@ -715,7 +719,8 @@ def patch_record_in_place(fn, record, subdir):
             depends[i] = dep.split(',')[0] + ',<3.0a0'
 
     # libffi broke ABI compatibility in 3.3
-    if 'libffi >=3.2.1,<4.0a0' in depends or 'libffi' in depends:
+    if name not in LIBFFI_HOTFIX_EXCLUDES and \
+            ('libffi >=3.2.1,<4.0a0' in depends or 'libffi' in depends):
         if 'libffi >=3.2.1,<4.0a0' in depends:
             libffi_idx = depends.index('libffi >=3.2.1,<4.0a0')
         else:
