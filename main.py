@@ -791,6 +791,10 @@ def patch_record_in_place(fn, record, subdir):
     if name == 'ipython' and version.startswith('7.'):
         replace_dep(depends, 'prompt_toolkit >=2.0.0', 'prompt_toolkit >=2.0.0,<3')
 
+    # IPython has an upper bound on jedi; see conda-forge/ipython-feedstock#127
+    if name == 'ipython':
+        replace_dep(depends, 'jedi >=0.10', 'jedi >=0.10,<0.18')
+
     # jupyter_console 5.2.0 has bounded dependency on prompt_toolkit
     if name == 'jupyter_console' and version == "5.2.0":
         replace_dep(depends, 'prompt_toolkit', 'prompt_toolkit >=1.0.0,<2')
