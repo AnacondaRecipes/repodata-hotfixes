@@ -22,6 +22,7 @@ SUBDIRS = (
     "linux-armv6l",
     "linux-armv7l",
     "linux-ppc64le",
+    "linux-s390x",
     "osx-64",
     "win-32",
     "win-64",
@@ -184,6 +185,7 @@ NP_BASE_LOOSE_PIN = {
     "linux-aarch64": [],
     "linux-armv6l": [],
     "linux-armv7l": [],
+    "linux-s390x": [],
 }
 
 BLAS_USING_PKGS = {"numpy", "numpy-base", "scipy", "numexpr", "scikit-learn", "libmxnet"}
@@ -366,7 +368,7 @@ def _fix_numpy_base_constrains(record, index, instructions, subdir):
     base_pkg_fn = '%s-%s-%s.tar.bz2' % (name, ver, build_str)
     if 'constrains' in index[base_pkg_fn]:
         return
-    if base_pkg_fn in NP_BASE_LOOSE_PIN[subdir]:
+    if base_pkg_fn in NP_BASE_LOOSE_PIN.get(subdir, []):
         # base package is a requirement of multiple numpy packages,
         # constrain to only the version
         req = '%s %s' % (record['name'], record['version'])
