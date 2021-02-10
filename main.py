@@ -844,6 +844,12 @@ def patch_record_in_place(fn, record, subdir):
     if name == "pytest-doctestplus" and version == "0.7.0":
         depends[:] = ["numpy >=1.10", "pytest >=4.0", "python >=3.6"]
 
+    # astropy 4.2 bumped the minimum version of numpy required; the recipe was
+    # updated to reflect this, but older 4.2 build need their metadata patched.
+    if name == "astropy" and version == "4.2":
+        depends[:] = [d for d in depends if not d.startswith("numpy ")] + ["numpy >=1.17.0"]
+        depends.sort()
+
     ###########################
     # compilers and run times #
     ###########################
