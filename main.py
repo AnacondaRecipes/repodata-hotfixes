@@ -847,7 +847,8 @@ def patch_record_in_place(fn, record, subdir):
     # astropy 4.2 bumped the minimum version of numpy required; the recipe was
     # updated to reflect this, but older 4.2 build need their metadata patched.
     if name == "astropy" and version == "4.2":
-        depends[:] = [d for d in depends if not d.startswith("numpy ")] + ["numpy >=1.17.0"]
+        depends[:] = [d for d in depends if not d.startswith("numpy ")]
+        depends.append("numpy >=1.17.0,<2.0a0")
         depends.sort()
 
     ###########################
