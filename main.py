@@ -628,6 +628,9 @@ def patch_record_in_place(fn, record, subdir):
     if name == 'tensorboard' and version == '2.0.0' and build_number == 0:
         depends.append('setuptools >=41.0.0')
 
+    if name.startswith('tensorflow-base') and version == '2.4.1':
+        replace_dep(depends, 'gast', 'gast 0.3.3')
+
     ##############
     # constrains #
     ##############
