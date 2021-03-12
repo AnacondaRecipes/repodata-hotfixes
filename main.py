@@ -629,8 +629,7 @@ def patch_record_in_place(fn, record, subdir):
         depends.append('setuptools >=41.0.0')
 
     if name.startswith('tensorflow-base') and version == '2.4.1':
-        replace_dep(depends, 'gast', 'gast == 0.3.3')
-        depends.append('gast == 0.3.3')
+        replace_dep(depends, 'gast', 'gast 0.3.3')
 
     ##############
     # constrains #
