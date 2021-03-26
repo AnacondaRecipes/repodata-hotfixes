@@ -792,6 +792,11 @@ def patch_record_in_place(fn, record, subdir):
         if add_parso_dep:
             depends.append("parso 0.5.2.*")
 
+    #  spyder 4.2.4 should have an upper bound on qdarkstyle and requires a newer qtconsole.
+    if name == 'spyder' and version == '4.2.4':
+        replace_dep(depends, 'qdarkstyle >=2.8', 'qdarkstyle >=2.8,<3.0')
+        replace_dep(depends, 'qtconsole >=5.0.1', 'qtconsole >=5.0.3')
+
     # IPython >=7,<7.10 should have an upper bound on prompt_toolkit
     if name == 'ipython' and version.startswith('7.'):
         replace_dep(depends, 'prompt_toolkit >=2.0.0', 'prompt_toolkit >=2.0.0,<3')
