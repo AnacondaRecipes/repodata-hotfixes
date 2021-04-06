@@ -805,6 +805,16 @@ def patch_record_in_place(fn, record, subdir):
         replace_dep(depends, 'qdarkstyle >=2.8', 'qdarkstyle >=2.8,<3.0')
         replace_dep(depends, 'qtconsole >=5.0.1', 'qtconsole >=5.0.3')
 
+    # spyder 5.0 new dependencies were not properly captured in our recipe
+    if name == 'spyder-kernels' and version == '2.0.1':
+        replace_dep(depends, 'ipykernel >=5.1.3', 'ipykernel >=5.3.0')
+    if name == 'spyder' and version == '5.0.0':
+        replace_dep(depends, 'qdarkstyle >=2.8,<3.0', 'qdarkstyle 3.0.2.*')
+        replace_dep(depends, 'spyder-kernels >=1.10.2,<1.11.0', 'spyder-kernels >=2.0.1,<2.1.0')
+        depends.append('qstylizer >=0.1.10')
+        depends.append('cookiecutter >=1.6.0')
+        depends.sort()
+
     # IPython >=7,<7.10 should have an upper bound on prompt_toolkit
     if name == 'ipython' and version.startswith('7.'):
         replace_dep(depends, 'prompt_toolkit >=2.0.0', 'prompt_toolkit >=2.0.0,<3')
