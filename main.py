@@ -766,7 +766,7 @@ def patch_record_in_place(fn, record, subdir):
 
     if (name == 'dask-core' and version == '2021.3.1' and build_number == 0):
         depends[:] = ['python >=3.7', 'cloudpickle >=1.1.1', 'fsspec >=0.6.0',
-                      'partd >= 0.3.10', 'pyyaml', 'toolz >=0.8.2']
+                      'partd >=0.3.10', 'pyyaml', 'toolz >=0.8.2']
     if (name == 'dask' and version == '2021.3.1' and build_number == 0):
         depends[:] = ['python >=3.7', 'numpy >=1.16'] + [d for d in depends if d.split(' ')[0]
             not in ('python', 'cloudpickle', 'fsspec', 'numpy', 'partd', 'toolz')]
