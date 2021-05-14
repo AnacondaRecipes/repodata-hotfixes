@@ -877,6 +877,12 @@ def patch_record_in_place(fn, record, subdir):
         depends.append("numpy >=1.17.0,<2.0a0")
         depends.sort()
 
+    # some builds of gitpyhon 3.1.17 list the wrong dependencies
+    if name == "gitpython" and version == "3.1.17":
+        depends[:] = ["gitdb >=4.0.1,<5", "python >=3.5",
+                      "typing-extensions >=3.7.4.0"]
+
+
     ###########################
     # compilers and run times #
     ###########################
