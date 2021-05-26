@@ -883,7 +883,8 @@ def patch_record_in_place(fn, record, subdir):
                       "typing-extensions >=3.7.4.0"]
 
     # click-repl incompatible with click >=8.0
-    if name == 'click-repl' and version == "0.1.6":
+    # TODO: set upper bounds once this is fixed upstream comment
+    if name == 'click-repl':
         replace_dep(depends, 'click', 'click <8.0')
 
 
