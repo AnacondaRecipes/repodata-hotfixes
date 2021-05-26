@@ -882,6 +882,11 @@ def patch_record_in_place(fn, record, subdir):
         depends[:] = ["gitdb >=4.0.1,<5", "python >=3.5",
                       "typing-extensions >=3.7.4.0"]
 
+    # click-repl incompatible with click >=8.0
+    # TODO: set upper bounds once this is fixed upstream comment
+    if name == 'click-repl':
+        replace_dep(depends, 'click', 'click <8.0')
+
 
     ###########################
     # compilers and run times #
