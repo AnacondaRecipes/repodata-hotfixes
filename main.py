@@ -887,6 +887,11 @@ def patch_record_in_place(fn, record, subdir):
     if name == 'click-repl':
         replace_dep(depends, 'click', 'click <8.0')
 
+    # tifffile 2021.3.31 requires Python >=3.7, imagecodecs >=2021.3.31
+    if name == 'tifffile' and version == "2021.3.31":
+        replace_dep(depends, 'python >=3.6', 'python >=3.7')
+        replace_dep(depends, 'imagecodecs', 'imagecodecs >=2021.3.31')
+
 
     ###########################
     # compilers and run times #
