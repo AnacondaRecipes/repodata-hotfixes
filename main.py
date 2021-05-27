@@ -894,7 +894,8 @@ def patch_record_in_place(fn, record, subdir):
 
     # Panel<0.11.0 requires Bokeh<2.3
     if name == 'panel':
-        if version in ['0.4.0','0.5.1','0.7.0','0.8.0'] or version.startswith('0.6.') or version.startswith('0.9.') or version.startswith('0.10.'):
+        ver_parts = version.split('.')
+        if int(ver_parts[0]) == 0 and int(ver_parts[1]) < 11:
             replace_dep(depends, 'bokeh >=2.2', 'bokeh >=2.2,<2.3')
 
     ###########################
