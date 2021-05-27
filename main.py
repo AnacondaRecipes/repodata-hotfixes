@@ -896,7 +896,9 @@ def patch_record_in_place(fn, record, subdir):
     if name == 'panel':
         ver_parts = version.split('.')
         if int(ver_parts[0]) == 0 and int(ver_parts[1]) < 11:
-            replace_dep(depends, 'bokeh >=2.2', 'bokeh >=2.2,<2.3')
+            for i, dep in enumerate(depends):
+                if dep.startswith('bokeh >='):
+                    depends[i] = dep.split(',')[0] + ',<2.3'
 
     ###########################
     # compilers and run times #
