@@ -892,6 +892,10 @@ def patch_record_in_place(fn, record, subdir):
         replace_dep(depends, 'python >=3.6', 'python >=3.7')
         replace_dep(depends, 'imagecodecs', 'imagecodecs >=2021.3.31')
 
+    # Panel<0.11.0 requires Bokeh<2.3
+    if name == 'panel':
+        if version in ['0.4.0','0.5.1','0.7.0','0.8.0'] or version.startswith('0.6.') or version.startswith('0.9.') or version.startswith('0.10.'):
+            replace_dep(depends, 'bokeh >=2.2', 'bokeh >=2.2,<2.3')
 
     ###########################
     # compilers and run times #
