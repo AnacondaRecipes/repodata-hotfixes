@@ -715,13 +715,18 @@ def patch_record_in_place(fn, record, subdir):
     # kealib 1.4.8 changed sonames, add new upper bound to existing packages
     replace_dep(depends, 'kealib >=1.4.7,<1.5.0a0', 'kealib >=1.4.7,<1.4.8.0a0')
 
-    # zstd has been ABI compatible in the 1.4.x releases
-    replace_dep(depends, 'zstd >=1.4.4,<1.4.5.0a0', 'zstd >=1.4.4,<1.5.0a0')
-
-    # glib is compatible up to the major version
+    # Other broad replacements
     for i, dep in enumerate(depends):
+        # glib is compatible up to the major version
         if dep.startswith('glib >='):
             depends[i] = dep.split(',')[0] + ',<3.0a0'
+
+        # zstd has been more or less ABI compatible in the 1.4.x releases.
+        # `ZSTD_getSequences` is the only symbol reported as being removed
+        # between 1.4.0 and 1.5.0, but as far as we can tell, none of our
+        # (linux-64) packages actually use it.
+        if dep.startswith('zstd >=1.4.'):
+            depends[i] = dep.split(',')[0] + ',<1.5.0a0'
 
     # libffi broke ABI compatibility in 3.3
     if name not in LIBFFI_HOTFIX_EXCLUDES and \
