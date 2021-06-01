@@ -728,14 +728,6 @@ def patch_record_in_place(fn, record, subdir):
         if dep.startswith('zstd >=1.4.'):
             depends[i] = dep.split(',')[0] + ',<1.5.0a0'
 
-        # hdf5 is ABI compatible between 1.10.3 to 1.10.7, inclusive.
-        # Ref: https://abi-laboratory.pro/index.php?view=timeline&l=hdf5
-        if dep.startswith('hdf5 >=1.10.'):
-            lower_bound = dep.split(',')[0]
-            patch_ver = lower_bound.split('.')[2]
-            if int(patch_ver) >= 3:
-                depends[i] = lower_bound + ',<1.10.8.0a0'
-
     # libffi broke ABI compatibility in 3.3
     if name not in LIBFFI_HOTFIX_EXCLUDES and \
             ('libffi >=3.2.1,<4.0a0' in depends or 'libffi' in depends):
