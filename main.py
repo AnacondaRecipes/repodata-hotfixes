@@ -902,8 +902,10 @@ def patch_record_in_place(fn, record, subdir):
         ver_parts = version.split('.')
         if int(ver_parts[0]) == 0 and int(ver_parts[1]) < 11:
             for i, dep in enumerate(depends):
-                if dep.startswith('bokeh >='):
+                if dep.startswith('bokeh >=2.'):
                     depends[i] = dep.split(',')[0] + ',<2.3'
+                if dep.startswith('bokeh >=1.'):
+                    depends[i] = dep.split(',')[0] + ',<2.0.0a0'
 
     ###########################
     # compilers and run times #
