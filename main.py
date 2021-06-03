@@ -907,6 +907,15 @@ def patch_record_in_place(fn, record, subdir):
                 if dep.startswith('bokeh >=1.'):
                     depends[i] = dep.split(',')[0] + ',<2.0.0a0'
 
+    # distributed 2021.5.0 requires dask-core 2021.5.0 and
+    # distributed 2021.4.1 requires dask-core 2021.4.1
+    # see how it was fixed for 2021.5.1 https://github.com/AnacondaRecipes/distributed-feedstock/blob/master/recipe/meta.yaml
+    if name == 'distributed':
+        if version == "2021.5.0":
+            replace_dep(depends, 'dask >=2021.04.0', 'dask-core 2021.5.0.*')
+        if version == "2021.4.1":
+            replace_dep(depends, 'dask >=2021.3.0', 'dask-core 2021.4.1.*')
+
     ###########################
     # compilers and run times #
     ###########################
