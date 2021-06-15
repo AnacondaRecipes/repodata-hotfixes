@@ -916,6 +916,10 @@ def patch_record_in_place(fn, record, subdir):
         if version == "2021.4.1":
             replace_dep(depends, 'dask >=2021.3.0', 'dask-core 2021.4.1.*')
 
+    #aiobotocore 1.2.2 needs botocore >=1.19.52,<1.19.53
+    if name == 'aiobotocore' and version.startswith('1.2.'):
+        replace_dep(depends, 'botocore', 'botocore >=1.19.52,<1.19.53')
+
     ###########################
     # compilers and run times #
     ###########################
