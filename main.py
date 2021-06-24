@@ -883,7 +883,7 @@ def patch_record_in_place(fn, record, subdir):
         depends.sort()
 
     # some builds of gitpyhon 3.1.17 list the wrong dependencies
-    if name == "gitpython" and version == "3.1.17":
+    if name == "gitpython" and version in ("3.1.17", "3.1.18"):
         depends[:] = ["gitdb >=4.0.1,<5", "python >=3.5",
                       "typing-extensions >=3.7.4.0"]
 
