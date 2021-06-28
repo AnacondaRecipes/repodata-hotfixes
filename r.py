@@ -199,6 +199,11 @@ def _patch_repodata(repodata, subdir):
                 record['depends'].append('r-base 3.1.2')
                 instructions["packages"][fn]["depends"] = record['depends']
 
+        # Every artifact's metadata requires 'subdir'.
+        if "subdir" not in record:
+            record["subdir"] = subdir
+            instructions["packages"][fn]["subdir"] = subdir
+
         # cyclical dep here.  Everything should depend on r-base instead of r, as r brings in r-essentials
         new_deps = []
         for dep in record['depends']:
