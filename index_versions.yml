@@ -1,2 +1,6 @@
+# As used in conda index on Zeus, this prevents the "custom" version of the
+# Anaconda metapackage from being excluded from the reduced-size repodata
+# file, current_repodata.json, in order to improve solver behavior.
+# See https://docs.anaconda.com/anaconda/install/update-version/
 anaconda:
   - custom
