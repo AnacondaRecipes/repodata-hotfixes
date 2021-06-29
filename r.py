@@ -179,7 +179,7 @@ def _combine_package_types(repodata):
 
 
 
-def _separate_package_types(repodata, instructions=[]):
+def _separate_package_types(repodata, instructions=None):
     """
     Given repodata edited by _combine_package_types, separate package types
     again (into the 'packages' and 'packages.conda' entries in repodata, as
@@ -198,6 +198,9 @@ def _separate_package_types(repodata, instructions=[]):
         if artifact.endswith('.conda'):
             repodata['packages.conda'][artifact] = repodata['packages'][artifact]
             del repodata['packages'][artifact]
+
+    if instructions is None:
+        return
 
     if 'packages.conda' in instructions:
         raise Exception(
