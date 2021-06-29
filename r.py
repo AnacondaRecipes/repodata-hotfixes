@@ -134,6 +134,85 @@ def _get_record_depends(fn, record, instructions):
     return record_depends
 
 
+
+def _combine_package_types(repodata):
+    """
+    Given repodata, combines .tar.bz2 entries and .conda entries (that is,
+    entries in "packages" and entries in "packages.conda") into one dictionary.
+    This updates repodata in place, emptying the "packages.conda" entry into
+    the "packages" entry.  They can later be separated again by
+    _separate_package_types.
+
+    For this to work, this function performs these checks before combining them
+    so that they remain intact and can be separated again:
+      - All entries in "packages" DO NOT end in ".conda".
+      - All entries "packages.conda" end in ".conda".
+
+    This is messier than using the two dictionary entries correctly in every
+    iteration, but the code in this patcher is diverse and a little chaotic,
+    and this seems safer for now.
+    """
+    for artifact in repodata['packages']:
+        if artifact.endswith('.conda'):
+            raise Exception(
+                    'Artifact in "packages" ends with .conda')
+    for artifact in repodata['packages.conda']:
+        if not artifact.endswith('.conda'):
+            raise Exception(
+                    'Artifact in "packages.conda" does not end in .conda')
+
+
+    # # Redundantly (forward-safe), check that the number of packages is not
+    # # reduced (which should not be possible if the checks above are written
+    # # correctly.
+    # all_packages = copy.deepcopy(repodata['packages'])
+    # all_packages.update(copy.deepcopy(repodata['packages']))
+    # if (   # test for possible intersections
+    #         len(all_packages) !=
+    #         len(repodata['packages']) + len(repodata['packages.conda'])):
+    #     raise Exception(
+    #             'Combination of .tar.bz2 and .conda package entries failed; '
+    #             'we ended up with the wrong number of entries.')
+
+    repodata['packages'].update(repodata['packages.conda'])
+    del repodata['packages.conda']
+
+
+
+def _separate_package_types(repodata, instructions=[]):
+    """
+    Given repodata edited by _combine_package_types, separate package types
+    again (into the 'packages' and 'packages.conda' entries in repodata, as
+    usual).  This updates repodata in place.
+
+    If provided an instructions argument (patch instructions), also separates
+    that (in place as well).
+    """
+    if 'packages.conda' in repodata:
+        raise Exception(
+                '_separate_package_types likely being used incorrectly: '
+                'the given repodata already includes a "packages.conda" dict.')
+
+    repodata['packages.conda'] = {}
+    for artifact in list(repodata['packages'].keys()):   # using list(...keys()) so I can change the size of the dict itself during loop iteration.  It's fine.
+        if artifact.endswith('.conda'):
+            repodata['packages.conda'][artifact] = repodata['packages'][artifact]
+            del repodata['packages'][artifact]
+
+    if 'packages.conda' in instructions:
+        raise Exception(
+                '_separate_package_types likely being used incorrectly: '
+                'the given patch instructions already include a '
+                '"packages.conda" dict.')
+
+    instructions['packages.conda'] = {}
+    for artifact in list(instructions['packages'].keys()):  # using list(...keys()) so I can change the size of the dict itself during loop iteration.  It's fine.
+        if artifact.endswith('.conda'):
+            instructions['packages.conda'][artifact] = instructions['packages'][artifact]
+            del instructions['packages'][artifact]
+
+
+
 def _patch_repodata(repodata, subdir):
     instructions = {
         "patch_instructions_version": 1,
@@ -144,6 +223,9 @@ def _patch_repodata(repodata, subdir):
     if 'packages' not in repodata:
         return instructions
 
+    # Move all "packages.conda" contents to "packages", checking to ensure that
+    # they can be separated later.
+    _combine_package_types(repodata)
     index = repodata["packages"]
     instructions["remove"].extend(REMOVALS.get(subdir, ()))
 
@@ -263,6 +345,11 @@ def _patch_repodata(repodata, subdir):
             depends = [fix_glib_dep(dep) for dep in record_depends]
             if depends != record_depends:
                 instructions["packages"][fn]["depends"] = depends
+
+    # Split the "packages" entries back into "packages" and "packages.conda" in
+    # both the repodata and instructions, undoing what we did earlier in this
+    # function to combine them.
+    _separate_package_types(repodata, instructions)
 
     return instructions
 
