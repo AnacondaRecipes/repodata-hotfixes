@@ -943,6 +943,17 @@ def patch_record_in_place(fn, record, subdir):
     if name == 'libgcc-ng':
         depends.append('_libgcc_mutex * main')
 
+    # Limit breaks as we transition from CentOS 6 to 7
+    if (subdir == 'linux-64' and
+            name in ('libgcc-ng', 'libstdcxx-ng', 'libgfortran-ng') and
+            version in ('7.5.0', '8.4.0', '9.3.0')
+            ):
+        # This would probably be better as a `constrains`, but conda's solver
+        # currently has issues enforcing virtual package constrains. Making
+        # `__glibc` a hard `depends` will almost surely break building
+        # cross-platform environments (e.g., via setting `$CONDA_SUBDIR`).
+        depends.append('__glibc >=2.17')
+
     if subdir == "osx-64":
         # fix clang_osx-64 and clangcxx_osx-64 packages to include dependencies, see:
         # https://github.com/AnacondaRecipes/aggregate/pull/164
