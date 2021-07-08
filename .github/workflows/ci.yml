@@ -1,0 +1,31 @@
+name: CI
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  test:
+    runs-on: "ubuntu-latest"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Setup Miniconda
+        uses: conda-incubator/setup-miniconda@v2
+      - name: Setup environment
+        shell: bash -l {0}
+        run: |
+          conda create --name testenv conda conda-build requests
+      - name: Test
+        shell: bash -l {0}
+        run: |
+          conda activate testenv
+          echo "################## main ###########################"
+          python test-hotfix.py main --subdir noarch linux-32 linux-64 linux-aarch64 linux-ppc64le linux-s390x osx-64 win-32 win-64
+          echo "################## r    ###########################"
+          python test-hotfix.py r --subdir noarch linux-32 linux-64 linux-aarch64 linux-ppc64le osx-64 win-32 win-64
+          echo "###################################################"
