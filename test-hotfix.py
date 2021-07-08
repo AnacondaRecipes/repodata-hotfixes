@@ -1,11 +1,11 @@
+import difflib
 import json
 import os
-import difflib
 import subprocess
 
-from six.moves import urllib
 from conda.exports import subdir
 from conda_build.index import _apply_instructions
+from six.moves import urllib
 
 html_differ = difflib.HtmlDiff()
 diff_options = {'unified': difflib.unified_diff,

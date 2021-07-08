@@ -1,14 +1,15 @@
 # -*- coding: utf-8 -*-
-from __future__ import absolute_import, division, print_function, unicode_literals
+from __future__ import (absolute_import, division, print_function,
+                        unicode_literals)
 
-from collections import defaultdict
+import copy
 import fnmatch
 import json
 import os
-from os.path import join, dirname, isfile, isdir
 import re
 import sys
-import copy
+from collections import defaultdict
+from os.path import dirname, isdir, isfile, join
 
 import requests
 
