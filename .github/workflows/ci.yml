@@ -19,7 +19,14 @@ jobs:
       - name: Setup environment
         shell: bash -l {0}
         run: |
-          conda create --name testenv conda conda-build requests
+          conda create --name testenv conda conda-build flake8 requests
+      - name: Lint
+        shell: bash -l {0}
+        run: |
+          conda activate testenv
+          echo "::add-matcher::.github/flake8-matcher.json"
+          flake8 --count --exit-zero .
+          echo "::remove-matcher owner=flake8::"
       - name: Test
         shell: bash -l {0}
         run: |
