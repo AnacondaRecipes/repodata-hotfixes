@@ -5,7 +5,7 @@ import subprocess
 
 from conda.exports import subdir as conda_subdir
 from conda_build.index import _apply_instructions
-from six.moves import urllib
+import urllib
 
 html_differ = difflib.HtmlDiff()
 diff_options = {'unified': difflib.unified_diff,
