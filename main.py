@@ -572,6 +572,11 @@ def patch_record_in_place(fn, record, subdir):
         if not any(re.match(r'blas\s.*\smkl', dep) for dep in record['depends']):
             depends.append("blas * mkl")
 
+    if name == 'openblas':
+        for i, dep in enumerate(depends):
+            if dep.split()[0] == 'nomkl':
+                depends[i] = 'nomkl 3.0 0'
+
     if name == 'openblas-devel' and not any(d.startswith('blas ') for d in depends):
         depends.append("blas * openblas")
 
