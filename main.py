@@ -1,14 +1,11 @@
-# -*- coding: utf-8 -*-
-from __future__ import absolute_import, division, print_function, unicode_literals
-
-from collections import defaultdict
+import copy
 import fnmatch
 import json
 import os
-from os.path import join, dirname, isfile, isdir
 import re
 import sys
-import copy
+from collections import defaultdict
+from os.path import dirname, isdir, isfile, join
 
 import requests
 
@@ -36,10 +33,11 @@ REMOVALS = {
         'qt-5.9.7-h468cd18_0.tar.bz2',
         ],
     "win-32": ["nomkl-*"],
-    "win-64": ["nomkl-*",
-               # numba 0.46 didn't actually support py38
-               "numba-0.46.0-py38hf9181ef_0.tar.bz2",
-              ],
+    "win-64": [
+        "nomkl-*",
+        # numba 0.46 didn't actually support py38
+        "numba-0.46.0-py38hf9181ef_0.tar.bz2",
+    ],
     "linux-64": [
         "numba-0.46.0-py38h962f231_0.tar.bz2",
     ],
@@ -223,6 +221,7 @@ LINUX_RUNTIME_DEPS = ("libgcc-ng", "libstdcxx-ng", "libgfortran-ng")
 LIBFFI_HOTFIX_EXCLUDES = [
     "_anaconda_depends",
 ]
+
 
 def _replace_vc_features_with_vc_pkg_deps(name, record, depends):
     python_vc_deps = {
@@ -570,7 +569,7 @@ def patch_record_in_place(fn, record, subdir):
         _fix_nomkl_features(record, depends)
 
     if name in ("mkl_random", "mkl_fft"):
-        if not any(re.match('blas\s.*\smkl', dep) for dep in record['depends']):
+        if not any(re.match(r'blas\s.*\smkl', dep) for dep in record['depends']):
             depends.append("blas * mkl")
 
     if name == 'openblas-devel' and not any(d.startswith('blas ') for d in depends):
@@ -773,8 +772,8 @@ def patch_record_in_place(fn, record, subdir):
         depends[:] = ['python >=3.7', 'cloudpickle >=1.1.1', 'fsspec >=0.6.0',
                       'partd >=0.3.10', 'pyyaml', 'toolz >=0.8.2']
     if (name == 'dask' and version == '2021.3.1' and build_number == 0):
-        depends[:] = ['python >=3.7', 'numpy >=1.16'] + [d for d in depends if d.split(' ')[0]
-            not in ('python', 'cloudpickle', 'fsspec', 'numpy', 'partd', 'toolz')]
+        depends[:] = ['python >=3.7', 'numpy >=1.16'] + [
+            d for d in depends if d.split(' ')[0] not in ('python', 'cloudpickle', 'fsspec', 'numpy', 'partd', 'toolz')]
         depends.sort()
 
     # sparkmagic <=0.12.7 has issues with ipykernel >4.10
@@ -909,14 +908,15 @@ def patch_record_in_place(fn, record, subdir):
 
     # distributed 2021.5.0 requires dask-core 2021.5.0 and
     # distributed 2021.4.1 requires dask-core 2021.4.1
-    # see how it was fixed for 2021.5.1 https://github.com/AnacondaRecipes/distributed-feedstock/blob/master/recipe/meta.yaml
+    # see how it was fixed for 2021.5.1:
+    #   https://github.com/AnacondaRecipes/distributed-feedstock/blob/master/recipe/meta.yaml
     if name == 'distributed':
         if version == "2021.5.0":
             replace_dep(depends, 'dask >=2021.04.0', 'dask-core 2021.5.0.*')
         if version == "2021.4.1":
             replace_dep(depends, 'dask >=2021.3.0', 'dask-core 2021.4.1.*')
 
-    #aiobotocore 1.2.2 needs botocore >=1.19.52,<1.19.53
+    # aiobotocore 1.2.2 needs botocore >=1.19.52,<1.19.53
     if name == 'aiobotocore' and version.startswith('1.2.'):
         replace_dep(depends, 'botocore', 'botocore >=1.19.52,<1.19.53')
 
@@ -946,8 +946,7 @@ def patch_record_in_place(fn, record, subdir):
     # Limit breaks as we transition from CentOS 6 to 7
     if (subdir == 'linux-64' and
             name in ('libgcc-ng', 'libstdcxx-ng', 'libgfortran-ng') and
-            version in ('7.5.0', '8.4.0', '9.3.0')
-            ):
+            version in ('7.5.0', '8.4.0', '9.3.0')):
         # This would probably be better as a `constrains`, but conda's solver
         # currently has issues enforcing virtual package constrains. Making
         # `__glibc` a hard `depends` will almost surely break building

@@ -1,11 +1,8 @@
-# -*- coding: utf-8 -*-
-from __future__ import absolute_import, division, print_function, unicode_literals
-
-from collections import defaultdict
 import json
 import os
-from os.path import join, dirname, isfile, isdir
 import sys
+from collections import defaultdict
+from os.path import dirname, isdir, isfile, join
 
 import requests
 
@@ -124,7 +121,6 @@ def do_hotfixes(base_dir):
                 os.makedirs(dirname(repodata_path))
             with open(repodata_path, 'w') as fh:
                 json.dump(repodatas[subdir], fh, indent=2, sort_keys=True, separators=(',', ': '))
-
 
     # Step 2. Create all patch instructions.
     patch_instructions = {}

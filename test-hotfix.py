@@ -1,11 +1,11 @@
+import difflib
 import json
 import os
-import difflib
 import subprocess
 
-from six.moves import urllib
-from conda.exports import subdir
+from conda.exports import subdir as conda_subdir
 from conda_build.index import _apply_instructions
+import urllib
 
 html_differ = difflib.HtmlDiff()
 diff_options = {'unified': difflib.unified_diff,
@@ -33,6 +33,7 @@ def clone_subdir(channel_base_url, subdir):
     print("downloading repodata from {}".format(url))
     urllib.request.urlretrieve(url, out_file)
 
+
 def show_pkgs(subdir, ref_repodata_file, patched_repodata_file):
     with open(ref_repodata_file) as f:
         reference_repodata = json.load(f)
@@ -45,17 +46,17 @@ def show_pkgs(subdir, ref_repodata_file, patched_repodata_file):
         print(f"{subdir}::{name}")
         ref_lines = json.dumps(ref_pkg, indent=2).splitlines()
         new_lines = json.dumps(new_pkg, indent=2).splitlines()
-        for l in difflib.unified_diff(ref_lines, new_lines, n=0, lineterm=''):
-            if l.startswith('+++') or l.startswith('---') or l.startswith('@@'):
+        for line in difflib.unified_diff(ref_lines, new_lines, n=0, lineterm=''):
+            if line.startswith('+++') or line.startswith('---') or line.startswith('@@'):
                 continue
-            print(l)
+            print(line)
 
 
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser(description='Process some integers.')
     parser.add_argument('channel', help='channel name or url to download repodata from')
-    parser.add_argument('--subdirs', nargs='*', help='subdir(s) to download/diff', default=(subdir, ))
+    parser.add_argument('--subdirs', nargs='*', help='subdir(s) to download/diff', default=(conda_subdir, ))
     parser.add_argument('--diff-format', help='format to save diff as',
                         choices=('unified', 'context', 'html'), default='html')
     parser.add_argument('--context-numlines', help='context lines to show around diff',
