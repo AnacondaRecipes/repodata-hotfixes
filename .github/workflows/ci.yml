@@ -25,7 +25,7 @@ jobs:
         run: |
           conda activate testenv
           echo "::add-matcher::.github/flake8-matcher.json"
-          flake8 --count --exit-zero .
+          flake8 --count .
           echo "::remove-matcher owner=flake8::"
       - name: Test
         shell: bash -l {0}

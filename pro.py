@@ -153,7 +153,6 @@ def do_hotfixes(base_dir):
             with open(repodata_path, 'w') as fh:
                 json.dump(repodatas[subdir], fh, indent=2, sort_keys=True, separators=(',', ': '))
 
-
     # Step 2. Create all patch instructions.
     patch_instructions = {}
     for subdir in SUBDIRS:

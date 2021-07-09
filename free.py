@@ -24,6 +24,7 @@ SUBDIRS = (
     "win-64",
 )
 
+
 def _patch_repodata(repodata, subdir):
     index = repodata["packages"]
     instructions = {
@@ -33,7 +34,7 @@ def _patch_repodata(repodata, subdir):
         "remove": [],
     }
 
-    if subdir== "linux-64":
+    if subdir == "linux-64":
         fn = 'openblas-0.2.19-0.tar.bz2'
         if fn in index:
             record = index[fn]
@@ -189,8 +190,8 @@ def _patch_repodata(repodata, subdir):
                 instructions["packages"][fn]['depends'] = depends
         if record_name == "git":
             # fix dependency on openssl
-            instructions["packages"][fn]['depends'] = [*map(lambda x: x if
-                x!='openssl' else 'openssl 1.0.*', record['depends'])]
+            instructions["packages"][fn]['depends'] = [*map(
+                lambda x: x if x != 'openssl' else 'openssl 1.0.*', record['depends'])]
         if "features" in record:
             if "nomkl" in record["features"]:
                 # remove nomkl feature
@@ -254,7 +255,6 @@ def main():
                 os.makedirs(dirname(repodata_path))
             with open(repodata_path, 'w') as fh:
                 json.dump(repodatas[subdir], fh, indent=2, sort_keys=True, separators=(',', ': '))
-
 
     # Step 2. Create all patch instructions.
     patch_instructions = {}

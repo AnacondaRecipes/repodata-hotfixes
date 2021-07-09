@@ -2,7 +2,6 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
-import copy
 import fnmatch
 import json
 import os
@@ -224,10 +223,10 @@ def _patch_repodata(repodata, subdir):
             instructions["packages"][fn]["depends"] = record['depends']
 
         if (any(fnmatch.fnmatch(fn, rev) for rev in REVOKED.get(subdir, [])) or
-                 any(fnmatch.fnmatch(fn, rev) for rev in REVOKED.get("any", []))):
+                any(fnmatch.fnmatch(fn, rev) for rev in REVOKED.get("any", []))):
             instructions['revoke'].append(fn)
         if (any(fnmatch.fnmatch(fn, rev) for rev in REMOVALS.get(subdir, [])) or
-                 any(fnmatch.fnmatch(fn, rev) for rev in REMOVALS.get("any", []))):
+                any(fnmatch.fnmatch(fn, rev) for rev in REMOVALS.get("any", []))):
             instructions['remove'].append(fn)
 
         if any(dep == 'mro-base' for dep in record.get('depends', [])):
@@ -253,6 +252,7 @@ def _patch_repodata(repodata, subdir):
         if any(dep.startswith('glib >=') for dep in record['depends']):
             if record['name'] == 'anaconda':
                 continue
+
             def fix_glib_dep(dep):
                 if dep.startswith('glib >='):
                     return dep.split(',')[0] + ',<3.0a0'
@@ -297,7 +297,6 @@ def do_hotfixes(base_dir):
                 os.makedirs(dirname(repodata_path))
             with open(repodata_path, 'w') as fh:
                 json.dump(repodatas[subdir], fh, indent=2, sort_keys=True, separators=(',', ': '))
-
 
     # Step 2. Create all patch instructions.
     patch_instructions = {}
