@@ -925,6 +925,11 @@ def patch_record_in_place(fn, record, subdir):
     if name == 'aiobotocore' and version.startswith('1.2.'):
         replace_dep(depends, 'botocore', 'botocore >=1.19.52,<1.19.53')
 
+    # pyjwt 2.1.0 has incorrect depends/constrains on cryptography
+    if name == 'pyjwt' and version == '2.1.0':
+        depends[:] = list(d for d in depends if not d.startswith('cryptography '))
+        record["constrains"] = ['cryptography >=3.3.1,<4.0.0']
+
     ###########################
     # compilers and run times #
     ###########################
