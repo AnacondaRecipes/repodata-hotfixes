@@ -134,7 +134,6 @@ def _get_record_depends(fn, record, instructions):
     return record_depends
 
 
-
 def _combine_package_types(repodata):
     """
     Given repodata, combines .tar.bz2 entries and .conda entries (that is,
@@ -161,7 +160,6 @@ def _combine_package_types(repodata):
             raise Exception(
                     'Artifact in "packages.conda" does not end in .conda')
 
-
     # # Redundantly (forward-safe), check that the number of packages is not
     # # reduced (which should not be possible if the checks above are written
     # # correctly.
@@ -176,7 +174,6 @@ def _combine_package_types(repodata):
 
     repodata['packages'].update(repodata['packages.conda'])
     del repodata['packages.conda']
-
 
 
 def _separate_package_types(repodata, instructions=None):
@@ -194,7 +191,9 @@ def _separate_package_types(repodata, instructions=None):
                 'the given repodata already includes a "packages.conda" dict.')
 
     repodata['packages.conda'] = {}
-    for artifact in list(repodata['packages'].keys()):   # using list(...keys()) so I can change the size of the dict itself during loop iteration.  It's fine.
+    # This loop uses list(...keys()) so that it can change the size of the dict
+    # itself during loop iteration.  It's fine.
+    for artifact in list(repodata['packages'].keys()):
         if artifact.endswith('.conda'):
             repodata['packages.conda'][artifact] = repodata['packages'][artifact]
             del repodata['packages'][artifact]
@@ -208,12 +207,20 @@ def _separate_package_types(repodata, instructions=None):
                 'the given patch instructions already include a '
                 '"packages.conda" dict.')
 
-    instructions['packages.conda'] = {}
-    for artifact in list(instructions['packages'].keys()):  # using list(...keys()) so I can change the size of the dict itself during loop iteration.  It's fine.
-        if artifact.endswith('.conda'):
-            instructions['packages.conda'][artifact] = instructions['packages'][artifact]
-            del instructions['packages'][artifact]
+    # Correct behavior would be to treat instructions just like repodata above;
+    # however, this breaks something in the indexing process on the staging
+    # server, so it will have to wait.  For now, we'll continue to exclude
+    # the hotfixes from the patch-instructions.json file, and include them in
+    # repodata.  Uncommenting the "# ##"-prefixed lines corrects the behavior.
 
+    # ##instructions['packages.conda'] = {}
+
+    # This loop uses list(...keys()) so that it can change the size of the dict
+    # itself during loop iteration.  It's fine.
+    for artifact in list(instructions['packages'].keys()):
+        if artifact.endswith('.conda'):
+            # ##instructions['packages.conda'][artifact] = instructions['packages'][artifact]
+            del instructions['packages'][artifact]
 
 
 def _patch_repodata(repodata, subdir):
