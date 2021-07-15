@@ -930,6 +930,9 @@ def patch_record_in_place(fn, record, subdir):
         depends[:] = list(d for d in depends if not d.startswith('cryptography '))
         record["constrains"] = ['cryptography >=3.3.1,<4.0.0']
 
+    if name == 'pyerfa' and version == '2.0.0':
+        replace_dep(depends, 'numpy >=1.17', 'numpy >=1.20.2,<2.0a0')
+
     ###########################
     # compilers and run times #
     ###########################
