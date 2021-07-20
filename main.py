@@ -933,6 +933,17 @@ def patch_record_in_place(fn, record, subdir):
     if name == 'pyerfa' and version == '2.0.0':
         replace_dep(depends, 'numpy >=1.17', 'numpy >=1.20.2,<2.0a0')
 
+    # Possible bug in conda solver, wherein run constrains seem to completely
+    # override version requirements in `depends`.  This results in users being
+    # able to (e.g.) install the Py3.9 build in Py3.7 or Py3.8 environments.
+    if name == 'pandas' and version == '1.3.0':
+        constrains.clear()
+        # Still to set lower bound on compatible Py3.7 interpreters
+        if record['build'].startswith('py37'):
+            for i, dep in enumerate(depends):
+                if dep.startswith('python '):
+                    depends[i] = "python >=3.7.1,<3.8.0a0"
+
     ###########################
     # compilers and run times #
     ###########################
