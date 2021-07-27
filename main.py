@@ -699,6 +699,18 @@ def patch_record_in_place(fn, record, subdir):
         if "python-libarchive-c" not in depends:
             depends.append('python-libarchive-c')
 
+    if name == "conda-build":
+        # Jinja 3.0.0 introduced behavior changes that broke certain
+        # conda-build templating functionality.
+        #
+        # TODO: Review the conda-build and/or jinja version bounds on new
+        # releases of those packages; at some point, the incompatibilities
+        # between conda-build and jinja >=3.0 should be resolved.
+        for i, dep in enumerate(depends):
+            name, *other = dep.split()
+            if name == "jinja2":
+                depends[i] = "jinja2 <3.0.0a0"
+
     if (name == 'constructor' and int(version[0]) < 3):
         replace_dep(depends, 'conda', 'conda <4.6.0a0')
 
