@@ -27,10 +27,25 @@ SUBDIRS = (
 
 REMOVALS = {
     "noarch": (),
-    "linux-ppc64le": [],
+    "linux-ppc64le": [
+        # This build contains incorrect libffi run depends; removing rather
+        # than patching to prevent solver from getting stuck in a bistable
+        # solution (since another build has the same set of requirements).
+        "cffi-1.14.6-py36h140841e_0.tar.bz2",
+        "cffi-1.14.6-py37h140841e_0.tar.bz2",
+        "cffi-1.14.6-py38h140841e_0.tar.bz2",
+        "cffi-1.14.6-py39h140841e_0.tar.bz2",
+        ],
     "osx-64": [
         # qt 5.9.7 accidentially added .conda. to the dylibs names
         'qt-5.9.7-h468cd18_0.tar.bz2',
+        # This build contains incorrect libffi run depends; removing rather
+        # than patching to prevent solver from getting stuck in a bistable
+        # solution (since another build has the same set of requirements).
+        "cffi-1.14.6-py36h9ed2024_0.tar.bz2",
+        "cffi-1.14.6-py37h9ed2024_0.tar.bz2",
+        "cffi-1.14.6-py38h9ed2024_0.tar.bz2",
+        "cffi-1.14.6-py39h9ed2024_0.tar.bz2",
         ],
     "win-32": ["nomkl-*"],
     "win-64": [
@@ -40,6 +55,13 @@ REMOVALS = {
     ],
     "linux-64": [
         "numba-0.46.0-py38h962f231_0.tar.bz2",
+        # This build contains incorrect libffi run depends; removing rather
+        # than patching to prevent solver from getting stuck in a bistable
+        # solution (since another build has the same set of requirements).
+        "cffi-1.14.6-py36h7f8727e_0.tar.bz2",
+        "cffi-1.14.6-py37h7f8727e_0.tar.bz2",
+        "cffi-1.14.6-py38h7f8727e_0.tar.bz2",
+        "cffi-1.14.6-py39h7f8727e_0.tar.bz2",
     ],
     "any": {
         # early efforts on splitting numpy recipe did not pin numpy-base exactly.
