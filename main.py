@@ -47,11 +47,17 @@ REMOVALS = {
         "cffi-1.14.6-py38h9ed2024_0.tar.bz2",
         "cffi-1.14.6-py39h9ed2024_0.tar.bz2",
         ],
-    "win-32": ["nomkl-*"],
+    "win-32": [
+        "nomkl-*",
+        # This release/build breaks matplotlib and possibly other things well
+        "freetype-2.11.0-h88da6cb_0.tar.bz2",
+    ],
     "win-64": [
         "nomkl-*",
         # numba 0.46 didn't actually support py38
         "numba-0.46.0-py38hf9181ef_0.tar.bz2",
+        # This release/build breaks matplotlib and possibly other things well
+        "freetype-2.11.0-ha860e81_0.tar.bz2",
     ],
     "linux-64": [
         "numba-0.46.0-py38h962f231_0.tar.bz2",
