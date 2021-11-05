@@ -978,6 +978,22 @@ def patch_record_in_place(fn, record, subdir):
                 if dep.startswith('python '):
                     depends[i] = "python >=3.7.1,<3.8.0a0"
 
+    # matplotlib-base on breaks with freetype 2.11 on Windows; see
+    # https://github.com/AnacondaRecipes/freetype-feedstock/issues/3.
+    # TODO: consider relaxing/removing once we figure out what's going on
+    if name in ('matplotlib', 'matplotlib-base') and subdir.startswith('win-'):
+        for i, dep in enumerate(depends):
+            if dep.startswith("freetype"):
+                idx = dep.find(",<")
+                if idx == -1:
+                    dep = dep + " <2.11.0"
+                else:
+                    ver_parts = dep[idx+2:].split(".")
+                    major = int(ver_parts[0])
+                    if major >= 3 or (major == 2 and int(ver_parts[1]) > 10):
+                        dep = dep[:idx] + ",<2.11.0"
+                depends[i] = dep
+
     ###########################
     # compilers and run times #
     ###########################
