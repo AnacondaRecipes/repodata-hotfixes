@@ -931,9 +931,9 @@ def patch_record_in_place(fn, record, subdir):
         depends[:] = ["gitdb >=4.0.1,<5", "python >=3.5",
                       "typing-extensions >=3.7.4.0"]
 
-    # click-repl incompatible with click >=8.0
-    # TODO: set upper bounds once this is fixed upstream comment
-    if name == 'click-repl':
+    # click-repl <0.2.0 incompatible with click >=8.0
+    # See: https://github.com/click-contrib/click-repl/pull/76
+    if name == 'click-repl' and version.startswith("0.1."):
         replace_dep(depends, 'click', 'click <8.0')
 
     # tifffile 2021.3.31 requires Python >=3.7, imagecodecs >=2021.3.31
