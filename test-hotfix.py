@@ -23,7 +23,7 @@ channel_map = {
 
 
 def clone_subdir(channel_base_url, subdir):
-    out_file = os.path.join(channel_base_url.rsplit('/', 1)[-1], subdir, 'reference_repodata.json')
+    out_file = os.path.join(channel_base_url.rsplit('/', 1)[-1], subdir, 'repodata-reference.json')
     url = "%s/%s/repodata.json" % (channel_base_url, subdir)
     print("downloading repodata from {}".format(url))
     urllib.request.urlretrieve(url, out_file)
@@ -77,7 +77,7 @@ if __name__ == "__main__":
     subprocess.check_call(['python', args.channel + '.py'])
     for subdir in args.subdirs:
         raw_repodata_file = os.path.join(args.channel, subdir, 'repodata_from_packages.json')
-        ref_repodata_file = os.path.join(args.channel, subdir, 'reference_repodata.json')
+        ref_repodata_file = os.path.join(args.channel, subdir, 'repodata-reference.json')
         with open(raw_repodata_file) as f:
             repodata = json.load(f)
         out_instructions = os.path.join(args.channel, subdir, 'patch_instructions.json')
@@ -96,4 +96,8 @@ if __name__ == "__main__":
                 diff_exe = 'colordiff'
             else:
                 diff_exe = 'diff'
-            subprocess.call([diff_exe, ref_repodata_file, patched_repodata_file])
+            fmt_flag = '{} {}'.format(
+                '-U' if args.diff_format == 'unified' else '-C',
+                args.context_numlines,
+                )
+            subprocess.call([diff_exe, fmt_flag, ref_repodata_file, patched_repodata_file])
