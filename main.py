@@ -931,6 +931,10 @@ def patch_record_in_place(fn, record, subdir):
         depends[:] = ["gitdb >=4.0.1,<5", "python >=3.5",
                       "typing-extensions >=3.7.4.0"]
 
+    # click >=8.0 is actually Python 3.6+
+    if name == 'click' and int(version.split('.', 1)[0]) >= 8:
+        replace_dep(depends, 'python', 'python >=3.6')
+
     # click-repl incompatible with click >=8.0
     # TODO: set upper bounds once this is fixed upstream comment
     if name == 'click-repl':
