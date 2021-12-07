@@ -739,6 +739,12 @@ def patch_record_in_place(fn, record, subdir):
             if name == "jinja2":
                 depends[i] = "jinja2 <3.0.0a0"
 
+        # See: https://github.com/AnacondaRecipes/conda-build-feedstock/pull/11
+        if (version == "3.21.7" and build_number == 0 and
+                subdir.startswith("win-")):
+            depends.append("py-lief")
+            depends.sort()
+
     if (name == 'constructor' and int(version[0]) < 3):
         replace_dep(depends, 'conda', 'conda <4.6.0a0')
 
