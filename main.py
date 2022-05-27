@@ -7,6 +7,8 @@ import sys
 from collections import defaultdict
 from os.path import dirname, isdir, isfile, join
 
+from conda.models.version import VersionOrder
+
 import requests
 
 CHANNEL_NAME = "main"
@@ -728,16 +730,21 @@ def patch_record_in_place(fn, record, subdir):
             depends.append('python-libarchive-c')
 
     if name == "conda-build":
-        # Jinja 3.0.0 introduced behavior changes that broke certain
-        # conda-build templating functionality.
-        #
-        # TODO: Review the conda-build and/or jinja version bounds on new
-        # releases of those packages; at some point, the incompatibilities
-        # between conda-build and jinja >=3.0 should be resolved.
         for i, dep in enumerate(depends):
-            name, *other = dep.split()
-            if name == "jinja2":
+            dep_name, *other = dep.split()
+            # Jinja 3.0.0 introduced behavior changes that broke certain
+            # conda-build templating functionality.
+            #
+            # TODO: Review the conda-build and/or jinja version bounds on new
+            # releases of those packages; at some point, the incompatibilities
+            # between conda-build and jinja >=3.0 should be resolved.
+            if dep_name == "jinja2":
                 depends[i] = "jinja2 <3.0.0a0"
+
+            # Deprecation removed in conda 4.13 break older conda-builds
+            if (VersionOrder(version) <= VersionOrder("3.21.8") and
+                    dep_name == "conda"):
+                depends[i] = "{} {}<4.13.0".format(dep_name, other[0] + "," if other else "")
 
     if (name == 'constructor' and int(version[0]) < 3):
         replace_dep(depends, 'conda', 'conda <4.6.0a0')
