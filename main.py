@@ -999,6 +999,10 @@ def patch_record_in_place(fn, record, subdir):
     if name == "conda-libmamba-solver":
         replace_dep(depends, "libmambapy >=0.22.1", "libmambapy 0.22.*")
 
+    # snowflake-snowpark-python cloudpickle pins
+    if name == "snowflake-snowpark-python" and version == '0.6.0':
+        replace_dep(depends, 'cloudpickle >=1.6.0', 'cloudpickle >=1.6.0,<=2.0.0')
+
     ###########################
     # compilers and run times #
     ###########################
