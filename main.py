@@ -274,14 +274,14 @@ def _replace_vc_features_with_vc_pkg_deps(name, record, depends):
     if name == "python":
         # remove the track_features key
         if "track_features" in record:
-            del record["track_features"]
+            record["track_features"] = ""
         # add a vc dependency
         if not any(d.startswith("vc") for d in depends):
             depends.append(python_vc_deps[record["version"][:3]])
     elif name == "vs2015_win-64":
         # remove the track_features key
         if "track_features" in record:
-            del record["track_features"]
+            record["track_features"] = ""
     elif record["name"] == "yasm":
         # remove vc from the features key
         vc_version = _extract_and_remove_vc_feature(record)
@@ -712,7 +712,7 @@ def patch_record_in_place(fn, record, subdir):
     if name == "nomkl" and not subdir.startswith("win-"):
         record["depends"] = ["blas * openblas"]
         if "track_features" in record:
-            del record["track_features"]
+            record["track_features"] = ""
 
     if record.get("track_features"):
         for feat in record["track_features"].split():
