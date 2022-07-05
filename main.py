@@ -1034,9 +1034,12 @@ def patch_record_in_place(fn, record, subdir):
                 if dep.startswith("python "):
                     depends[i] = "python >=3.7.1,<3.8.0a0"
 
-    # libmambapy 0.23 introduced breaking changes
     if name == "conda-libmamba-solver":
+        # libmambapy 0.23 introduced breaking changes
         replace_dep(depends, "libmambapy >=0.22.1", "libmambapy 0.22.*")
+        if version == "22.6.0":
+            # conda 4.13 needed for the user agent strings
+            replace_dep(depends, "conda >=4.12", "conda >=4.13")
 
     # snowflake-snowpark-python cloudpickle pins
     if name == "snowflake-snowpark-python" and version == '0.6.0':
