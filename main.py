@@ -771,8 +771,13 @@ def patch_record_in_place(fn, record, subdir):
                     dep_name, other[0] + "," if other else ""
                 )
 
-    if name == "constructor" and int(version[0]) < 3:
-        replace_dep(depends, "conda", "conda <4.6.0a0")
+    if name == "constructor":
+        if int(version[0]) < 3:
+            replace_dep(depends, "conda", "conda <4.6.0a0")
+        if VersionOrder("3.2") <= VersionOrder(version) <= VersionOrder("3.3.1"):
+            # Pin nsis on recent versions of constructor
+            # https://github.com/conda/constructor/issues/526
+            replace_dep(depends, "nsis >=3.01", "nsis 3.01")
 
     # libarchive 3.3.2 and 3.3.3 build 0 are missing zstd support.
     # De-prioritize these packages with a track_feature (via _low_priority)
