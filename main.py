@@ -1015,10 +1015,18 @@ def patch_record_in_place(fn, record, subdir):
     if name == "aiobotocore" and version.startswith("1.2."):
         replace_dep(depends, "botocore", "botocore >=1.19.52,<1.19.53")
 
-    # pyjwt 2.1.0 has incorrect depends/constrains on cryptography
+    # cryptography changed its versioning convention
+    # see https://cryptography.io/en/latest/api-stability/#versioning
     if name == "pyjwt" and version == "2.1.0":
+        # pyjwt 2.1.0 has incorrect depends/constrains on cryptography
         depends[:] = list(d for d in depends if not d.startswith("cryptography "))
-        record["constrains"] = ["cryptography >=3.3.1,<4.0.0"]
+        record["constrains"] = ["cryptography >=3.3.1,<40.0.0"]
+    if name == "authlib" and version == "0.15.4":
+        replace_dep(depends, "cryptography >=3.2,<4", "cryptography >=3.2,<40.0.0a0")
+    if name == "flask-jwt-extended" and version == "4.2.3":
+        replace_dep(depends, "cryptography >=3.0,<4.0", "cryptography >=3.0,<40.0.0a0")
+    if name == "oauthlib" and (version == "3.1.1" or version == "3.2.0"):
+        replace_dep(depends, "cryptography >=3.0.0,<4", "cryptography >=3.0.0,<40.0.0a0")
 
     if name == "pyerfa" and version == "2.0.0":
         replace_dep(depends, "numpy >=1.17", "numpy >=1.20.2,<2.0a0")
