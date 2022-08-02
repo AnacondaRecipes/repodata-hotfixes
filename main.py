@@ -23,6 +23,7 @@ SUBDIRS = (
     "linux-ppc64le",
     "linux-s390x",
     "osx-64",
+    "osx-arm64",
     "win-32",
     "win-64",
 )
