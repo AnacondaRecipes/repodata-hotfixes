@@ -682,6 +682,14 @@ def patch_record_in_place(fn, record, subdir):
     if name.startswith("tensorflow-base") and version == "2.4.1":
         replace_dep(depends, "gast", "gast 0.3.3")
 
+    # Relax the scipy pin slightly on linux-64 for tensorflow-base 2.8.2
+    # to match linux-aarch64, to facilitate intel/arm version alignment.
+    if name.startswith("tensorflow-base") and version == "2.8.2" and subdir == 'linux-64':
+        for i, dep in enumerate(depends):
+            if dep == "scipy >=1.7.3":
+                depends[i] = "scipy >=1.7.1"
+                break
+
     ##############
     # constrains #
     ##############
