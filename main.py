@@ -526,6 +526,7 @@ def patch_record_in_place(fn, record, subdir):
     """Patch record in place"""
     name = record["name"]
     version = record["version"]
+    build = record["build"]
     build_number = record["build_number"]
     depends = record["depends"]
     constrains = record.get("constrains", [])
@@ -652,6 +653,22 @@ def patch_record_in_place(fn, record, subdir):
             depends.append("_pytorch_select 0.2")
         else:
             depends.append("_pytorch_select 0.1")
+
+    #########
+    # scipy #
+    #########
+
+    # Our original build of scipy-1.7.3 (build number 0) did not comply with the
+    # upstream's min and max numpy pinnings.
+    # See: https://github.com/scipy/scipy/blob/v1.7.3/setup.py#L551-L552
+
+    if name == "scipy" and version == "1.7.3" and build_number == 0:
+        if subdir != 'osx-arm64' and not build.startswith("py310"):
+            replace_dep(depends, "numpy >=1.16.6,<2.0a0", "numpy >=1.16.6,<1.23.0")
+        if subdir == 'osx-arm64' and not build.startswith("py310"):
+            replace_dep(depends, "numpy >=1.19.5,<2.0a0", "numpy >=1.19.5,<1.23.0")
+        if build.startswith("py310"):
+            replace_dep(depends, "numpy >=1.21.2,<2.0a0", "numpy >=1.21.2,<1.23.0")
 
     ##############
     # tensorflow #
