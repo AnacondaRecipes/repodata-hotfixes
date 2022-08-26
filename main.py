@@ -526,6 +526,7 @@ def patch_record_in_place(fn, record, subdir):
     """Patch record in place"""
     name = record["name"]
     version = record["version"]
+    build = record["build"]
     build_number = record["build_number"]
     depends = record["depends"]
     constrains = record.get("constrains", [])
