@@ -633,6 +633,20 @@ def patch_record_in_place(fn, record, subdir):
         elif any(dep.split()[0] in ("openblas", "libopenblas") for dep in depends):
             depends.append("blas * openblas")
 
+    #########
+    # numpy #
+    #########
+
+    # Correct packages mistakenly built against 1.21.5 on linux-aarch64
+    # Replaces the dependency bound with 1.21.2. These packages should
+    # actually have been built against an even earlier version of numpy.
+    # This is the safest correction we can make for now
+    if subdir == "linux-aarch64":
+        for i, dep in enumerate(depends):
+            if dep.startswith("numpy >=1.21.5,"):
+                depends[i] = depends[i].replace(">=1.21.5,", ">=1.21.2,")
+                break
+
     ###########
     # pytorch #
     ###########
@@ -1112,16 +1126,6 @@ def patch_record_in_place(fn, record, subdir):
             depends[:] = ["cctools", "clang 4.0.1.*", "compiler-rt 4.0.1.*", "ld64"]
         if name == "clangxx_osx-64" and version == "4.0.1" and int(build_number) < 17:
             depends[:] = ["clang_osx-64 >=4.0.1,<4.0.2.0a0", "clangxx", "libcxx"]
-
-    # Correct packages mistakenly built against 1.21.5 on linux-aarch64
-    # Replaces the dependency bound with 1.21.2. These packages should
-    # actually have been built against an even earlier version of numpy.
-    # This is the safest correction we can make for now
-    if subdir == "linux-aarch64":
-        for i, dep in enumerate(depends):
-            if dep.startswith("numpy >=1.21.5,"):
-                depends[i] = depends[i].replace(">=1.21.5,", ">=1.21.2,")
-                break
 
 
 def replace_dep(depends, old, new):
