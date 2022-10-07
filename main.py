@@ -23,6 +23,7 @@ SUBDIRS = (
     "linux-ppc64le",
     "linux-s390x",
     "osx-64",
+    "osx-arm64",
     "win-32",
     "win-64",
 )
@@ -213,6 +214,7 @@ NP_BASE_LOOSE_PIN = {
     "linux-armv6l": [],
     "linux-armv7l": [],
     "linux-s390x": [],
+    "osx-arm64": [],
 }
 
 BLAS_USING_PKGS = {
@@ -683,6 +685,21 @@ def patch_record_in_place(fn, record, subdir):
             replace_dep(depends, "numpy >=1.19.5,<2.0a0", "numpy >=1.19.5,<1.23.0")
         if build.startswith("py310"):
             replace_dep(depends, "numpy >=1.21.2,<2.0a0", "numpy >=1.21.2,<1.23.0")
+
+    ######################
+    # scipy dependencies #
+    ######################
+
+    # scipy 1.8 and 1.9 introduce breaking API changes impacting these packages
+    if name == "theano":
+        if version in ["1.0.4", "1.0.5"]:
+            replace_dep(depends, "scipy >=0.14", "scipy >=0.14,<1.8")
+        elif version in ["0.9.0", "1.0.1", "1.0.2", "1.0.3"]:
+            replace_dep(depends, "scipy >=0.14.0", "scipy >=0.14,<1.8")
+    if name == "theano-pymc":
+        replace_dep(depends, "scipy >=0.14", "scipy >=0.14,<1.8")
+    if name == "pyamg" and version in ["3.3.2", "4.0.0", "4.1.0"]:
+        replace_dep(depends, "scipy >=0.12.0", "scipy >=0.12.0,<1.8")
 
     ##############
     # tensorflow #
