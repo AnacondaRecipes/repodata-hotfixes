@@ -14,7 +14,7 @@ When packages are created, authors do their best to specify constraints that mak
 There's a script that downloads the current repodata and runs your instructions against it.  It then shows you a diff.  Example usage of this script:
 
 ```
-python test-hotfix.py main --subdir linux-64 osx-64 win-64 win-32 linux-ppc64le linux-32 noarch
+python test-hotfix.py main --subdir linux-64 osx-64 win-64 osx-arm64 linux-ppc64le linux-aarch64 linux-s390x noarch
 ```
 
 Use the `--color` or `--show-pkgs` options for different outputs.
