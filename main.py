@@ -1128,7 +1128,7 @@ def patch_record_in_place(fn, record, subdir):
     if (
         subdir == "linux-64"
         and name in ("libgcc-ng", "libstdcxx-ng", "libgfortran-ng")
-        and version in ("7.5.0", "8.4.0", "9.3.0")
+        and version in ("7.5.0", "8.4.0", "9.3.0", "11.2.0")
     ):
         # This would probably be better as a `constrains`, but conda's solver
         # currently has issues enforcing virtual package constrains. Making
