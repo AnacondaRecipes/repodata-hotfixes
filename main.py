@@ -400,7 +400,11 @@ def _fix_numpy_base_constrains(record, index, instructions, subdir):
         # base package pinning not to version + build, no modification needed
         return
     base_pkg_fn = "%s-%s-%s.tar.bz2" % (name, ver, build_str)
-    if "constrains" in index[base_pkg_fn]:
+    try:
+        if "constrains" in index[base_pkg_fn]:
+            return
+    except KeyError:
+        # package might be revoked
         return
     if base_pkg_fn in NP_BASE_LOOSE_PIN.get(subdir, []):
         # base package is a requirement of multiple numpy packages,
