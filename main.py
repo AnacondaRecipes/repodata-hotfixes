@@ -993,9 +993,12 @@ def patch_record_in_place(fn, record, subdir):
         depends.append("setuptools")
 
     # numba 0.54.1 0.55.0 have the wrong numpy bounds set
-    # see for each version: https://github.com/numba/numba/blob/0.54.1/numba/__init__.py#L135
-    if name == "numba" and version in ["0.54.1", "0.55.0"]:
+    # see https://github.com/numba/numba/blob/0.54.1/numba/__init__.py#L135
+    # see https://github.com/numba/numba/blob/0.55.0/numba/__init__.py#L137
+    if name == "numba" and version == "0.54.1":
         record["constrains"] = ["numpy >=1.17,<=1.20"]
+    if name == "numba" and version == "0.55.0":
+        record["constrains"] = ["numpy >=1.18,<=1.21"]
 
     # python-language-server should contrains ujson <=1.35
     # see https://github.com/conda-forge/cf-mark-broken/pull/20
