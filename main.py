@@ -997,9 +997,9 @@ def patch_record_in_place(fn, record, subdir):
     # see https://github.com/numba/numba/blob/0.54.1/numba/__init__.py#L135
     # see https://github.com/numba/numba/blob/0.55.0/numba/__init__.py#L137
     if name == "numba" and version in ("0.54.0", "0.54.1"):
-        record["constrains"] = ["numpy >=1.17,<=1.20"]
+        record["constrains"] = ["numpy >=1.17,<1.21.0a0"]
     if name == "numba" and version == "0.55.0":
-        record["constrains"] = ["numpy >=1.18,<=1.21"]
+        record["constrains"] = ["numpy >=1.18,<1.22.0a0"]
 
     # python-language-server should contrains ujson <=1.35
     # see https://github.com/conda-forge/cf-mark-broken/pull/20
