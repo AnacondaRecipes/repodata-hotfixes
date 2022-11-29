@@ -1109,6 +1109,8 @@ def patch_record_in_place(fn, record, subdir):
         if version == "22.6.0":
             # conda 4.13 needed for the user agent strings
             replace_dep(depends, "conda >=4.12", "conda >=4.13")
+        # conda 22.11 introduces the plugin system
+        replace_dep(depends, "conda >=4.13", "conda >=4.13,<22.11.0a")
 
     # snowflake-snowpark-python cloudpickle pins
     if name == "snowflake-snowpark-python" and version == '0.6.0':
