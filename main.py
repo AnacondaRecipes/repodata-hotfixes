@@ -1001,6 +1001,11 @@ def patch_record_in_place(fn, record, subdir):
     if name == "numba" and version == "0.55.0":
         record["constrains"] = ["numpy >=1.18,<1.22.0a0"]
 
+    # qt-webengine constraint on virtual package qt is too strict
+    if name == "qt-webengine" and version in ("5.15.9"):
+        record["constrains"] = [item for item in record["constrains"] if not item.startswith("qt ")]
+        record["constrains"].append("qt >=5.15.7,<6")
+
     # python-language-server should contrains ujson <=1.35
     # see https://github.com/conda-forge/cf-mark-broken/pull/20
     # https://github.com/conda-forge/python-language-server-feedstock/pull/48
