@@ -1103,6 +1103,10 @@ def patch_record_in_place(fn, record, subdir):
                 if dep.startswith("python "):
                     depends[i] = "python >=3.7.1,<3.8.0a0"
 
+    if name == "conda" and version in ("22.11.0", "22.11.1"):
+        # exclude all pre-plugin-system libmambapy/conda-libmamba-solver
+        constrains += ["conda-libmamba-solver >=22.11.0"]
+
     if name == "conda-libmamba-solver":
         # libmambapy 0.23 introduced breaking changes
         replace_dep(depends, "libmambapy >=0.22.1", "libmambapy 0.22.*")
