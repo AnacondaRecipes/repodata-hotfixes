@@ -7,9 +7,8 @@ import sys
 from collections import defaultdict
 from os.path import dirname, isdir, isfile, join
 
-from conda.models.version import VersionOrder
-
 import requests
+from conda.models.version import VersionOrder
 
 CHANNEL_NAME = "main"
 CHANNEL_ALIAS = "https://repo.anaconda.com/pkgs"
@@ -683,9 +682,9 @@ def patch_record_in_place(fn, record, subdir):
     # See: https://github.com/scipy/scipy/blob/v1.7.3/setup.py#L551-L552
 
     if name == "scipy" and version == "1.7.3" and build_number == 0:
-        if subdir != 'osx-arm64' and not build.startswith("py310"):
+        if subdir != "osx-arm64" and not build.startswith("py310"):
             replace_dep(depends, "numpy >=1.16.6,<2.0a0", "numpy >=1.16.6,<1.23.0")
-        if subdir == 'osx-arm64' and not build.startswith("py310"):
+        if subdir == "osx-arm64" and not build.startswith("py310"):
             replace_dep(depends, "numpy >=1.19.5,<2.0a0", "numpy >=1.19.5,<1.23.0")
         if build.startswith("py310"):
             replace_dep(depends, "numpy >=1.21.2,<2.0a0", "numpy >=1.21.2,<1.23.0")
@@ -736,7 +735,11 @@ def patch_record_in_place(fn, record, subdir):
 
     # Relax the scipy pin slightly on linux-64 for tensorflow-base 2.8.2
     # to match linux-aarch64, to facilitate intel/arm version alignment.
-    if name.startswith("tensorflow-base") and version == "2.8.2" and subdir == 'linux-64':
+    if (
+        name.startswith("tensorflow-base")
+        and version == "2.8.2"
+        and subdir == "linux-64"
+    ):
         for i, dep in enumerate(depends):
             if dep == "scipy >=1.7.3":
                 depends[i] = "scipy >=1.7.1"
@@ -1106,9 +1109,7 @@ def patch_record_in_place(fn, record, subdir):
     if name == "conda" and version in ("22.11.0", "22.11.1"):
         # exclude all pre-plugin-system libmambapy/conda-libmamba-solver
         constrains[:] = [
-            dep
-            for dep in constrains
-            if not dep.startswith("conda-libmamba-solver")
+            dep for dep in constrains if not dep.startswith("conda-libmamba-solver")
         ] + ["conda-libmamba-solver >=22.12.0"]
         replace_dep(
             depends, "ruamel.yaml >=0.11.14,<0.17", "ruamel.yaml >=0.11.14,<0.18"
@@ -1124,8 +1125,8 @@ def patch_record_in_place(fn, record, subdir):
         replace_dep(depends, "conda >=4.13", "conda >=4.13,<22.11.0a")
 
     # snowflake-snowpark-python cloudpickle pins
-    if name == "snowflake-snowpark-python" and version == '0.6.0':
-        replace_dep(depends, 'cloudpickle >=1.6.0', 'cloudpickle >=1.6.0,<=2.0.0')
+    if name == "snowflake-snowpark-python" and version == "0.6.0":
+        replace_dep(depends, "cloudpickle >=1.6.0", "cloudpickle >=1.6.0,<=2.0.0")
 
     ###########################
     # compilers and run times #
