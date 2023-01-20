@@ -16,9 +16,9 @@ diff_context_keyword = {'unified': 'n',
                         'html': 'numlines'}
 
 channel_map = {
-    'main': 'https://repo.anaconda.com/pkgs/main',
-    'free': 'https://repo.anaconda.com/pkgs/free',
-    'r': 'https://repo.anaconda.com/pkgs/r',
+    "main": "https://repo.anaconda.com/pkgs/main",
+    "r": "https://repo.anaconda.com/pkgs/r",
+    "msys2": "https://repo.anaconda.com/pkgs/msys2"
 }
 
 
@@ -66,15 +66,28 @@ if __name__ == "__main__":
     parser.add_argument('--show-pkgs', action='store_true', help='Show packages that differ')
     args = parser.parse_args()
 
+    print(f"Creating channel directory structure for channel '{args.channel}' and platforms {args.subdirs}")
     for subdir in args.subdirs:
         if not os.path.isdir(os.path.join(args.channel, subdir)):
             os.makedirs(os.path.join(args.channel, subdir))
+
+    # See if I mean a local channel or a predetermined mapping
     if '/' not in args.channel:
+        print("Using ")
         channel_base_url = channel_map[args.channel]
+
+    if args.use_cache:
+        print(f"Using cache for {' '.join(args.subdirs)}.")
     if not args.use_cache:
+        print(f"Cloning subdirs {' '.join(args.subdirs)}...")
         for subdir in args.subdirs:
             clone_subdir(channel_base_url, subdir)
+
+    print(f"Executing hotfix for channel '{args.channel}'.")
     subprocess.check_call(['python', args.channel + '.py'])
+    print(f"Completed hotfix for channel '{args.channel}'.")
+
+    print("Analyzing results...")
     for subdir in args.subdirs:
         raw_repodata_file = os.path.join(args.channel, subdir, 'repodata_from_packages.json')
         ref_repodata_file = os.path.join(args.channel, subdir, 'repodata-reference.json')
@@ -85,11 +98,13 @@ if __name__ == "__main__":
             instructions = json.load(f)
         patched_repodata = _apply_instructions(subdir, repodata, instructions)
         patched_repodata_file = os.path.join(args.channel, subdir, 'repodata-patched.json')
+        print(f"Writing diff in {patched_repodata_file} for '{subdir}' platform.")
         with open(patched_repodata_file, 'w') as f:
             json.dump(patched_repodata, f, indent=2, sort_keys=True, separators=(',', ': '))
             f.write('\n')
 
         if args.show_pkgs:
+            print("Results:")
             show_pkgs(subdir, ref_repodata_file, patched_repodata_file)
         else:
             if args.color:
