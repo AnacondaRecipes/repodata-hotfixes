@@ -1125,7 +1125,6 @@ def patch_record_in_place(fn, record, subdir):
         # conda 23.1 changed an internal SubdirData API needed for S3/FTP channels
         replace_dep(depends, "conda >=22.11.0", "conda >=22.11.0,<23.1.0a")
 
-
     # snowflake-snowpark-python cloudpickle pins
     if name == "snowflake-snowpark-python" and version == '0.6.0':
         replace_dep(depends, 'cloudpickle >=1.6.0', 'cloudpickle >=1.6.0,<=2.0.0')
