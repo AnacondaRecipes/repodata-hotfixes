@@ -22,7 +22,13 @@ channel_map = {
 }
 
 
-def clone_subdir(channel_base_url, subdir):
+def clone_subdir(channel_base_url:str, subdir:str):
+    """Download repodata.json and repodata_from_packages.json from channel
+
+    Args:
+        channel_base_url (str):
+        subdir (str): subdir of channel (aka platform) to download
+    """
     out_file = os.path.join(channel_base_url.rsplit('/', 1)[-1], subdir, 'repodata-reference.json')
     url = "%s/%s/repodata.json" % (channel_base_url, subdir)
     print("downloading repodata from {}".format(url))
@@ -54,7 +60,7 @@ def show_pkgs(subdir, ref_repodata_file, patched_repodata_file):
 
 if __name__ == "__main__":
     import argparse
-    parser = argparse.ArgumentParser(description='Process some integers.')
+    parser = argparse.ArgumentParser(description='Test new hotfix changes before they are deployed.')
     parser.add_argument('channel', help='channel name or url to download repodata from')
     parser.add_argument('--subdirs', nargs='*', help='subdir(s) to download/diff', default=(conda_subdir, ))
     parser.add_argument('--diff-format', help='format to save diff as',
@@ -66,15 +72,17 @@ if __name__ == "__main__":
     parser.add_argument('--show-pkgs', action='store_true', help='Show packages that differ')
     args = parser.parse_args()
 
+
     print(f"Creating channel directory structure for channel '{args.channel}' and platforms {args.subdirs}")
     for subdir in args.subdirs:
         if not os.path.isdir(os.path.join(args.channel, subdir)):
             os.makedirs(os.path.join(args.channel, subdir))
 
-    # See if I mean a local channel or a predetermined mapping
+    # Not sure why this is checked (only main, r and msys2 are available)
+    # This is the only place where channel_base_url is set.
     if '/' not in args.channel:
-        print("Using ")
         channel_base_url = channel_map[args.channel]
+        print(f"Applying url to alias {args.channel}. {channel_base_url=}")
 
     if args.use_cache:
         print(f"Using cache for {' '.join(args.subdirs)}.")
@@ -90,7 +98,6 @@ if __name__ == "__main__":
     print("Analyzing results...")
     for subdir in args.subdirs:
         raw_repodata_file = os.path.join(args.channel, subdir, 'repodata_from_packages.json')
-        ref_repodata_file = os.path.join(args.channel, subdir, 'repodata-reference.json')
         with open(raw_repodata_file) as f:
             repodata = json.load(f)
         out_instructions = os.path.join(args.channel, subdir, 'patch_instructions.json')
@@ -98,13 +105,14 @@ if __name__ == "__main__":
             instructions = json.load(f)
         patched_repodata = _apply_instructions(subdir, repodata, instructions)
         patched_repodata_file = os.path.join(args.channel, subdir, 'repodata-patched.json')
-        print(f"Writing diff in {patched_repodata_file} for '{subdir}' platform.")
+        print(f"Writing out new repodata as {patched_repodata_file} for '{subdir}' platform.")
         with open(patched_repodata_file, 'w') as f:
             json.dump(patched_repodata, f, indent=2, sort_keys=True, separators=(',', ': '))
             f.write('\n')
 
+        ref_repodata_file = os.path.join(args.channel, subdir, 'repodata-reference.json')
         if args.show_pkgs:
-            print("Results:")
+            print("New Hot Fixes:")
             show_pkgs(subdir, ref_repodata_file, patched_repodata_file)
         else:
             if args.color:
