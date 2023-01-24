@@ -78,7 +78,7 @@ if __name__ == "__main__":
         if not os.path.isdir(os.path.join(args.channel, subdir)):
             os.makedirs(os.path.join(args.channel, subdir))
 
-    # Not sure why this is checked (only main, r and msys2 are available)
+    # NOTE: Not sure why this is checked (only main, r and msys2 are available)
     # This is the only place where channel_base_url is set.
     if '/' not in args.channel:
         channel_base_url = channel_map[args.channel]
