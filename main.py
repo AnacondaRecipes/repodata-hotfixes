@@ -1122,6 +1122,8 @@ def patch_record_in_place(fn, record, subdir):
             replace_dep(depends, "conda >=4.12", "conda >=4.13")
         # conda 22.11 introduces the plugin system
         replace_dep(depends, "conda >=4.13", "conda >=4.13,<22.11.0a")
+        # conda 23.1 changed an internal SubdirData API needed for S3/FTP channels
+        replace_dep(depends, "conda >=22.11.0", "conda >=22.11.0,<23.1.0a")
 
     # snowflake-snowpark-python cloudpickle pins
     if name == "snowflake-snowpark-python" and version == '0.6.0':
