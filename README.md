@@ -25,7 +25,7 @@ changes one out of the ten dependency for a single package, all ten will still s
 Adding a package to the removal list will remove the entire entry from the repodata.json.  It will no longer be searchable by conda search.
 
 We should put things on the remove list when:
-- ...
+- We think the customer may still want a package but it is super fragile and we don't want it to be broken for others.
 
 Another approach might be to move the package into broken package directory (see directions in perseverance-skills).  This will cause it not to be indexed in the first place.
 ### Revoked
