@@ -18,14 +18,15 @@ feasible or perhaps not worth the time.  By changing dependencies and constraint
 the data used to solve for dependencies can be modified and leave the larger ecosystem
 unharmed.
 
-NOTE: Changes are implemented that the entire dependency or constraint list (i.e. If someone
+NOTE: Hotfixes are applied in a overwrite manner.  So any changes are implemented
+will effect the the entire dependency or constraint list (i.e. If someone
 changes one out of the ten dependency for a single package, all ten will still should be in the
 "patch-instructions" as patching is an overwriting operation).
 ### Removal
 Adding a package to the removal list will remove the entire entry from the repodata.json.  It will no longer be searchable by conda search.
 
 We should put things on the remove list when:
-- We think the customer may still want a package but it is super fragile and we don't want it to be broken for others.
+- We need a quick fix to stop consumers from downloading a bad package.
 
 Another approach might be to move the package into broken package directory (see directions in perseverance-skills).  This will cause it not to be indexed in the first place.
 ### Revoked
@@ -36,7 +37,8 @@ Adding a package to the revoked list does two things:
 This should cause that the package in question is still available but will not be used by default as "package_has_been_revoked" isn't a valid package.
 
 We should put things on the revoke list when:
-- ...
+- We feel we want a customer to still have access but not the whole consumer population by default
+- ?
 
 ## Utility scripts:
 ### Seeing current hotfixes with `gen-current-hotfix-report.py`:
