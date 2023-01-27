@@ -22,9 +22,21 @@ NOTE: Changes are implemented that the entire dependency or constraint list (i.e
 changes one out of the ten dependency for a single package, all ten will still should be in the
 "patch-instructions" as patching is an overwriting operation).
 ### Removal
-Adding a package to the removal list...
+Adding a package to the removal list will remove the entire entry from the repodata.json.  It will no longer be searchable by conda search.
+
+We should put things on the remove list when:
+- ...
+
+Another approach might be to move the package into broken package directory (see directions in perseverance-skills).  This will cause it not to be indexed in the first place.
 ### Revoked
-Adding a package to the revoked list does...
+Adding a package to the revoked list does two things:
+1. It inserts the "package_has_been_revoked" into the depends list.
+2. It adds the revoked key value pair `revoked: true`
+
+This should cause that the package in question is still available but will not be used by default as "package_has_been_revoked" isn't a valid package.
+
+We should put things on the revoke list when:
+- ...
 
 ## Utility scripts:
 ### Seeing current hotfixes with `gen-current-hotfix-report.py`:
