@@ -818,12 +818,8 @@ def patch_record_in_place(fn, record, subdir):
             dep_name, *other = dep.split()
             # Jinja 3.0.0 introduced behavior changes that broke certain
             # conda-build templating functionality.
-            #
-            # TODO: Review the conda-build and/or jinja version bounds on new
-            # releases of those packages; at some point, the incompatibilities
-            # between conda-build and jinja >=3.0 should be resolved.
             if dep_name == "jinja2":
-                depends[i] = "jinja2 <3.0.0a0"
+                depends[i] = "jinja2 !=3.0.0"
 
             # Deprecation removed in conda 4.13 break older conda-builds
             if VersionOrder(version) <= VersionOrder("3.21.8") and dep_name == "conda":
