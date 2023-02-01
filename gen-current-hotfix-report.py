@@ -1,6 +1,8 @@
 """
-gen-current-hotfix-report is a simple script that finds the current effective changes that occur due to repodata-hotfixes
-main, r, and mysys2 hotfixes scripts.  There are a few important files that are used to find this information:
+gen-current-hotfix-report is a simple script that finds the current effective changes that occur
+due to repodata-hotfixes main, r, and mysys2 hotfixes scripts.
+
+There are a few important files that are used to find this information:
 - repodata_from_packages.json
   - A clean json file that takes information directly from the packages in a channel
 - repodata.json (or also referred to as repodata-patched.json in this script)
