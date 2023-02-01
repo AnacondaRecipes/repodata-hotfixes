@@ -22,7 +22,7 @@ channel_map = {
 }
 
 
-def clone_subdir(channel_base_url:str, subdir:str):
+def clone_subdir(channel_base_url: str, subdir: str):
     """Download repodata.json and repodata_from_packages.json from channel
 
     Args:
@@ -71,7 +71,6 @@ if __name__ == "__main__":
     parser.add_argument('--color', action='store_true', help='use colordiff rather than diff')
     parser.add_argument('--show-pkgs', action='store_true', help='Show packages that differ')
     args = parser.parse_args()
-
 
     print(f"Creating channel directory structure for channel '{args.channel}' and platforms {args.subdirs}")
     for subdir in args.subdirs:
