@@ -1,23 +1,32 @@
+"""
+gen-current-hotfix-report is a simple script that finds the current effective changes that occur due to repodata-hotfixes
+main, r, and mysys2 hotfixes scripts.  There are a few important files that are used to find this information:
+- repodata_from_packages.json
+  - A clean json file that takes information directly from the packages in a channel
+- repodata.json (or also referred to as repodata-patched.json in this script)
+  - The result of running the repodata-hotfixes scripts on one of the three operational channels
+  - This is what an end-user will search against in the conda cli
+- patched_instructions.json
+  - The output of a repodata-hotfix channel scripts.
+  - This only contains the changes that are going to be patched
+  - Patches apply in an overwrite fashion by key
+    -(aka if you change on thing in a list of the key the whole list needs to be present)
+- repodata-diff.json
+  - Json file that only contains the changes that have occurred through the patching process
+    - Meaning anything common between values in patch_instructions and repodata_from_packages is thrown out
+    - This file isn't found in a regular conda index channel (the 3 above should be)
+"""
+
+
 import copy
-import difflib
 import json
 import sys
+import urllib
 from collections import defaultdict
-from pprint import pprint
 from pathlib import Path
-
 
 from conda.exports import subdir as conda_subdir
 from conda_build.index import _apply_instructions
-import urllib
-
-html_differ = difflib.HtmlDiff()
-diff_options = {
-    "unified": difflib.unified_diff,
-    "context": difflib.context_diff,
-    "html": html_differ.make_file,
-}
-diff_context_keyword = {"unified": "n", "context": "n", "html": "numlines"}
 
 channel_map = {
     "main": "https://repo.anaconda.com/pkgs/main",
@@ -26,9 +35,19 @@ channel_map = {
 }
 
 
-current_supported_subdirs = ("linux-64", "linux-aarch64", "linux-ppc64le", "linux-s390x", "noarch", "osx-64", "osx-arm64", "win-64")
+current_supported_subdirs = (
+    "linux-64",
+    "linux-aarch64",
+    "linux-ppc64le",
+    "linux-s390x",
+    "noarch",
+    "osx-64",
+    "osx-arm64",
+    "win-64",
+)
 
-def write_readable_json_file(info:dict, filepath:Path):
+
+def write_readable_json_file(info: dict, filepath: Path):
     """Simple write to from dictionary into pretty json file
 
     Args:
@@ -40,59 +59,36 @@ def write_readable_json_file(info:dict, filepath:Path):
         fobj.write("\n")
 
 
-def clone_subdir(channel, channel_base_url: str, subdir: str):
+def clone_subdir(channel_name: str, channel_base_url: str, subdir_name: str):
     """Download repodata.json and repodata_from_packages.json from channel
 
     Args:
         channel_base_url (str): Root URL
         subdir (str): subdir of channel (aka platform) to download
     """
-    channel_subdir_dir = Path(channel) / subdir
+    channel_subdir_dir = Path(channel_name) / subdir
 
-    # out_file =  channel_subdir_dir / "repodata-reference.json"
-    # url = f"{channel_base_url}/{subdir}/repodata.json"
-    # print(f"Downloading 'repodata.json' from {url}")
-    # urllib.request.urlretrieve(url, out_file)
-
-    out_file = channel_subdir_dir /  "repodata_from_packages.json"
-    url = f"{channel_base_url}/{subdir}/repodata_from_packages.json"
+    out_file = channel_subdir_dir / "repodata_from_packages.json"
+    url = f"{channel_base_url}/{subdir_name}/repodata_from_packages.json"
     print(f"Downloading 'repodata_from_packages.json' from {url}")
     urllib.request.urlretrieve(url, out_file)
 
-    out_file = channel_subdir_dir /  "patch_instructions.json"
-    url = f"{channel_base_url}/{subdir}/patch_instructions.json"
+    out_file = channel_subdir_dir / "patch_instructions.json"
+    url = f"{channel_base_url}/{subdir_name}/patch_instructions.json"
     print(f"Downloading 'patch_instructions' from {url}")
     urllib.request.urlretrieve(url, out_file)
 
 
-def show_pkgs(subdir, ref_repodata_file, patched_repodata_file):
-    with open(ref_repodata_file) as f:
-        reference_repodata = json.load(f)
-    with open(patched_repodata_file) as f:
-        patched_repodata = json.load(f)
-    for name, ref_pkg in reference_repodata["packages"].items():
-        new_pkg = patched_repodata["packages"][name]
-        if ref_pkg == new_pkg:
-            continue
-        print(f"{subdir}::{name}")
-        ref_lines = json.dumps(ref_pkg, indent=2).splitlines()
-        new_lines = json.dumps(new_pkg, indent=2).splitlines()
-        for line in difflib.unified_diff(ref_lines, new_lines, n=0, lineterm=""):
-            if (
-                line.startswith("+++")
-                or line.startswith("---")
-                or line.startswith("@@")
-            ):
-                continue
-            print(line)
-
-
 def find_diffs(patch_instructions: dict, ref_data: dict, patched_data: dict) -> dict:
-    """Find differences between packages patch instructions and reference data
+    """Find differences between packages patch patch_instructions and reference data
 
+        This function only keeps the differences between the reference data and the patched_data.
+        In other words it removes anything common between values in patch_instructions and
+        repodata_from_packages.
     Args:
         patch_instructions (dict): patch_instructions dictionary from patch_instructions
-        ref_data (dict): repodata_from_packages information aka the reference information
+        ref_data (dict): reference information aka from repodata_from_packages.json
+        patched_data (dict): repodata information coming from repodata.json
 
     Returns:
         dict: Dictionary contain only the differences between two libraries
@@ -102,11 +98,18 @@ def find_diffs(patch_instructions: dict, ref_data: dict, patched_data: dict) -> 
     rd_packages = ref_data["packages"]
     patched_packages = patched_data["packages"]
 
+    sd = {
+        "packages": {},
+        "patched_but_on_remove_list": [],
+        "patch_instruction_on_nonexistent_package": [],
+    }
 
-    sd = {"packages": {}, "patched_but_on_remove_list": [], "patch_instruction_on_nonexistent_package":[]}
-
-    sd["removed"] = [prp for prp in pi_remove_packages if prp not in patched_packages.keys()]
-    sd["not_removed"] = [prp for prp in pi_remove_packages if prp in patched_packages.keys()]
+    sd["removed"] = [
+        prp for prp in pi_remove_packages if prp not in patched_packages.keys()
+    ]
+    sd["not_removed"] = [
+        prp for prp in pi_remove_packages if prp in patched_packages.keys()
+    ]
     for package_name, pck in pi_packages.items():
         try:
             if package_name in pi_remove_packages:
@@ -117,10 +120,7 @@ def find_diffs(patch_instructions: dict, ref_data: dict, patched_data: dict) -> 
             common_keys = pck_keys & ref_pck_keys
             new_keys = pck_keys - ref_pck_keys
             changes = {}
-            # # This is new to original repo, so I can add this straight across
-            # if new_keys:
-            #     for k in sorted(new_keys):
-            #         changes[k] = pck[k]
+            # # This is new to original repo, so I can add the information straight across
             new_and_common_keys = new_keys | common_keys
             # There seems to be a few different mappings
             # str->str, int->int, list->list and str->None
@@ -135,26 +135,20 @@ def find_diffs(patch_instructions: dict, ref_data: dict, patched_data: dict) -> 
                         # It's new so nothing exists here
                         ref_items = set()
                     else:
-                        ref_items =set(ref_val)
+                        ref_items = set(ref_val)
                     patch_items = set(patch_val)
                     new_or_modded_items = patch_items - ref_items
                     removed_or_modded_items = ref_items - patch_items
                     item_changes["src"] = list(removed_or_modded_items)
                     item_changes["patch"] = list(new_or_modded_items)
                     changes[k] = item_changes
-                    # if not (new_or_modded_items or removed_or_modded_items):
-                    #     print(package_name, k)
-                    #     print('ref: ', ref_items)
-                    #     print('patch: ', patch_items)
-                    #     print(f"{new_or_modded_items=}")
-                    #     print(f"{removed_or_modded_items=}")
                 else:
                     changes[k] = f"{ref_val}->{patch_val}"
             sd["packages"][package_name] = changes
 
         except KeyError:
-                # This should never occur but his here to assure that things are accounted for
-                sd["patch_instruction_on_nonexistent_package"].append(package_name)
+            # This should never occur but his here to assure that things are accounted for
+            sd["patch_instruction_on_nonexistent_package"].append(package_name)
     return sd
 
 
@@ -178,14 +172,18 @@ def _has_change(pkg_diff_dict: dict) -> bool:
     return has_change
 
 
-def generate_summary(summary_stats, simplified_diffs):
+def generate_summary(summary_stats: dict, simplified_diffs: dict):
     print("Summary:")
     print()
     hdr_str = "|   platform  | changes | removals | revokes |"
     print(hdr_str)
     print("-" * len(hdr_str))
     for subdir in subdirs:
-        npc, nrm, nrv = summary_stats[subdir]['package_changes'], summary_stats[subdir]['package_removals'], summary_stats[subdir]['package_revokes']
+        npc, nrm, nrv = (
+            summary_stats[subdir]["package_changes"],
+            summary_stats[subdir]["package_removals"],
+            summary_stats[subdir]["package_revokes"],
+        )
         print(f"{subdir:15}{npc:8}{nrm:9}{nrv:10}")
     print()
     print("Removal Summary:")
@@ -203,20 +201,25 @@ def generate_summary(summary_stats, simplified_diffs):
         if simplified_diffs[subdir]["not_removed"]:
             print(f"For {subdir}:")
             for pkg in simplified_diffs[subdir]["not_removed"]:
-                print("   " , pkg)
+                print("   ", pkg)
             print()
 
     print()
-    print("Unnecessarily Patched (aka no changes though patches were applied) Packages Summary:")
+    print(
+        "Unnecessarily Patched (aka no changes though patches were applied) Packages Summary:"
+    )
     print("----------------")
     for subdir in subdirs:
-        subdir_unnecessary_patches = [pkg for pkg, pkg_info in simplified_diffs[subdir]["packages"].items() if not _has_change(pkg_info)]
+        subdir_unnecessary_patches = [
+            pkg
+            for pkg, pkg_info in simplified_diffs[subdir]["packages"].items()
+            if not _has_change(pkg_info)
+        ]
         if subdir_unnecessary_patches:
             print(f"For {subdir}:")
             for pkg in subdir_unnecessary_patches:
                 print("   ", pkg)
             print()
-
 
 
 if __name__ == "__main__":
@@ -225,7 +228,11 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="Generate what current repodata-hotfixes is doing."
     )
-    parser.add_argument("channel", help="channel name or url to download repodata from", choices=channel_map.keys())
+    parser.add_argument(
+        "channel",
+        help="channel name or url to download repodata from",
+        choices=channel_map.keys(),
+    )
     parser.add_argument(
         "--subdirs",
         nargs="*",
@@ -239,21 +246,25 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     channel = args.channel
-    if 'all' in args.subdirs:
+    if "all" in args.subdirs:
         subdirs = current_supported_subdirs
     else:
         subdirs = args.subdirs
 
-    ################################
-    ## Making directory structure ##
-    ################################
+    ##############################
+    # Making directory structure #
+    ##############################
 
     # NOTE: Only main, r and msys2 are available
     base_path = Path(channel)
     if not base_path.is_dir():
-        print(f"Creating channel directory structure for channel '{channel}' and platforms {subdirs}...")
+        print(
+            f"Creating channel directory structure for channel '{channel}' and platforms {subdirs}..."
+        )
         if base_path.exists():
-            sys.exit(f"{base_path} exists but it is not a directory. Won't overwrite so exiting.")
+            sys.exit(
+                f"{base_path} exists but it is not a directory. Won't overwrite so exiting."
+            )
 
         base_path.mkdir()
 
@@ -262,9 +273,9 @@ if __name__ == "__main__":
         if not subdir_dir.is_dir():
             subdir_dir.mkdir()
 
-    ################################
-    ## Downloading data           ##
-    ################################
+    ##############################
+    # Downloading data           #
+    ##############################
     channel_base_url = channel_map[channel]
 
     if args.use_cache:
@@ -274,49 +285,54 @@ if __name__ == "__main__":
         for subdir in subdirs:
             clone_subdir(channel, channel_base_url, subdir)
 
-    ################################
-    ## Analyze data               ##
-    ################################
+    ###############################
+    # Analyze data                #
+    ###############################
     print("Analyzing results...")
     summary_stats = dict()
     simplified_diffs = dict()
     for subdir in subdirs:
-        raw_repodata_file = base_path / subdir / "repodata_from_packages.json"
-        out_instructions = base_path / subdir / "patch_instructions.json"
-        if not (raw_repodata_file.exists() or out_instructions.exists()):
+        repodata_filepath = base_path / subdir / "repodata_from_packages.json"
+        patch_instructions_filepath = base_path / subdir / "patch_instructions.json"
+        if not (repodata_filepath.exists() or patch_instructions_filepath.exists()):
             print("Missing files.  Attempting to reclone.")
             clone_subdir(channel, channel_base_url, subdir)
 
-        with open(raw_repodata_file) as f:
+        with open(repodata_filepath) as f:
             repodata = json.load(f)
 
-        with open(out_instructions) as f:
-            instructions = json.load(f)
+        with open(patch_instructions_filepath) as f:
+            patch_instructions = json.load(f)
 
-        summary_stats[subdir] = {'package_changes':len(instructions['packages']),
-                                'package_removals': len(instructions['remove']),
-                                'package_revokes': len(instructions['revoke'])}
+        summary_stats[subdir] = {
+            "package_changes": len(patch_instructions["packages"]),
+            "package_removals": len(patch_instructions["remove"]),
+            "package_revokes": len(patch_instructions["revoke"]),
+        }
 
         # Making a clean copy as _apply_instructions mutates original
         repodata_clean = copy.deepcopy(repodata)
-        patched_repodata = _apply_instructions(subdir, repodata, instructions)
-        patched_repodata_file = base_path / subdir / "repodata-patched.json"
-        print(f"Writing out new repodata as {patched_repodata_file} for '{subdir}' platform.")
-        write_readable_json_file(patched_repodata, patched_repodata_file)
+        patched_repodata = _apply_instructions(subdir, repodata, patch_instructions)
+        patched_repodata_filepath = base_path / subdir / "repodata-patched.json"
+        print(
+            f"Writing out new repodata as {patched_repodata_filepath} for '{subdir}' platform."
+        )
+        write_readable_json_file(patched_repodata, patched_repodata_filepath)
 
-        simplified_diff_path = base_path / subdir / "repodata-diff.json"
-        diff_dict = find_diffs(instructions, repodata_clean, patched_repodata)
-        simplified_diffs[subdir] = diff_dict
-        print(f"Writing out simple diff as {simplified_diff_path} for '{subdir}' platform.")
-        write_readable_json_file(diff_dict, simplified_diff_path)
+        simplified_diff_filepath = base_path / subdir / "repodata-diff.json"
+        subdir_simple_diff = find_diffs(patch_instructions, repodata_clean, patched_repodata)
+        simplified_diffs[subdir] = subdir_simple_diff
+        print(
+            f"Writing out simple diff as {simplified_diff_filepath} for '{subdir}' platform."
+        )
+        write_readable_json_file(subdir_simple_diff, simplified_diff_filepath)
 
     # Summary
     generate_summary(summary_stats, simplified_diffs)
 
-
-    ################################
-    ## Process data               ##
-    ################################
+    ##############################
+    # Process data               #
+    ##############################
     # Let's look at this is in a different way.  Let's look at it by what changes are being pushed on
 
     changes_dict = defaultdict(set)
@@ -324,7 +340,7 @@ if __name__ == "__main__":
         for pkg, chg_dict in simplified_diffs[subdir]["packages"].items():
             for change_key, changes in chg_dict.items():
                 if isinstance(changes, dict):
-                    for change_item in changes['patch']:
+                    for change_item in changes["patch"]:
                         changes_dict[(change_key, f"->{change_item}")].add(pkg)
                 else:
                     changes_dict[(change_key, changes)].add(pkg)

@@ -12,6 +12,7 @@ When packages are created, authors do their best to specify constraints that mak
 ## Actions that repodata-hotfixes (main.py, r.py and msys2.py) scripts can do:
 
 ### Dependency and Constraint updates
+
 Changing dependencies and constraints is the primary reason hotfixes are applied.  Their
 may be reasons why you need to change a longstanding package but rebuilding may not be
 feasible or perhaps not worth the time.  By changing dependencies and constraints,
@@ -22,14 +23,18 @@ NOTE: Hotfixes are applied in a overwrite manner.  So any changes are implemente
 will effect the the entire dependency or constraint list (i.e. If someone
 changes one out of the ten dependency for a single package, all ten will still should be in the
 "patch-instructions" as patching is an overwriting operation).
+
 ### Removal
+
 Adding a package to the removal list will remove the entire entry from the repodata.json.  It will no longer be searchable by conda search.
 
 We should put things on the remove list when:
 - We need a quick fix to stop consumers from downloading a bad package.
 
 Another approach might be to move the package into broken package directory (see directions in perseverance-skills).  This will cause it not to be indexed in the first place.
+
 ### Revoked
+
 Adding a package to the revoked list does two things:
 1. It inserts the "package_has_been_revoked" into the depends list.
 2. It adds the revoked key value pair `revoked: true`
