@@ -1010,22 +1010,22 @@ def patch_record_in_place(fn, record, subdir):
         if "toml >=0.7.1" not in depends:
             depends.append("toml >=0.7.1")
 
-    if name == "flask":
-        # flask <1.0 should pin werkzeug to <1.0.0
-        if version[0] == "0":
-            replace_dep(depends, "werkzeug", "werkzeug <1.0.0")
-            replace_dep(depends, "werkzeug >=0.7", "werkzeug >=0.7,<1.0.0")
-        # if flask is 1.x is not compatible with the newest versions of
-        # some dependencies. Hotfix to pin according to pinnings in v1.1.4:
-        # https://github.com/pallets/flask/blob/1.1.4/setup.py#L55-L60
-        # Version 1.1.4 will be maintained in a separate branch:
-        # https://github.com/AnacondaRecipes/flask-feedstock/tree/main-1.1.x
-        elif version[0] == "1" and int(version[-1]) < 4:
-            replace_dep(depends, "click >=5.1","click >=5.1,<8.0")
-            replace_dep(depends, "itsdangerous >=0.24", "itsdangerous >=0.24,<2.0")
-            replace_dep(depends, "jinja2 >=2.10.1", "jinja2 >=2.10.1,<3.0")
-            replace_dep(depends, "jinja2 >=2.10", "jinja2 >=2.10,<3.0")
-            replace_dep(depends, "werkzeug >=0.14","werkzeug >=0.15,<2.0")
+    # flask <1.0 should pin werkzeug to <1.0.0
+    if name == "flask" and version[0] == "0":
+        replace_dep(depends, "werkzeug", "werkzeug <1.0.0")
+        replace_dep(depends, "werkzeug >=0.7", "werkzeug >=0.7,<1.0.0")
+
+    # if flask is 1.x is not compatible with the newest versions of
+    # some dependencies. Hotfix to pin according to pinnings in v1.1.4:
+    # https://github.com/pallets/flask/blob/1.1.4/setup.py#L55-L60
+    # Version 1.1.4 will be maintained in a separate branch:
+    # https://github.com/AnacondaRecipes/flask-feedstock/tree/main-1.1.x
+    if name == "flask" and version[0] == "1" and int(version[-1]) < 4:
+        replace_dep(depends, "click >=5.1","click >=5.1,<8.0")
+        replace_dep(depends, "itsdangerous >=0.24", "itsdangerous >=0.24,<2.0")
+        replace_dep(depends, "jinja2 >=2.10.1", "jinja2 >=2.10.1,<3.0")
+        replace_dep(depends, "jinja2 >=2.10", "jinja2 >=2.10,<3.0")
+        replace_dep(depends, "werkzeug >=0.14","werkzeug >=0.15,<2.0")
 
     # package found the freetype library in the build enviroment rather than
     # host but used the host run_export: freetype >=2.9.1,<3.0a0
