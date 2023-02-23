@@ -1,3 +1,4 @@
+import bisect
 import copy
 import fnmatch
 import json
@@ -98,6 +99,8 @@ REMOVALS = {
         "intel-openmp*-2019.5*",
         # missing dependencies
         "numpy-devel-1.14.3*",
+        # anaconda-client<1.10.0 is incompatible with python 3.10
+        "anaconda-client-1.9.0-py310*",
     },
 }
 
@@ -848,6 +851,13 @@ def patch_record_in_place(fn, record, subdir):
     ):
         depends.append("_low_priority")
 
+    if name == 'anaconda-navigator':
+        if re.match(r'1\.|2\.[0-2]\.', version):  # < 2.3.0
+            replace_dep(depends, ['pyqt >=5.6,<6.0a0', 'pyqt >=5.6', 'pyqt'], 'pyqt >=5.6,<5.15')
+
+        if re.match(r'1\.|2\.[0-3]\.', version):  # < 2.4.0
+            replace_dep(depends, 'conda', 'conda <22.11.0', append=True)
+
     ########################
     # run_exports mis-pins #
     ########################
@@ -1194,11 +1204,64 @@ def patch_record_in_place(fn, record, subdir):
             depends[:] = ["clang_osx-64 >=4.0.1,<4.0.2.0a0", "clangxx", "libcxx"]
 
 
-def replace_dep(depends, old, new):
-    """Replace a old dependency with a new one."""
-    if old in depends:
-        index = depends.index(old)
+def replace_dep(depends, old, new, *, append=False):
+    """
+    Replace an old dependency with a new one.
+
+    :param depends: List of dependencies that should be updated.
+    :type depends: list[str]
+
+    :param old: Old dependency(s) that should be replaced with a :code:`new` one.
+    :type old: str | Iterable[str]
+
+    :param new: New dependency to use instead of the :code:`old` one.
+
+                If set to :code:`None` - instead of replacing function will remove :code:`old` dependency.
+    :type new: str | None
+
+    :param append: Append :code:`new` dependency if it is not already added.
+    :type append: bool
+
+    :return: Change status. Might be one of the next values:
+
+             - :code:`'+'` - :code:`new` dependency added to the :code:`depends`.
+             - :code:`'-'` - :code:`old` dependency removed from the :code:`depends`.
+             - :code:`'~'` - :code:`old` dependency is replaced by the :code:`new`.
+             - :code:`'='` - no changes made to the :code:`depends`.
+
+             .. note::
+
+                Single character results were chosen to be able to do such kind of checks:
+
+                 .. code-block:: python
+
+                    if replace_dep(...) in '+=':
+                        ...
+
+    :rtype: Literal['+', '-', '~', '=']
+    """
+    if isinstance(old, str):
+        old = [old]
+
+    for item in old:
+        try:
+            index = depends.index(item)
+        except ValueError:
+            continue
+        if new is None:
+            del depends[index]
+            return '-'
         depends[index] = new
+        return '~'
+
+    if append:
+        if new is None:
+            raise TypeError('Forbidden to append None to dependencies')
+        if new not in depends:
+            bisect.insort_left(depends, new)
+            return '+'
+
+    return '='
 
 
 def _extract_and_remove_vc_feature(record):
