@@ -527,6 +527,10 @@ def patch_record(fn, record, subdir, instructions, index):
     if subdir == "linux-ppc64le" and fn == "blas-1.0-openblas.tar.bz2":
         instructions["packages"][fn]["build_number"] = 7
 
+    # 'cryptography' + openssl incompatibility 28 Feb 2023 #
+    if record["name"] == "cryptography" and record["version"] == "1.9.1":
+        instructions["remove"].append(fn)
+
 
 def patch_record_in_place(fn, record, subdir):
     """Patch record in place"""
