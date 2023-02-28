@@ -759,7 +759,7 @@ def patch_record_in_place(fn, record, subdir):
     # 'cryptography' + openssl incompatibility 28 Feb 2023 #
     if name == "cryptography" and VersionOrder(version) >= VersionOrder("39.0.1"):
         # or pyopenssl should have a max cryptography version set
-        record["constrains"] = ["pyopenssl > 22.1.0"]
+        record["constrains"] = ["pyopenssl >=23.0.0"]
 
     ############
     # features #
