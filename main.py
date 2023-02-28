@@ -756,7 +756,7 @@ def patch_record_in_place(fn, record, subdir):
     if name == "basemap":
         record["constrains"] = ["proj4 <6", "proj <6"]
 
-    # 'cryptography' + openssl incompatibility 28 Feb 2023 #
+    # 'cryptography' + pyopenssl incompatibility 28 Feb 2023 #
     if name == "cryptography" and VersionOrder(version) >= VersionOrder("39.0.1"):
         # or pyopenssl should have a max cryptography version set
         record["constrains"] = ["pyopenssl >=23.0.0"]
