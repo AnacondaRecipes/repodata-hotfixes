@@ -528,7 +528,7 @@ def patch_record(fn, record, subdir, instructions, index):
         instructions["packages"][fn]["build_number"] = 7
 
     # 'cryptography' + openssl incompatibility 28 Feb 2023 #
-    if record["name"] == "cryptography" and record["version"] == "1.9.1":
+    if record["name"] == "cryptography" and record["version"] == "39.0.1":
         instructions["remove"].append(fn)
 
 
