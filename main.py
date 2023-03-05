@@ -1242,25 +1242,22 @@ def replace_dep(depends, old, new, *, append=False):
     """
     if isinstance(old, str):
         old = [old]
+    if append and (new is None):
+        raise TypeError('Forbidden to append None to dependencies')
 
+    removed = False
     for item in old:
-        try:
-            index = depends.index(item)
-        except ValueError:
-            continue
-        if new is None:
-            del depends[index]
-            return '-'
-        depends[index] = new
-        return '~'
+        if item in depends:
+            depends.remove(item)
+            removed = True
 
-    if append:
-        if new is None:
-            raise TypeError('Forbidden to append None to dependencies')
-        if new not in depends:
-            bisect.insort_left(depends, new)
-            return '+'
-
+    if (removed or append) and (new is not None) and (new not in depends):
+        bisect.insort_left(depends, new)
+        if removed:
+            return '~'
+        return '+'
+    if removed:
+        return '-'
     return '='
 
 
