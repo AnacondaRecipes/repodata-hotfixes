@@ -1155,6 +1155,12 @@ def patch_record_in_place(fn, record, subdir):
         if VersionOrder(version) < VersionOrder("23.1.0a0"):
             # https://github.com/conda/conda-libmamba-solver/issues/132
             replace_dep(depends, "conda >=22.11.0", "conda >=22.11.0,<23.1.0a")
+        # conda 23.3 changed an internal SubdirData API needed with S3/FTP channels
+        # conda depricated Boltons leading to a breakage in the solver api interface
+        if VersionOrder(version) < VersionOrder("23.2.0a0"):
+            # https://github.com/conda/conda-libmamba-solver/issues/153
+            # https://github.com/conda/conda-libmamba-solver/issues/152
+            replace_dep(depends, "conda >=22.11.0", "conda >=22.11.0,<23.2.0a")
 
     # snowflake-snowpark-python cloudpickle pins
     if name == "snowflake-snowpark-python" and version == '0.6.0':
