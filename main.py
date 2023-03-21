@@ -681,17 +681,22 @@ def patch_record_in_place(fn, record, subdir):
     # scipy #
     #########
 
-    # Our original build of scipy-1.7.3 (build number 0) did not comply with the
-    # upstream's min and max numpy pinnings.
-    # See: https://github.com/scipy/scipy/blob/v1.7.3/setup.py#L551-L552
-
-    if name == "scipy" and version == "1.7.3" and build_number == 0:
-        if subdir != 'osx-arm64' and not build.startswith("py310"):
-            replace_dep(depends, "numpy >=1.16.6,<2.0a0", "numpy >=1.16.6,<1.23.0")
-        if subdir == 'osx-arm64' and not build.startswith("py310"):
-            replace_dep(depends, "numpy >=1.19.5,<2.0a0", "numpy >=1.19.5,<1.23.0")
-        if build.startswith("py310"):
-            replace_dep(depends, "numpy >=1.21.2,<2.0a0", "numpy >=1.21.2,<1.23.0")
+    if name == "scipy":
+        # Our original build of scipy-1.7.3 (build number 0) did not comply with the
+        # upstream's min and max numpy pinnings.
+        # See: https://github.com/scipy/scipy/blob/v1.7.3/setup.py#L551-L552
+        if version == "1.7.3" and build_number == 0:
+            if subdir != 'osx-arm64' and not build.startswith("py310"):
+                replace_dep(depends, "numpy >=1.16.6,<2.0a0", "numpy >=1.16.6,<1.23.0")
+            if subdir == 'osx-arm64' and not build.startswith("py310"):
+                replace_dep(depends, "numpy >=1.19.5,<2.0a0", "numpy >=1.19.5,<1.23.0")
+            if build.startswith("py310"):
+                replace_dep(depends, "numpy >=1.21.2,<2.0a0", "numpy >=1.21.2,<1.23.0")
+        # scipy needs at least nympy 1.19.5
+        # https://github.com/scipy/scipy/blob/v1.10.0/pyproject.toml#L78
+        elif version == "1.10.0" and build_number == 0:
+            if build[:4] in ["py37", "py38", "py39"]:
+                replace_dep(depends, "numpy >=1.19,<1.27.0", "numpy >=1.19.5,<1.27.0")
 
     ######################
     # scipy dependencies #
