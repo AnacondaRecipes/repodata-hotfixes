@@ -751,6 +751,13 @@ def patch_record_in_place(fn, record, subdir):
                 break
 
     ##############
+    # versioneer #
+    ##############
+
+    if name == "versioneer" and record["license_family"].upper() == "NONE":
+        record["license_family"] = "PUBLIC-DOMAIN"
+
+    ##############
     # constrains #
     ##############
 
