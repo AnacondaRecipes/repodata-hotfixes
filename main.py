@@ -511,7 +511,15 @@ def patch_record(fn, record, subdir, instructions, index):
     # to the patch instructions
     original_record = copy.deepcopy(record)
     patch_record_in_place(fn, record, subdir)
-    keys_to_check = ["depends", "constrains", "namespace", "track_features", "features", "license_family"]
+    keys_to_check = [
+        "constrains",
+        "depends",
+        "features",
+        "namespace",
+        "license_family",
+        "subdir",
+        "track_features",
+    ]
     for key in keys_to_check:
         if record.get(key) != original_record.get(key):
             instructions["packages"][fn][key] = record.get(key)
@@ -539,6 +547,13 @@ def patch_record_in_place(fn, record, subdir):
     build_number = record["build_number"]
     depends = record["depends"]
     constrains = record.get("constrains", [])
+
+    ##########
+    # subdir #
+    ##########
+
+    if "subdir" not in record:
+        record["subdir"] = subdir
 
     #############
     # namespace #
