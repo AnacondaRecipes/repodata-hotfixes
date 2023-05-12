@@ -895,6 +895,7 @@ def patch_record_in_place(fn, record, subdir):
 
     # openssl3 preventive measures
     replace_dep(depends, "openssl !=1.1.1e", "openssl !=1.1.1e,<1.1.2a")
+    replace_dep(constrains, "openssl >=1.1.1k", "openssl >=1.1.1k,<1.1.2a")
     if name != "_anaconda_depends":
         replace_dep(depends, "openssl", "openssl<1.1.2a")
 
