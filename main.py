@@ -692,7 +692,14 @@ def patch_record_in_place(fn, record, subdir):
     # these packages for the time being. The aforementioned unresolved CVE may
     # require us to take a different approach in the future.
     if name.startswith("pytest-"):
-        replace_dep(depends, "", "py", append=True)
+        # Prevent existing projects with `py` dependencies from being included
+        has_py = False
+        for dep in depends:
+            if dep == "py" or dep.startswith("py "):
+                has_py = True
+                break
+        if not has_py:
+            replace_dep(depends, "", "py", append=True)
 
     ###########
     # pytorch #
