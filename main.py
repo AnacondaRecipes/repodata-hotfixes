@@ -695,7 +695,7 @@ def patch_record_in_place(fn, record, subdir):
         # Prevent existing projects with `py` dependencies from being included
         has_py = False
         for dep in depends:
-            if dep == "py" or dep.startswith("py "):
+            if re.match(r"py(<|>|=|\s|$)", dep):
                 has_py = True
                 break
         if not has_py:
