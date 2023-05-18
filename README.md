@@ -9,16 +9,67 @@ When packages are created, authors do their best to specify constraints that mak
 * addition or removal of dependencies
 * addition or removal of constraints
 
-## Testing hotfixes:
+## Actions that repodata-hotfixes (main.py, r.py and msys2.py) scripts can do:
 
-There's a script that downloads the current repodata and runs your instructions against it.  It then shows you a diff.  Example usage of this script:
+### Dependency and Constraint updates
+
+Changing dependencies and constraints is the primary reason hotfixes are applied.  Their
+may be reasons why you need to change a longstanding package but rebuilding may not be
+feasible or perhaps not worth the time.  By changing dependencies and constraints,
+the data used to solve for dependencies can be modified and leave the larger ecosystem
+unharmed.
+
+NOTE: Hotfixes are applied in a overwrite manner.  So any changes are implemented
+will effect the the entire dependency or constraint list (i.e. If someone
+changes one out of the ten dependency for a single package, all ten will still should be in the
+"patch-instructions" as patching is an overwriting operation).
+
+### Removal
+
+Adding a package to the removal list will remove the entire entry from the repodata.json.  It will no longer be searchable by conda search.
+
+We should put things on the remove list when:
+- We need a quick fix to stop consumers from downloading a bad package.
+
+Another approach might be to move the package into broken package directory (see directions in perseverance-skills).  This will cause it not to be indexed in the first place.
+
+### Revoked
+
+Adding a package to the revoked list does two things:
+1. It inserts the "package_has_been_revoked" into the depends list.
+2. It adds the revoked key value pair `revoked: true`
+
+This should cause that the package in question is still available but will not be used by default as "package_has_been_revoked" isn't a valid package.
+
+We should put things on the revoke list when:
+- We feel we want a customer to still have access but not the whole consumer population by default
+- ?
+
+## Utility scripts:
+### Seeing current hotfixes with `gen-current-hotfix-report.py`:
+
+It can be quite difficult to grok what the hotfix scripts are doing.  The script, `gen-current-hotfix-report.py`, attempts to make it easier to see what the current state of the applied hotfixes looks like.
+
+The script downloads the current repodata.  It then shows you a diff.  Example usage of this script:
 
 ```
-python test-hotfix.py main --subdir linux-64 osx-64 win-64 win-32 linux-ppc64le linux-32 noarch
+python gen-current-hotfix-report.py main --subdir linux-64 osx-64 win-64 osx-arm64 linux-ppc64le linux-aarch64 linux-s390x noarch
+```
+
+For repeated runs add `--use-cache` to avoid downloading the repodata files.
+
+### Testing hotfixes with `test-hotfix.py`:
+
+The script, `test-hotfix.py`,  downloads the current repodata and runs your instructions against it.  It then shows you a diff.
+
+This useful for testing out changes before they are committed and deployed.  This will show differences in current state of hotfixes
+and the ones you are working on.
+
+Example usage of this script:
+```
+python test-hotfix.py main --subdir linux-64 osx-64 win-64 osx-arm64 linux-ppc64le linux-aarch64 linux-s390x noarch
 ```
 
 Use the `--color` or `--show-pkgs` options for different outputs.
 
 For repeated runs add `--use-cache` to avoid downloading the repodata files.
-
-You should run this before merging any PRs so that you understand the effects your change may have (or not have, if you have bugs).

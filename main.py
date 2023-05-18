@@ -1,3 +1,4 @@
+import bisect
 import copy
 import fnmatch
 import json
@@ -23,6 +24,7 @@ SUBDIRS = (
     "linux-ppc64le",
     "linux-s390x",
     "osx-64",
+    "osx-arm64",
     "win-32",
     "win-64",
 )
@@ -97,6 +99,8 @@ REMOVALS = {
         "intel-openmp*-2019.5*",
         # missing dependencies
         "numpy-devel-1.14.3*",
+        # anaconda-client<1.10.0 is incompatible with python 3.10
+        "anaconda-client-1.9.0-py310*",
     },
 }
 
@@ -213,6 +217,7 @@ NP_BASE_LOOSE_PIN = {
     "linux-armv6l": [],
     "linux-armv7l": [],
     "linux-s390x": [],
+    "osx-arm64": [],
 }
 
 BLAS_USING_PKGS = {
@@ -398,7 +403,11 @@ def _fix_numpy_base_constrains(record, index, instructions, subdir):
         # base package pinning not to version + build, no modification needed
         return
     base_pkg_fn = "%s-%s-%s.tar.bz2" % (name, ver, build_str)
-    if "constrains" in index[base_pkg_fn]:
+    try:
+        if "constrains" in index[base_pkg_fn]:
+            return
+    except KeyError:
+        # package might be revoked
         return
     if base_pkg_fn in NP_BASE_LOOSE_PIN.get(subdir, []):
         # base package is a requirement of multiple numpy packages,
@@ -502,7 +511,15 @@ def patch_record(fn, record, subdir, instructions, index):
     # to the patch instructions
     original_record = copy.deepcopy(record)
     patch_record_in_place(fn, record, subdir)
-    keys_to_check = ["depends", "constrains", "namespace", "track_features", "features"]
+    keys_to_check = [
+        "constrains",
+        "depends",
+        "features",
+        "namespace",
+        "license_family",
+        "subdir",
+        "track_features",
+    ]
     for key in keys_to_check:
         if record.get(key) != original_record.get(key):
             instructions["packages"][fn][key] = record.get(key)
@@ -526,9 +543,17 @@ def patch_record_in_place(fn, record, subdir):
     """Patch record in place"""
     name = record["name"]
     version = record["version"]
+    build = record["build"]
     build_number = record["build_number"]
     depends = record["depends"]
     constrains = record.get("constrains", [])
+
+    ##########
+    # subdir #
+    ##########
+
+    if "subdir" not in record:
+        record["subdir"] = subdir
 
     #############
     # namespace #
@@ -632,6 +657,50 @@ def patch_record_in_place(fn, record, subdir):
         elif any(dep.split()[0] in ("openblas", "libopenblas") for dep in depends):
             depends.append("blas * openblas")
 
+    #########
+    # numpy #
+    #########
+
+    # Correct packages mistakenly built against 1.21.5 on linux-aarch64
+    # Replaces the dependency bound with 1.21.2. These packages should
+    # actually have been built against an even earlier version of numpy.
+    # This is the safest correction we can make for now
+    if subdir == "linux-aarch64":
+        for i, dep in enumerate(depends):
+            if dep.startswith("numpy >=1.21.5,"):
+                depends[i] = depends[i].replace(">=1.21.5,", ">=1.21.2,")
+                break
+
+    ############
+    # pytest-* #
+    ############
+
+    # When we upgraded `pytest` to v7.3.1, we unknowingly broke several (if not
+    # all) `pytest-*` plugins. In v7.2.0, `pytest` removed `py` as a dependency
+    # and at least some plugins were all silently depending on it transitively
+    # from `pytest`. See here for more context:
+    # - https://github.com/pytest-dev/pytest/releases/tag/7.2.0
+    #   - "pytest no longer depends on the py library...."
+    # - https://github.com/pytest-dev/pytest-html/releases/tag/v3.2.0
+    #   - "Add py as a dependency"
+    # - https://anaconda.slack.com/archives/C03HJF22C4W/p1684253695788659
+    #   - Slack thread that dicusses this further
+    # Dropping `py` from `pytest` was likely caused by this CVE against `py`
+    # that the community (as of writing) still seems to be hashing out:
+    # - https://github.com/advisories/GHSA-w596-4wvx-j9j6
+    # To address this, we have decided to patch-in the `py` dependency for
+    # these packages for the time being. The aforementioned unresolved CVE may
+    # require us to take a different approach in the future.
+    if name.startswith("pytest-"):
+        # Prevent existing projects with `py` dependencies from being included
+        has_py = False
+        for dep in depends:
+            if re.match(r"py(<|>|=|!|~|\s|$)", dep):
+                has_py = True
+                break
+        if not has_py:
+            replace_dep(depends, "", "py", append=True)
+
     ###########
     # pytorch #
     ###########
@@ -652,6 +721,42 @@ def patch_record_in_place(fn, record, subdir):
             depends.append("_pytorch_select 0.2")
         else:
             depends.append("_pytorch_select 0.1")
+
+    #########
+    # scipy #
+    #########
+
+    if name == "scipy":
+        # Our original build of scipy-1.7.3 (build number 0) did not comply with the
+        # upstream's min and max numpy pinnings.
+        # See: https://github.com/scipy/scipy/blob/v1.7.3/setup.py#L551-L552
+        if version == "1.7.3" and build_number == 0:
+            if subdir != 'osx-arm64' and not build.startswith("py310"):
+                replace_dep(depends, "numpy >=1.16.6,<2.0a0", "numpy >=1.16.6,<1.23.0")
+            if subdir == 'osx-arm64' and not build.startswith("py310"):
+                replace_dep(depends, "numpy >=1.19.5,<2.0a0", "numpy >=1.19.5,<1.23.0")
+            if build.startswith("py310"):
+                replace_dep(depends, "numpy >=1.21.2,<2.0a0", "numpy >=1.21.2,<1.23.0")
+        # scipy needs at least nympy 1.19.5
+        # https://github.com/scipy/scipy/blob/v1.10.0/pyproject.toml#L78
+        elif version == "1.10.0" and build_number == 0:
+            if build[:4] in ["py37", "py38", "py39"]:
+                replace_dep(depends, "numpy >=1.19,<1.27.0", "numpy >=1.19.5,<1.27.0")
+
+    ######################
+    # scipy dependencies #
+    ######################
+
+    # scipy 1.8 and 1.9 introduce breaking API changes impacting these packages
+    if name == "theano":
+        if version in ["1.0.4", "1.0.5"]:
+            replace_dep(depends, "scipy >=0.14", "scipy >=0.14,<1.8")
+        elif version in ["0.9.0", "1.0.1", "1.0.2", "1.0.3"]:
+            replace_dep(depends, "scipy >=0.14.0", "scipy >=0.14,<1.8")
+    if name == "theano-pymc":
+        replace_dep(depends, "scipy >=0.14", "scipy >=0.14,<1.8")
+    if name == "pyamg" and version in ["3.3.2", "4.0.0", "4.1.0"]:
+        replace_dep(depends, "scipy >=0.12.0", "scipy >=0.12.0,<1.8")
 
     ##############
     # tensorflow #
@@ -682,6 +787,21 @@ def patch_record_in_place(fn, record, subdir):
     if name.startswith("tensorflow-base") and version == "2.4.1":
         replace_dep(depends, "gast", "gast 0.3.3")
 
+    # Relax the scipy pin slightly on linux-64 for tensorflow-base 2.8.2
+    # to match linux-aarch64, to facilitate intel/arm version alignment.
+    if name.startswith("tensorflow-base") and version == "2.8.2" and subdir == 'linux-64':
+        for i, dep in enumerate(depends):
+            if dep == "scipy >=1.7.3":
+                depends[i] = "scipy >=1.7.1"
+                break
+
+    ##############
+    # versioneer #
+    ##############
+
+    if name == "versioneer" and record["license_family"].upper() == "NONE":
+        record["license_family"] = "PUBLIC-DOMAIN"
+
     ##############
     # constrains #
     ##############
@@ -695,6 +815,11 @@ def patch_record_in_place(fn, record, subdir):
     # https://github.com/ContinuumIO/anaconda-issues/issues/11590
     if name == "basemap":
         record["constrains"] = ["proj4 <6", "proj <6"]
+
+    # 'cryptography' + pyopenssl incompatibility 28 Feb 2023 #
+    if name == "cryptography" and VersionOrder(version) >= VersionOrder("39.0.1"):
+        # or pyopenssl should have a max cryptography version set
+        record["constrains"] = ["pyopenssl >=23.0.0"]
 
     ############
     # features #
@@ -758,12 +883,8 @@ def patch_record_in_place(fn, record, subdir):
             dep_name, *other = dep.split()
             # Jinja 3.0.0 introduced behavior changes that broke certain
             # conda-build templating functionality.
-            #
-            # TODO: Review the conda-build and/or jinja version bounds on new
-            # releases of those packages; at some point, the incompatibilities
-            # between conda-build and jinja >=3.0 should be resolved.
             if dep_name == "jinja2":
-                depends[i] = "jinja2 <3.0.0a0"
+                depends[i] = "jinja2 !=3.0.0"
 
             # Deprecation removed in conda 4.13 break older conda-builds
             if VersionOrder(version) <= VersionOrder("3.21.8") and dep_name == "conda":
@@ -778,6 +899,10 @@ def patch_record_in_place(fn, record, subdir):
             # Pin nsis on recent versions of constructor
             # https://github.com/conda/constructor/issues/526
             replace_dep(depends, "nsis >=3.01", "nsis 3.01")
+        # conda 23.1 broke constructor
+        # https://github.com/conda/constructor/pull/627
+        if record.get("timestamp", 0) <= 1674637311000:
+            replace_dep(depends, "conda >=4.6", "conda >=4.6,<23.1.0a0")
 
     # libarchive 3.3.2 and 3.3.3 build 0 are missing zstd support.
     # De-prioritize these packages with a track_feature (via _low_priority)
@@ -786,6 +911,13 @@ def patch_record_in_place(fn, record, subdir):
         version == "3.3.2" or (version == "3.3.3" and build_number == 0)
     ):
         depends.append("_low_priority")
+
+    if name == 'anaconda-navigator':
+        if re.match(r'1\.|2\.[0-2]\.', version):  # < 2.3.0
+            replace_dep(depends, ['pyqt >=5.6,<6.0a0', 'pyqt >=5.6', 'pyqt'], 'pyqt >=5.6,<5.15')
+
+        if re.match(r'1\.|2\.[0-3]\.', version):  # < 2.4.0
+            replace_dep(depends, 'conda', 'conda <22.11.0', append=True)
 
     ########################
     # run_exports mis-pins #
@@ -937,6 +1069,15 @@ def patch_record_in_place(fn, record, subdir):
     if name == "numba" and version in ["0.46.0", "0.47.0"]:
         depends.append("setuptools")
 
+    # numba 0.54.0 0.54.1 0.55.0 have the wrong numpy bounds set
+    # see https://github.com/numba/numba/blob/0.54.0/numba/__init__.py#L135
+    # see https://github.com/numba/numba/blob/0.54.1/numba/__init__.py#L135
+    # see https://github.com/numba/numba/blob/0.55.0/numba/__init__.py#L137
+    if name == "numba" and version in ("0.54.0", "0.54.1"):
+        record["constrains"] = ["numpy >=1.17,<1.21.0a0"]
+    if name == "numba" and version == "0.55.0":
+        record["constrains"] = ["numpy >=1.18,<1.22.0a0"]
+
     # python-language-server should contrains ujson <=1.35
     # see https://github.com/conda-forge/cf-mark-broken/pull/20
     # https://github.com/conda-forge/python-language-server-feedstock/pull/48
@@ -954,6 +1095,19 @@ def patch_record_in_place(fn, record, subdir):
     if name == "flask" and version[0] == "0":
         replace_dep(depends, "werkzeug", "werkzeug <1.0.0")
         replace_dep(depends, "werkzeug >=0.7", "werkzeug >=0.7,<1.0.0")
+
+    # if flask is 1.x is not compatible with the newest versions of
+    # some dependencies. Hotfix to pin according to pinnings in v1.1.4:
+    # https://github.com/pallets/flask/blob/1.1.4/setup.py#L55-L60
+    # Version 1.1.4 will be maintained in a separate branch:
+    # https://github.com/AnacondaRecipes/flask-feedstock/tree/main-1.1.x
+    if name == "flask" and version[0] == "1" and int(version[-1]) < 4:
+        # the two next lines are commented as they break older anaconda distributions (2022.05)
+        # replace_dep(depends, "click >=5.1", "click >=5.1,<8.0")
+        # replace_dep(depends, "itsdangerous >=0.24", "itsdangerous >=0.24,<2.0")
+        replace_dep(depends, "jinja2 >=2.10.1", "jinja2 >=2.10.1,<3.0")
+        replace_dep(depends, "jinja2 >=2.10", "jinja2 >=2.10,<3.0")
+        replace_dep(depends, "werkzeug >=0.14", "werkzeug >=0.15,<2.0")
 
     # package found the freetype library in the build enviroment rather than
     # host but used the host run_export: freetype >=2.9.1,<3.0a0
@@ -1039,12 +1193,35 @@ def patch_record_in_place(fn, record, subdir):
                 if dep.startswith("python "):
                     depends[i] = "python >=3.7.1,<3.8.0a0"
 
+    if name == "conda" and version in ("22.11.0", "22.11.1"):
+        # exclude all pre-plugin-system libmambapy/conda-libmamba-solver
+        constrains[:] = [
+            dep
+            for dep in constrains
+            if not dep.startswith("conda-libmamba-solver")
+        ] + ["conda-libmamba-solver >=22.12.0"]
+        replace_dep(
+            depends, "ruamel.yaml >=0.11.14,<0.17", "ruamel.yaml >=0.11.14,<0.18"
+        )
+
     if name == "conda-libmamba-solver":
         # libmambapy 0.23 introduced breaking changes
         replace_dep(depends, "libmambapy >=0.22.1", "libmambapy 0.22.*")
         if version == "22.6.0":
             # conda 4.13 needed for the user agent strings
             replace_dep(depends, "conda >=4.12", "conda >=4.13")
+        # conda 22.11 introduces the plugin system
+        replace_dep(depends, "conda >=4.13", "conda >=4.13,<22.11.0a")
+        # conda 23.1 changed an internal SubdirData API needed for S3/FTP channels
+        if VersionOrder(version) < VersionOrder("23.1.0a0"):
+            # https://github.com/conda/conda-libmamba-solver/issues/132
+            replace_dep(depends, "conda >=22.11.0", "conda >=22.11.0,<23.1.0a")
+        # conda 23.3 changed an internal SubdirData API needed with S3/FTP channels
+        # conda depricated Boltons leading to a breakage in the solver api interface
+        if VersionOrder(version) < VersionOrder("23.2.0a0"):
+            # https://github.com/conda/conda-libmamba-solver/issues/153
+            # https://github.com/conda/conda-libmamba-solver/issues/152
+            replace_dep(depends, "conda >=22.11.0", "conda >=22.11.0,<23.2.0a")
 
     # snowflake-snowpark-python cloudpickle pins
     if name == "snowflake-snowpark-python" and version == '0.6.0':
@@ -1077,7 +1254,7 @@ def patch_record_in_place(fn, record, subdir):
     if (
         subdir == "linux-64"
         and name in ("libgcc-ng", "libstdcxx-ng", "libgfortran-ng")
-        and version in ("7.5.0", "8.4.0", "9.3.0")
+        and version in ("7.5.0", "8.4.0", "9.3.0", "11.2.0")
     ):
         # This would probably be better as a `constrains`, but conda's solver
         # currently has issues enforcing virtual package constrains. Making
@@ -1093,22 +1270,62 @@ def patch_record_in_place(fn, record, subdir):
         if name == "clangxx_osx-64" and version == "4.0.1" and int(build_number) < 17:
             depends[:] = ["clang_osx-64 >=4.0.1,<4.0.2.0a0", "clangxx", "libcxx"]
 
-    # Correct packages mistakenly built against 1.21.5 on linux-aarch64
-    # Replaces the dependency bound with 1.21.2. These packages should
-    # actually have been built against an even earlier version of numpy.
-    # This is the safest correction we can make for now
-    if subdir == "linux-aarch64":
-        for i, dep in enumerate(depends):
-            if dep.startswith("numpy >=1.21.5,"):
-                depends[i] = depends[i].replace(">=1.21.5,", ">=1.21.2,")
-                break
 
+def replace_dep(depends, old, new, *, append=False):
+    """
+    Replace an old dependency with a new one.
 
-def replace_dep(depends, old, new):
-    """Replace a old dependency with a new one."""
-    if old in depends:
-        index = depends.index(old)
-        depends[index] = new
+    :param depends: List of dependencies that should be updated.
+    :type depends: list[str]
+
+    :param old: Old dependency(s) that should be replaced with a :code:`new` one.
+    :type old: str | Iterable[str]
+
+    :param new: New dependency to use instead of the :code:`old` one.
+
+                If set to :code:`None` - instead of replacing function will remove :code:`old` dependency.
+    :type new: str | None
+
+    :param append: Append :code:`new` dependency if it is not already added.
+    :type append: bool
+
+    :return: Change status. Might be one of the next values:
+
+             - :code:`'+'` - :code:`new` dependency added to the :code:`depends`.
+             - :code:`'-'` - :code:`old` dependency removed from the :code:`depends`.
+             - :code:`'~'` - :code:`old` dependency is replaced by the :code:`new`.
+             - :code:`'='` - no changes made to the :code:`depends`.
+
+             .. note::
+
+                Single character results were chosen to be able to do such kind of checks:
+
+                 .. code-block:: python
+
+                    if replace_dep(...) in '+=':
+                        ...
+
+    :rtype: Literal['+', '-', '~', '=']
+    """
+    if isinstance(old, str):
+        old = [old]
+    if append and (new is None):
+        raise TypeError('Forbidden to append None to dependencies')
+
+    removed = False
+    for item in old:
+        if item in depends:
+            depends.remove(item)
+            removed = True
+
+    if (removed or append) and (new is not None) and (new not in depends):
+        bisect.insort_left(depends, new)
+        if removed:
+            return '~'
+        return '+'
+    if removed:
+        return '-'
+    return '='
 
 
 def _extract_and_remove_vc_feature(record):

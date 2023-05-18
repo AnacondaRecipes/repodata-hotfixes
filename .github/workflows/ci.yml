@@ -32,7 +32,7 @@ jobs:
         run: |
           conda activate testenv
           echo "################## main ###########################"
-          python test-hotfix.py main --subdir noarch linux-32 linux-64 linux-aarch64 linux-ppc64le linux-s390x osx-64 win-32 win-64
+          python test-hotfix.py main --subdir noarch linux-32 linux-64 linux-aarch64 linux-ppc64le linux-s390x osx-64 osx-arm64 win-32 win-64
           echo "################## r    ###########################"
           python test-hotfix.py r --subdir noarch linux-32 linux-64 linux-aarch64 linux-ppc64le osx-64 win-32 win-64
           echo "###################################################"
