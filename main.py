@@ -671,6 +671,36 @@ def patch_record_in_place(fn, record, subdir):
                 depends[i] = depends[i].replace(">=1.21.5,", ">=1.21.2,")
                 break
 
+    ############
+    # pytest-* #
+    ############
+
+    # When we upgraded `pytest` to v7.3.1, we unknowingly broke several (if not
+    # all) `pytest-*` plugins. In v7.2.0, `pytest` removed `py` as a dependency
+    # and at least some plugins were all silently depending on it transitively
+    # from `pytest`. See here for more context:
+    # - https://github.com/pytest-dev/pytest/releases/tag/7.2.0
+    #   - "pytest no longer depends on the py library...."
+    # - https://github.com/pytest-dev/pytest-html/releases/tag/v3.2.0
+    #   - "Add py as a dependency"
+    # - https://anaconda.slack.com/archives/C03HJF22C4W/p1684253695788659
+    #   - Slack thread that dicusses this further
+    # Dropping `py` from `pytest` was likely caused by this CVE against `py`
+    # that the community (as of writing) still seems to be hashing out:
+    # - https://github.com/advisories/GHSA-w596-4wvx-j9j6
+    # To address this, we have decided to patch-in the `py` dependency for
+    # these packages for the time being. The aforementioned unresolved CVE may
+    # require us to take a different approach in the future.
+    if name.startswith("pytest-"):
+        # Prevent existing projects with `py` dependencies from being included
+        has_py = False
+        for dep in depends:
+            if re.match(r"py(<|>|=|!|~|\s|$)", dep):
+                has_py = True
+                break
+        if not has_py:
+            replace_dep(depends, "", "py", append=True)
+
     ###########
     # pytorch #
     ###########
