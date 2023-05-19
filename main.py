@@ -915,6 +915,9 @@ def patch_record_in_place(fn, record, subdir):
         if re.match(r'1\.|2\.[0-3]\.', version):  # < 2.4.0
             replace_dep(depends, 'conda', 'conda <22.11.0', append=True)
 
+        if version.startswith('2.4.0'):  # = 2.4.0*
+            replace_dep(depends, ['conda', 'conda !=22.11.*'], 'conda <23.5.0,!=22.11.*')
+
     ########################
     # run_exports mis-pins #
     ########################
