@@ -950,7 +950,7 @@ def patch_record_in_place(fn, record, subdir):
             depends[i] = dep.split(",")[0] + ",<1.5.0a0"
 
         # curl >=8.0.0 is not actually a major upgrade
-        if dep.startswith("libcurl >= 7."):
+        if dep.startswith("libcurl >=7.") or dep.startswith("curl >=7."):
             depends[i] = dep.split(",")[0] + ",<9.0a0"
 
     # libffi broke ABI compatibility in 3.3
