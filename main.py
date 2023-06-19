@@ -1199,15 +1199,22 @@ def patch_record_in_place(fn, record, subdir):
                 if dep.startswith("python "):
                     depends[i] = "python >=3.7.1,<3.8.0a0"
 
-    if name == "conda" and version in ("22.11.0", "22.11.1"):
-        # exclude all pre-plugin-system libmambapy/conda-libmamba-solver
-        constrains[:] = [
-            dep
-            for dep in constrains
-            if not dep.startswith("conda-libmamba-solver")
-        ] + ["conda-libmamba-solver >=22.12.0"]
+    if name == "conda":
+        if version in ("22.11.0", "22.11.1"):
+            # exclude all pre-plugin-system libmambapy/conda-libmamba-solver
+            constrains[:] = [
+                dep
+                for dep in constrains
+                if not dep.startswith("conda-libmamba-solver")
+            ] + ["conda-libmamba-solver >=22.12.0"]
+            replace_dep(
+                depends, "ruamel.yaml >=0.11.14,<0.17", "ruamel.yaml >=0.11.14,<0.18"
+            )
+
+        # this issue affects all conda releases which use pluggy
+        # https://github.com/conda/conda/issues/12808
         replace_dep(
-            depends, "ruamel.yaml >=0.11.14,<0.17", "ruamel.yaml >=0.11.14,<0.18"
+            depends, "pluggy", "pluggy >=1.0.0,<1.1.0a0"
         )
 
     if name == "conda-libmamba-solver":
