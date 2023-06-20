@@ -949,6 +949,10 @@ def patch_record_in_place(fn, record, subdir):
         if dep.startswith("zstd >=1.4."):
             depends[i] = dep.split(",")[0] + ",<1.5.0a0"
 
+        # curl >=8.0.0 is not actually a major upgrade
+        if dep.startswith("libcurl >=7.") or dep.startswith("curl >=7."):
+            depends[i] = dep.split(",")[0] + ",<9.0a0"
+
     # libffi broke ABI compatibility in 3.3
     if name not in LIBFFI_HOTFIX_EXCLUDES and (
         "libffi >=3.2.1,<4.0a0" in depends or "libffi" in depends
