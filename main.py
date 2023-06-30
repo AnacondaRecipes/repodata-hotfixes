@@ -908,6 +908,11 @@ def patch_record_in_place(fn, record, subdir):
     ):
         depends.append("_low_priority")
 
+    if name == 'anaconda-client':
+        if re.match(r'1\.(?:\d|1[01])\.', version):  # < 1.12.0
+            if replace_dep(depends, 'urllib3 >=1.26.4', 'urllib3 >=1.26.4,<2.0.0a') == '=':  # if no changes
+                depends.append('urllib3 <2.0.0a')
+
     if name == 'anaconda-navigator':
         if re.match(r'1\.|2\.[0-2]\.', version):  # < 2.3.0
             replace_dep(depends, ['pyqt >=5.6,<6.0a0', 'pyqt >=5.6', 'pyqt'], 'pyqt >=5.6,<5.15')
