@@ -1242,6 +1242,12 @@ def patch_record_in_place(fn, record, subdir):
     if name == "snowflake-snowpark-python" and version == '0.6.0':
         replace_dep(depends, 'cloudpickle >=1.6.0', 'cloudpickle >=1.6.0,<=2.0.0')
 
+    # s3fs downgraded to the last version not requiring botocore. 
+    if name == "s3fs" and VersionOrder(version) <= VersionOrder("0.4.2"):
+        replace_dep(depends, "python", "python <3.9")
+        replace_dep(depends, "python >=3.5", "python >=3.5,<3.9")
+        replace_dep(depends, "python >=3.6", "python >=3.6,<3.9")
+
     ###########################
     # compilers and run times #
     ###########################
