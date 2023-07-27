@@ -1027,8 +1027,13 @@ def patch_record_in_place(fn, record, subdir):
 
     # notebook <5.7.6 will not work with tornado 6, see:
     # https://github.com/jupyter/notebook/issues/4439
+    # notebook <7 will not work with pyzmq>=25 and jupyter_client>=8, see:
+    # https://github.com/jupyter/notebook/pull/6749
     if name == "notebook":
         replace_dep(depends, "tornado >=4", "tornado >=4,<6")
+        if int(version.split('.', 1)[0]) < 7:
+            replace_dep(depends, "pyzmq >=17", "pyzmq >=17,<25")
+            replace_dep(depends, "jupyter_client >=5.3.4", "jupyter_client >=5.3.4,<8")
 
     # spyder 4.0.0 and 4.0.1 should include a lower bound on psutil of 5.2
     # and should pin parso to 0.5.2.
