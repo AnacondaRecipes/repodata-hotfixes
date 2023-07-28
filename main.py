@@ -1035,6 +1035,7 @@ def patch_record_in_place(fn, record, subdir):
             replace_dep(depends, "pyzmq >=17", "pyzmq >=17,<25")
             replace_dep(depends, "jupyter_client >=5.3.4", "jupyter_client >=5.3.4,<8")
             replace_dep(depends, "jupyter_client >=5.2.0", "jupyter_client >=5.2.0,<8")
+            replace_dep(depends, "jupyter_client", "jupyter_client <8")
 
     # spyder 4.0.0 and 4.0.1 should include a lower bound on psutil of 5.2
     # and should pin parso to 0.5.2.
