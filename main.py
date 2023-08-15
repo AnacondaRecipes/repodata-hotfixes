@@ -923,6 +923,9 @@ def patch_record_in_place(fn, record, subdir):
         if version.startswith('2.4.0'):  # = 2.4.0*
             replace_dep(depends, ['conda', 'conda !=22.11.*'], 'conda <23.5.0,!=22.11.*')
 
+        if re.match(r'2.4.[1-2](?!\d)', version):  # = 2.4.1* or = 2.4.2*
+            replace_dep(depends, ['conda', 'conda !=22.11.*'], 'conda !=22.11.*,!=23.7.0,!=23.7.1')
+
     if name == "conda-content-trust" and version == "0.1.3":
         replace_dep(depends, "cryptography", "cryptography <41.0.0a0")
     ########################
@@ -1036,6 +1039,11 @@ def patch_record_in_place(fn, record, subdir):
             replace_dep(depends, "jupyter_client >=5.3.4", "jupyter_client >=5.3.4,<8")
             replace_dep(depends, "jupyter_client >=5.2.0", "jupyter_client >=5.2.0,<8")
             replace_dep(depends, "jupyter_client", "jupyter_client <8")
+
+    # requests-toolbelt<1.0.0 does not support urllib3>=2.0.0 (which is an indirect dependency)
+    # issue: https://github.com/Anaconda-Platform/anaconda-client/issues/654#issuecomment-1655089483
+    if (name == 'requests-toolbelt') and version.startswith('0.'):
+        depends.append('urllib3 <2.0.0a')
 
     # spyder 4.0.0 and 4.0.1 should include a lower bound on psutil of 5.2
     # and should pin parso to 0.5.2.
