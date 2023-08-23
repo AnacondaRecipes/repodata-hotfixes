@@ -705,9 +705,22 @@ def patch_record_in_place(fn, record, subdir):
     # pytorch #
     ###########
 
-    # pytorch was built with nccl 1.x
     if name == "pytorch":
+        # pytorch was built with nccl 1.x
         replace_dep(depends, "nccl", "nccl <2")
+
+        # Impose our BLAS mutex so users don't accidentally mix OpenBLAS and
+        # MKL within a single environment.  In theory, having multiple BLAS
+        # implementations in an environment isn't a problem; in practice,
+        # however, this can lead to all sorts of problems due to other
+        # dependencies (like OpenMP implementations) being dragged in.
+        if subdir.endswith("-64") and not any(dep.startswith("blas ") for dep in depends):
+            if any(dep.startswith("libopenblas") for dep in depends):
+                depends.append("blas * openblas")
+            if any(dep.startswith("mkl ") for dep in depends):
+                depends.append("blas * mkl")
+
+        depends.sort()
 
     if name == "torchvision" and version == "0.3.0":
         replace_dep(depends, "pytorch >=1.1.0", "pytorch 1.1.*")
