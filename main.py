@@ -930,7 +930,7 @@ def patch_record_in_place(fn, record, subdir):
         if re.match(r'2.4.[1-2](?!\d)', version):  # = 2.4.1* or = 2.4.2*
             replace_dep(depends, ['conda', 'conda !=22.11.*'], 'conda !=22.11.*,!=23.7.0,!=23.7.1')
 
-    if name == "conda-content-trust" and version == "0.1.3":
+    if name == "conda-content-trust" and VersionOrder(version) <= VersionOrder("0.1.3"):
         replace_dep(depends, "cryptography", "cryptography <41.0.0a0")
     ########################
     # run_exports mis-pins #
