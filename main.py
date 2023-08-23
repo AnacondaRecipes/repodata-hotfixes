@@ -895,6 +895,10 @@ def patch_record_in_place(fn, record, subdir):
     if name == "constructor":
         if int(version[0]) < 3:
             replace_dep(depends, "conda", "conda <4.6.0a0")
+        if VersionOrder("3.2") <= VersionOrder(version) <= VersionOrder("3.3.1"):
+            # Pin nsis on recent versions of constructor
+            # https://github.com/conda/constructor/issues/526
+            replace_dep(depends, "nsis >=3.01", "nsis 3.01")
         # conda 23.1 broke constructor
         # https://github.com/conda/constructor/pull/627
         if record.get("timestamp", 0) <= 1674637311000:
