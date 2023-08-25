@@ -1283,6 +1283,11 @@ def patch_record_in_place(fn, record, subdir):
         replace_dep(depends, "python >=3.5", "python >=3.5,<3.9")
         replace_dep(depends, "python >=3.6", "python >=3.6,<3.9")
 
+    # This targets an errant version on the osx-arm64 subdir
+    # REMOVE after ffmpeg is updated from 4.2.2.
+    if name == "ffmpeg" and version == "4.2.2":
+        depends[:] = [d for d in depends if not d.startswith("openssl")]
+
     ###########################
     # compilers and run times #
     ###########################
