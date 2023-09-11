@@ -1293,7 +1293,7 @@ def patch_record_in_place(fn, record, subdir):
     if name == "anaconda-ident" and VersionOrder(version) < VersionOrder("0.2"):
         record["constrains"] = ["anaconda-anon-usage <0"]
     if name == "anaconda-anon-usage" and VersionOrder(version) < VersionOrder("0.4"):
-        record["constrains"] = ["anaconda-ident<0"]
+        record["constrains"] = ["anaconda-ident <0"]
 
     ###########################
     # compilers and run times #
