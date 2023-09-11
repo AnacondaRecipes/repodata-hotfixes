@@ -1291,7 +1291,7 @@ def patch_record_in_place(fn, record, subdir):
     # anaconda-ident<0.2 not compatible with anaconda-anon-usage
     # anaconda-anon-usage<0.4 not compatible with anaconda-ident
     if name == "anaconda-ident" and VersionOrder(version) < VersionOrder("0.2"):
-        record["constrains"] = ["anaconda-anon-usage<0"]
+        record["constrains"] = ["anaconda-anon-usage <0"]
     if name == "anaconda-anon-usage" and VersionOrder(version) < VersionOrder("0.4"):
         record["constrains"] = ["anaconda-ident<0"]
 
