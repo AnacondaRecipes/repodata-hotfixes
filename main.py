@@ -925,6 +925,10 @@ def patch_record_in_place(fn, record, subdir):
     ):
         depends.append("_low_priority")
 
+    if name == 'anaconda-cloud-auth':
+        if re.match(r'0\.1\.[2-3](?!\d)', version):  # = 0.1.2* or = 0.1.3*
+            bisect.insort_left(depends, 'jaraco.classes =3')
+
     if name == 'anaconda-client':
         if re.match(r'1\.(?:\d|1[01])\.', version):  # < 1.12.0
             if replace_dep(depends, 'urllib3 >=1.26.4', 'urllib3 >=1.26.4,<2.0.0a') == '=':  # if no changes
@@ -940,11 +944,16 @@ def patch_record_in_place(fn, record, subdir):
         if version.startswith('2.4.0'):  # = 2.4.0*
             replace_dep(depends, ['conda', 'conda !=22.11.*'], 'conda <23.5.0,!=22.11.*')
 
-        if re.match(r'2.4.[1-2](?!\d)', version):  # = 2.4.1* or = 2.4.2*
-            replace_dep(depends, ['conda', 'conda !=22.11.*'], 'conda !=22.11.*,!=23.7.0,!=23.7.1')
+        if re.match(r'2\.4\.[1-3](?!\d)', version):  # = 2.4.1* or = 2.4.2* or = 2.4.3*
+            replace_dep(
+                depends,
+                ['conda', 'conda !=22.11.*', 'conda !=22.11.*,!=23.7.0,!=23.7.1'],
+                'conda !=22.11.*,!=23.7.0,!=23.7.1,!=23.7.2,!=23.7.3',
+            )
 
     if name == "conda-content-trust" and VersionOrder(version) <= VersionOrder("0.1.3"):
         replace_dep(depends, "cryptography", "cryptography <41.0.0a0")
+
     ########################
     # run_exports mis-pins #
     ########################
