@@ -1263,7 +1263,11 @@ def patch_record_in_place(fn, record, subdir):
         )
 
     if name == "conda" and version == "23.9.0":
-        constrains += ["conda-build >=3.27"]
+        constrains[:] = [
+            dep
+            for dep in constrains
+            if not dep.startswith("conda-build ")
+        ] + ["conda-build >=3.27"]
 
     if name == "conda-libmamba-solver":
         # libmambapy 0.23 introduced breaking changes
