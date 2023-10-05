@@ -1262,6 +1262,9 @@ def patch_record_in_place(fn, record, subdir):
             depends, "ruamel.yaml >=0.11.14,<0.17", "ruamel.yaml >=0.11.14,<0.18"
         )
 
+    if name == "conda" and version == "23.9.0":
+        constrains += ["conda-build >=3.27"]
+
     if name == "conda-libmamba-solver":
         # libmambapy 0.23 introduced breaking changes
         replace_dep(depends, "libmambapy >=0.22.1", "libmambapy 0.22.*")
