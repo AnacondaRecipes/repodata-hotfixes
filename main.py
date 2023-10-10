@@ -1218,6 +1218,45 @@ def patch_record_in_place(fn, record, subdir):
                 if dep.startswith("bokeh >=1."):
                     depends[i] = dep.split(",")[0] + ",<2.0.0a0"
 
+    # Param 2.0 to be released in October 2023 with breaking changes that make
+    # incompatible many old versions of the HoloViz packages. Pinning them
+    # all to <2.0.0a0.
+    # Package name to the last version not pinning Param (either >2 or <2)
+    # correctly.
+    _holoviz_version_mapping = dict(
+        panel='1.2.3',
+        holoviews='1.17.1',
+        hvplot='0.8.4',
+        datashader='0.15.2',
+        geoviews='1.10.1',
+    )
+    for _holoviz_pkg, _holoviz_version in _holoviz_version_mapping.items():
+        if name != _holoviz_pkg:
+            continue
+        if VersionOrder(version) > VersionOrder(_holoviz_version):
+            continue
+        for i, dep in enumerate(depends):
+            if not dep.startswith("param"):
+                continue
+            if "<2" in dep:
+                continue
+            if "," not in dep:
+                if "<=2" in dep or "<=3" in dep:
+                    # e.g. param <=2 or param <=3
+                    depends[i] = dep.split("<=")[0] + "<2.0.0a0"
+                elif "<" in dep:
+                    # e.g. param <3
+                    depends[i] = dep.split("<")[0] + "<2.0.0a0"
+                elif ">" not in dep:
+                    # e.g. param
+                    depends[i] = dep + " <2.0.0a0"
+                elif ">" in dep:
+                    # e.g. param >1 or param >=1
+                    depends[i] = dep + ",<2.0.0a0"
+            else:
+                # e.g. param >1,<3
+                depends[i] = dep.split(",")[0] + ",<2.0.0a0"
+
     # distributed requires `dask-core`, not `dask`. This requirement also
     # became much stricter with the upstream 2021.5.0 release.
     # see how it was fixed for 2021.5.1:
