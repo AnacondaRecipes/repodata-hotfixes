@@ -1351,6 +1351,12 @@ def patch_record_in_place(fn, record, subdir):
     if name == "anaconda-anon-usage" and VersionOrder(version) < VersionOrder("0.4"):
         record["constrains"] = ["anaconda-ident <0"]
 
+    # orange3 pandas 2.1 error
+    if name == "orange3" and VersionOrder(version) < VersionOrder("3.36.0"):
+        replace_dep("pandas", "pandas >=1.3.0,<2")
+        replace_dep("pandas >=1.3.0", "pandas >=1.3.0,<2")
+        replace_dep("pandas >=1.3.0,!=1.5.0", "pandas >=1.3.0,!=1.5.0,<2")
+
     ###########################
     # compilers and run times #
     ###########################
