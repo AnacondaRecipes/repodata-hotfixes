@@ -777,6 +777,9 @@ def patch_record_in_place(fn, record, subdir):
             if dep == "scipy >=1.7.3":
                 depends[i] = "scipy >=1.7.1"
                 break
+    
+    if name == "tensorflow-gpu" and version == "2.4.1":
+        replace_dep(depends, "numpy", "numpy >=1.17, <1.20.0a0")
 
     ##############
     # versioneer #
