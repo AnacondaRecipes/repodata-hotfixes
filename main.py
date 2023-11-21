@@ -1024,6 +1024,11 @@ def patch_record_in_place(fn, record, subdir):
     if name == "sparkmagic" and version in ["0.12.1", "0.12.5", "0.12.6", "0.12.7"]:
         replace_dep(depends, "ipykernel >=4.2.2", "ipykernel >=4.2.2,<4.10.0")
 
+    # sparmagic has issues with pandas >=2
+    # see: https://github.com/jupyter-incubator/sparkmagic/pull/812
+    if name == "sparkmagic" and VersionOrder(version) < VersionOrder("0.20.5"):
+        replace_dep(depends, "pandas >=0.17.1", "pandas >=0.17.1,<2.0.0")
+
     # notebook <5.7.6 will not work with tornado 6, see:
     # https://github.com/jupyter/notebook/issues/4439
     # notebook <7 will not work with pyzmq>=25 and jupyter_client>=8, see:
