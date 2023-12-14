@@ -875,6 +875,11 @@ def patch_record_in_place(fn, record, subdir):
                     dep_name, other[0] + "," if other else ""
                 )
 
+            # Avoid issue on Windows where an old menuinst 1.x is allowed in the environment
+            # and breaks the JSON validation with a failed import
+            if  dep_name == "menuinst" and VersionOrder(version) <= VersionOrder("3.28.1"):
+                depends[i] = "menuinst >=2.0.1"
+
     if name == "constructor":
         if int(version[0]) < 3:
             replace_dep(depends, "conda", "conda <4.6.0a0")
