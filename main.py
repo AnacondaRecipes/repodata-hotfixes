@@ -1034,6 +1034,11 @@ def patch_record_in_place(fn, record, subdir):
     if name == "sparkmagic" and VersionOrder(version) < VersionOrder("0.20.5"):
         replace_dep(depends, "pandas >=0.17.1", "pandas >=0.17.1,<2.0.0")
 
+    # prophet has trouble with pandas >=2
+    # https://github.com/facebook/prophet/issues/2542, also reported independently by Anaconda user
+    if name == "prophet" and VersionOrder(version) <= VersionOrder("1.1.4"):
+        replace_dep(depends, "pandas >=1.0.4", "pandas >=1.0.4,<2.0.0")
+
     # notebook <5.7.6 will not work with tornado 6, see:
     # https://github.com/jupyter/notebook/issues/4439
     # notebook <7 will not work with pyzmq>=25 and jupyter_client>=8, see:
