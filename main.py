@@ -1046,6 +1046,12 @@ def patch_record_in_place(fn, record, subdir):
             replace_dep(depends, "jupyter_client >=5.2.0", "jupyter_client >=5.2.0,<8")
             replace_dep(depends, "jupyter_client", "jupyter_client <8")
 
+    # no cross-compatibility possible between Notebook 6 and 7 extensions
+    if name == "nb_conda" and VersionOrder(version) <= VersionOrder("2.2.1"):
+        replace_dep(depends, "notebook >=4.3.1", "notebook >=4.3.1,<7")
+    if name == "nb_conda_kernels" and VersionOrder(version) <= VersionOrder("2.3.1"):
+        replace_dep(depends, "notebook >=4.2.0", "notebook >=4.2.0,<7")
+
     # requests-toolbelt<1.0.0 does not support urllib3>=2.0.0 (which is an indirect dependency)
     # issue: https://github.com/Anaconda-Platform/anaconda-client/issues/654#issuecomment-1655089483
     if (name == 'requests-toolbelt') and version.startswith('0.'):
