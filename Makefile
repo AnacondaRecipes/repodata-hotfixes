@@ -16,7 +16,7 @@ help:
 
 init:
 	@if [ -z "$${CONDA_SHLVL:+x}" ]; then echo "Conda is not installed." && exit 1; fi
-	@conda create -y -n repodata-hotfixes conda conda-build flake8 pytest requests
+	@conda create -y -n repodata-hotfixes conda conda-index flake8 pytest requests
 
 check: lint test
 
