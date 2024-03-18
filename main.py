@@ -877,7 +877,11 @@ def patch_record_in_place(fn, record, subdir):
 
             # Deprecations removed in conda 24.3.0 break conda-build <24.3.0.
             # Note that we don't want to affect conda-build <=3.21.8
-            if dep_name == "conda" and VersionOrder(version) > VersionOrder("3.21.8") and VersionOrder(version) < VersionOrder("24.3.0"):
+            if (
+                dep_name == "conda" and
+                VersionOrder(version) > VersionOrder("3.21.8") and
+                VersionOrder(version) < VersionOrder("24.3.0")
+            ):
                 depends[i] = "{} {}<24.3.0".format(
                     dep_name, other[0] + "," if other else ""
                 )
