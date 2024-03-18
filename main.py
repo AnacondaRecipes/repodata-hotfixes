@@ -875,6 +875,13 @@ def patch_record_in_place(fn, record, subdir):
                     dep_name, other[0] + "," if other else ""
                 )
 
+            # Deprecations removed in conda 24.3.0 break conda-build <24.3.0.
+            # Note that we don't want to affect conda-build <=3.21.8
+            if dep_name == "conda" and VersionOrder(version) > VersionOrder("3.21.8") and VersionOrder(version) < VersionOrder("24.3.0"):
+                depends[i] = "{} {}<24.3.0".format(
+                    dep_name, other[0] + "," if other else ""
+                )
+
             # Avoid issue on Windows where an old menuinst 1.x is allowed in the environment
             # and breaks the JSON validation with a failed import
             if dep_name == "menuinst" and VersionOrder(version) <= VersionOrder("3.28.1"):
