@@ -4,7 +4,7 @@ import os
 import subprocess
 
 from conda.exports import subdir as conda_subdir
-from conda_build.index import _apply_instructions
+from conda_index.index import _apply_instructions
 import urllib
 
 html_differ = difflib.HtmlDiff()

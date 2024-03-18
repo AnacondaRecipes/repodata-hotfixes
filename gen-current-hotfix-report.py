@@ -28,7 +28,7 @@ from collections import defaultdict
 from pathlib import Path
 
 from conda.exports import subdir as conda_subdir
-from conda_build.index import _apply_instructions
+from conda_index.index import _apply_instructions
 
 channel_map = {
     "main": "https://repo.anaconda.com/pkgs/main",
