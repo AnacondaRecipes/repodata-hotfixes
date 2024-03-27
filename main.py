@@ -725,6 +725,11 @@ def patch_record_in_place(fn, record, subdir):
         elif version == "1.10.0" and build_number == 0:
             if build[:4] in ["py37", "py38", "py39"]:
                 replace_dep(depends, "numpy >=1.19,<1.27.0", "numpy >=1.19.5,<1.27.0")
+        # scipy needs at least nympy 1.22.4
+        # https://github.com/scipy/scipy/blob/v1.12.0/pyproject.toml#L24
+        elif version == "1.12.0" and build_number == 0:
+            if build[:4] in ["py39", "py310"]:
+                replace_dep(depends, "numpy >=1.22.3,<1.29", "numpy >=1.22.4,<1.29")
 
     ######################
     # scipy dependencies #
