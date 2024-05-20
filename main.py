@@ -783,11 +783,14 @@ def patch_record_in_place(fn, record, subdir):
                 depends[i] = "scipy >=1.7.1"
                 break
 
-    # tensorflow numpy incompatibilites
-    if name.startswith("tensorflow-base") and VersionOrder(version) <= VersionOrder("2.6.0"):
-        replace_dep(depends, "numpy >=1.20", "numpy <=1.20")
+    # Tensorflow numpy incompatibilites
+    if name.startswith("tensorflow-base"):
+        if VersionOrder(version) <= VersionOrder("2.6.0"):
+            replace_dep(depends, "numpy >=1.20", "numpy >=1.20,<2.0a0")
+        if VersionOrder(version) <= VersionOrder("2.5.0"):
+            replace_dep(depends, "numpy >=1.16.6,<2.0a0", "numpy >=1.16.6,<1.20.0a0")
 
-     ##############
+    ##############
     # versioneer #
     ##############
 
