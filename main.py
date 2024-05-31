@@ -101,6 +101,8 @@ REMOVALS = {
         "numpy-devel-1.14.3*",
         # anaconda-client<1.10.0 is incompatible with python 3.10
         "anaconda-client-1.9.0-py310*",
+        # navigator-updater=0.5.0 is incompatible with anaconda-navigator
+        "navigator-updater-0.5.0-*"
     },
 }
 
