@@ -260,6 +260,7 @@ LIBFFI_HOTFIX_EXCLUDES = [
     "_anaconda_depends",
 ]
 
+
 def _update_numpy_base_dependencies(fn, record, instructions):
     depends = record.get("depends", [])
     updated = False
@@ -270,11 +271,10 @@ def _update_numpy_base_dependencies(fn, record, instructions):
         elif dep == "numpy-base":
             depends[i] = "numpy-base <2.0a0"
             updated = True
-    
     if updated:
         instructions["packages"][fn]['depends'] = depends
-    
     return updated
+
 
 def _update_numpy_dependencies(fn, record, instructions):
     depends = record.get("depends", [])
@@ -292,10 +292,8 @@ def _update_numpy_dependencies(fn, record, instructions):
             elif '==' not in dep and '<' not in dep:
                 depends[i] = dep + ",<2.0a0"
                 updated = True
-
     if updated:
         instructions["packages"][fn]['depends'] = depends
-    
     return updated
 
 
