@@ -260,6 +260,44 @@ LIBFFI_HOTFIX_EXCLUDES = [
     "_anaconda_depends",
 ]
 
+def _update_numpy_base_dependencies(fn, record, instructions):
+    depends = record.get("depends", [])
+    updated = False
+    for i, dep in enumerate(depends):
+        if dep.startswith("numpy-base") and '==' not in dep and '<' not in dep:
+            depends[i] = dep + ",<2.0a0"
+            updated = True
+        elif dep == "numpy-base":
+            depends[i] = "numpy-base <2.0a0"
+            updated = True
+    
+    if updated:
+        instructions["packages"][fn]['depends'] = depends
+    
+    return updated
+
+def _update_numpy_dependencies(fn, record, instructions):
+    depends = record.get("depends", [])
+    updated = False
+    for i, dep in enumerate(depends):
+        if dep.startswith("numpy"):
+            # If there's no upper bound and the dependency isn't pinned to a specific version
+            if '==' not in dep and '<' not in dep:
+                depends[i] = dep + ",<2.0a0"
+                updated = True
+            elif dep == "numpy":
+                depends[i] = "numpy <2.0a0"
+                updated = True
+            # Add an upper bound if it is missing in the dependency constraint
+            elif '==' not in dep and '<' not in dep:
+                depends[i] = dep + ",<2.0a0"
+                updated = True
+
+    if updated:
+        instructions["packages"][fn]['depends'] = depends
+    
+    return updated
+
 
 def _replace_vc_features_with_vc_pkg_deps(name, record, depends):
     python_vc_deps = {
@@ -661,15 +699,17 @@ def patch_record_in_place(fn, record, subdir):
     # numpy #
     #########
 
-    # Correct packages mistakenly built against 1.21.5 on linux-aarch64
-    # Replaces the dependency bound with 1.21.2. These packages should
-    # actually have been built against an even earlier version of numpy.
-    # This is the safest correction we can make for now
-    if subdir == "linux-aarch64":
-        for i, dep in enumerate(depends):
-            if dep.startswith("numpy >=1.21.5,"):
-                depends[i] = depends[i].replace(">=1.21.5,", ">=1.21.2,")
-                break
+    # to update dependencies for preperation for numpy 2.0.0
+    numpy_instructions = {
+        "patch_instructions_version": 1,
+        "packages": defaultdict(dict),
+        "revoke": [],
+        "remove": [],
+    }
+    if name == "numpy":
+        _update_numpy_dependencies(fn, record, numpy_instructions)
+    elif name == "numpy-base":
+        _update_numpy_base_dependencies(fn, record, numpy_instructions)
 
     ###########
     # pytorch #
