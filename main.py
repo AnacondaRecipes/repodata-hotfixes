@@ -265,10 +265,10 @@ def _update_numpy_base_dependencies(fn, record, instructions):
     depends = record.get("depends", [])
     updated = False
     for i, dep in enumerate(depends):
-        if dep.startswith("numpy-base") and '==' not in dep and '<' not in dep:
+        if dep.split()[0] == "numpy-base" and '==' not in dep and '<' not in dep:
             depends[i] = dep + ",<2.0a0"
             updated = True
-        elif dep == "numpy-base":
+        else:
             depends[i] = "numpy-base <2.0a0"
             updated = True
     if updated:
@@ -280,7 +280,7 @@ def _update_numpy_dependencies(fn, record, instructions):
     depends = record.get("depends", [])
     updated = False
     for i, dep in enumerate(depends):
-        if dep.startswith("numpy"):
+        if dep.split()[0] == "numpy":
             # If there's no upper bound and the dependency isn't pinned to a specific version
             if '==' not in dep and '<' not in dep:
                 depends[i] = dep + ",<2.0a0"
