@@ -850,7 +850,12 @@ def patch_record_in_place(fn, record, subdir):
     #############################################
 
     # Remove old shortcut packages from Navigator panel
-    if name in ["console_shortcut", "console_shortcut_miniconda", "powershell_shortcut", "powershell_shortcut_miniconda"]:
+    if name in [
+        "console_shortcut",
+        "console_shortcut_miniconda",
+        "powershell_shortcut",
+        "powershell_shortcut_miniconda",
+    ]:
         if "app_entry" in record:
             del record["app_entry"]
         if "app_type" in record:
