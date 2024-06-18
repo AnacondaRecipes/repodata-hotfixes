@@ -265,7 +265,7 @@ def _update_numpy_base_dependencies(fn, record, instructions):
     depends = record.get("depends", [])
     updated = False
     for i, dep in enumerate(depends):
-        if dep.split()[0] == "numpy-base" and '==' not in dep and '<' not in dep:
+        if dep.split()[0] == "numpy-base" and '==' not in dep and "1." not in dep and '<' not in dep:
             depends[i] = dep + ",<2.0a0"
             updated = True
         else:
