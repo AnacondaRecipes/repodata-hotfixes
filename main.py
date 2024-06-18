@@ -282,15 +282,11 @@ def _update_numpy_dependencies(fn, record, instructions):
     for i, dep in enumerate(depends):
         if dep.split()[0] == "numpy":
             # If there's no upper bound and the dependency isn't pinned to a specific version
-            if '==' not in dep and '<' not in dep:
+            if '==' not in dep and "1." not in dep and '<' not in dep:
                 depends[i] = dep + ",<2.0a0"
                 updated = True
             elif dep == "numpy":
                 depends[i] = "numpy <2.0a0"
-                updated = True
-            # Add an upper bound if it is missing in the dependency constraint
-            elif '==' not in dep and '<' not in dep:
-                depends[i] = dep + ",<2.0a0"
                 updated = True
     if updated:
         instructions["packages"][fn]['depends'] = depends
