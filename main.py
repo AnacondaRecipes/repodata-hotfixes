@@ -265,11 +265,11 @@ def _update_numpy_base_dependencies(fn, record, instructions):
     depends = record.get("depends", [])
     updated = False
     for i, dep in enumerate(depends):
+        if dep.split()[0] == "numpy-base":
+            depends[i] = "numpy-base <2.0a0"
+            updated = True
         if dep.split()[0] == "numpy-base" and '==' not in dep and "1." not in dep and '<' not in dep:
             depends[i] = dep + ",<2.0a0"
-            updated = True
-        else:
-            depends[i] = "numpy-base <2.0a0"
             updated = True
     if updated:
         instructions["packages"][fn]['depends'] = depends
@@ -282,12 +282,13 @@ def _update_numpy_dependencies(fn, record, instructions):
     for i, dep in enumerate(depends):
         if dep.split()[0] == "numpy":
             # If there's no upper bound and the dependency isn't pinned to a specific version
-            if '==' not in dep and "1." not in dep and '<' not in dep:
-                depends[i] = dep + ",<2.0a0"
-                updated = True
-            elif dep == "numpy":
+            if dep == "numpy":
                 depends[i] = "numpy <2.0a0"
                 updated = True
+            elif '==' not in dep and "1." not in dep and '<' not in dep:
+                depends[i] = dep + ",<2.0a0"
+                updated = True
+
     if updated:
         instructions["packages"][fn]['depends'] = depends
     return updated
@@ -710,10 +711,13 @@ def patch_record_in_place(fn, record, subdir):
         "revoke": [],
         "remove": [],
     }
-    if name == "numpy":
-        _update_numpy_dependencies(fn, record, numpy_instructions)
-    elif name == "numpy-base":
-        _update_numpy_base_dependencies(fn, record, numpy_instructions)
+    for i, dep in enumerate(depends):
+        if dep == "numpy":
+            print("Updating numpy dependencies for %s" % fn)
+            _update_numpy_dependencies(fn, record, numpy_instructions)
+        elif dep == "numpy-base":
+            print("Updating numpy-base dependencies for %s" % fn)
+            _update_numpy_base_dependencies(fn, record, numpy_instructions)
 
     ###########
     # pytorch #
