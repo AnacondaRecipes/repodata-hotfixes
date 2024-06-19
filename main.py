@@ -712,11 +712,9 @@ def patch_record_in_place(fn, record, subdir):
         "remove": [],
     }
     for i, dep in enumerate(depends):
-        if dep == "numpy":
-            print("Updating numpy dependencies for %s" % fn)
+        if dep == "numpy" and name != "_anaconda_depends":
             _update_numpy_dependencies(fn, record, numpy_instructions)
-        elif dep == "numpy-base":
-            print("Updating numpy-base dependencies for %s" % fn)
+        elif dep == "numpy-base" and name != "_anaconda_depends":
             _update_numpy_base_dependencies(fn, record, numpy_instructions)
 
     ###########
