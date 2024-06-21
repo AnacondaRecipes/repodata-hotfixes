@@ -1354,6 +1354,9 @@ def patch_record_in_place(fn, record, subdir):
             # https://github.com/conda/conda-libmamba-solver/issues/152
             replace_dep(depends, "conda >=22.11.0", "conda >=22.11.0,<23.2.0a")
 
+    if name == "conda-token" and VersionOrder(version) < VersionOrder("0.5.0"):
+        replace_dep(depends, "conda >=4.3", "conda >=4.3,<23.9")
+
     # snowflake-snowpark-python cloudpickle pins
     if name == "snowflake-snowpark-python" and version == '0.6.0':
         replace_dep(depends, 'cloudpickle >=1.6.0', 'cloudpickle >=1.6.0,<=2.0.0')
