@@ -851,12 +851,10 @@ def patch_record_in_place(fn, record, subdir):
     # anaconda, conda, conda-build, constructor #
     #############################################
 
-    # Remove old shortcut packages from Navigator panel
+    # Remove new shortcut packages from Navigator panel until they are ready
     if name in [
-        "console_shortcut",
-        "console_shortcut_miniconda",
-        "powershell_shortcut",
-        "powershell_shortcut_miniconda",
+        "anconda_prompt",
+        "anaconda_powershell_prompt",
     ]:
         if "app_entry" in record:
             del record["app_entry"]
