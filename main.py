@@ -514,6 +514,8 @@ def patch_record(fn, record, subdir, instructions, index):
     original_record = copy.deepcopy(record)
     patch_record_in_place(fn, record, subdir)
     keys_to_check = [
+        "app_entry",
+        "app_type",
         "constrains",
         "depends",
         "features",
@@ -521,6 +523,7 @@ def patch_record(fn, record, subdir, instructions, index):
         "license_family",
         "subdir",
         "track_features",
+        "type",
     ]
     for key in keys_to_check:
         if record.get(key) != original_record.get(key):
@@ -847,6 +850,20 @@ def patch_record_in_place(fn, record, subdir):
     #############################################
     # anaconda, conda, conda-build, constructor #
     #############################################
+
+    # Remove old shortcut packages from Navigator panel
+    if name in [
+        "console_shortcut",
+        "console_shortcut_miniconda",
+        "powershell_shortcut",
+        "powershell_shortcut_miniconda",
+    ]:
+        if "app_entry" in record:
+            del record["app_entry"]
+        if "app_type" in record:
+            del record["app_type"]
+        if record.get("type") == "app":
+            del record["type"]
 
     if (
         name == "anaconda"
