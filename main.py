@@ -2,6 +2,7 @@ import bisect
 import copy
 import fnmatch
 import json
+import yaml
 import os
 import re
 import sys
@@ -260,35 +261,53 @@ LIBFFI_HOTFIX_EXCLUDES = [
     "_anaconda_depends",
 ]
 
+# Load the configuration file
+with open('numpy2_protect.yaml', 'r') as f:
+    numpy2_protect_dict = yaml.safe_load(f)
 
-def _update_numpy_base_dependencies(fn, record, instructions):
+
+def parse_version(version_str):
+    # Extract the version number without any comparison operators
+    match = re.search(r'(\d+(\.\d+)*)', version_str)
+    return match.group(1) if match else None
+
+def has_upper_bound(dep):
+    # Check if the dependency string already contains an upper bound
+    return any(part.strip().startswith('<') for part in dep.split(','))
+
+def has_comparison_operator(dep):
+    # Check if the dependency string contains a comparison operator
+    return any(op in dep for op in ['<', '>', '='])
+
+def update_numpy_dependencies(fn, record, instructions):
     depends = record.get("depends", [])
     updated = False
     for i, dep in enumerate(depends):
-        if dep.split()[0] == "numpy-base":
-            depends[i] = "numpy-base <2.0a0"
-            updated = True
-        if dep.split()[0] == "numpy-base" and '==' not in dep and "1." not in dep and '<' not in dep:
-            depends[i] = dep + ",<2.0a0"
-            updated = True
-    if updated:
-        instructions["packages"][fn]['depends'] = depends
-    return updated
-
-
-def _update_numpy_dependencies(fn, record, instructions):
-    depends = record.get("depends", [])
-    updated = False
-    for i, dep in enumerate(depends):
-        if dep.split()[0] == "numpy":
-            # If there's no upper bound and the dependency isn't pinned to a specific version
-            if dep == "numpy":
-                depends[i] = "numpy <2.0a0"
-                updated = True
-            elif '==' not in dep and "1." not in dep and '<' not in dep:
-                depends[i] = dep + ",<2.0a0"
-                updated = True
-
+        parts = dep.split()
+        pkg = parts[0]
+        if pkg in ["numpy", "numpy-base"]:
+            if not has_upper_bound(dep):
+                if pkg in numpy2_protect_dict:
+                    version_str = parts[1] if len(parts) > 1 else None
+                    version = parse_version(version_str) if version_str else None
+                    protect_version = parse_version(numpy2_protect_dict[pkg])
+                    
+                    if version and protect_version:
+                        try:
+                            if VersionOrder(version) <= VersionOrder(protect_version):
+                                if has_comparison_operator(dep):
+                                    depends[i] = f"{dep},<2.0a0"
+                                    updated = True
+                        except ValueError:
+                            # If we can't compare versions, we'll add the bound to be safe
+                            if has_comparison_operator(dep):
+                                depends[i] = f"{dep},<2.0a0"
+                                updated = True
+                # Only add bound if explicitly specified in config and no upper bound exists
+                elif numpy2_protect_dict.get('add_bound_to_unspecified', False):
+                    if has_comparison_operator(dep):
+                        depends[i] = f"{dep},<2.0a0"
+                        updated = True
     if updated:
         instructions["packages"][fn]['depends'] = depends
     return updated
@@ -711,12 +730,10 @@ def patch_record_in_place(fn, record, subdir):
         "revoke": [],
         "remove": [],
     }
-    for i, dep in enumerate(depends):
-        if dep == "numpy" and name != "_anaconda_depends":
-            _update_numpy_dependencies(fn, record, numpy_instructions)
-        elif dep == "numpy-base" and name != "_anaconda_depends":
-            _update_numpy_base_dependencies(fn, record, numpy_instructions)
 
+    for i, dep in enumerate(depends):
+        if dep.split()[0] in ["numpy", "numpy-base"] and name != "_anaconda_depends":
+            update_numpy_dependencies(fn, record, numpy_instructions)
     ###########
     # pytorch #
     ###########
