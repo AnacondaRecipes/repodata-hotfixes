@@ -136,6 +136,8 @@ REVOKED = {
     ],
     "win-64": [
         "spyder-kernels-1.0.1-*_0",
+    ],
+    "any": [
         # Packages with bad shortcuts that can cause installers
         # and uninstallers to break under certain circumstances.
         "anaconda-navigator-2.6.0-*_1.*",
@@ -146,7 +148,6 @@ REVOKED = {
         "spyder-5.5.1-*_1.*",
         "spyder-5.5.1-*_2.*",
     ],
-    "any": [],
 }
 
 # This is a list of numpy-base packages for each subdir which multiple numpy
