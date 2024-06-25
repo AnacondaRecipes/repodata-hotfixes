@@ -265,6 +265,7 @@ LIBFFI_HOTFIX_EXCLUDES = [
 with open('numpy2_protect.yaml', 'r') as f:
     numpy2_protect_dict = yaml.safe_load(f)
 
+
 def parse_version(version_str):
     # Extract the version number without any comparison operators
     match = re.search(r'(\d+(\.\d+)*)', version_str)
