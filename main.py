@@ -136,6 +136,15 @@ REVOKED = {
     ],
     "win-64": [
         "spyder-kernels-1.0.1-*_0",
+        # Packages with bad shortcuts that can cause installers
+        # and uninstallers to break under certain circumstances.
+        "anaconda-navigator-2.6.0-*_1.*",
+        "anaconda-navigator-2.6.1-*_1.*",
+        "git-2.40.1-haa95532_2.*",
+        "git-2.40.1-haa95532_3.*",
+        "notebook-7.0.8-*_1.*",
+        "spyder-5.5.1-*_1.*",
+        "spyder-5.5.1-*_2.*",
     ],
     "any": [],
 }
