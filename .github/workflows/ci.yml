@@ -19,7 +19,7 @@ jobs:
       - name: Setup environment
         shell: bash -l {0}
         run: |
-          conda create --name testenv conda conda-index flake8 requests
+          conda create --name testenv conda conda-index flake8 requests pyyaml
       - name: Lint
         shell: bash -l {0}
         run: |
