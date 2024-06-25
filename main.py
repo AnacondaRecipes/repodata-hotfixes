@@ -265,19 +265,21 @@ LIBFFI_HOTFIX_EXCLUDES = [
 with open('numpy2_protect.yaml', 'r') as f:
     numpy2_protect_dict = yaml.safe_load(f)
 
-
 def parse_version(version_str):
     # Extract the version number without any comparison operators
     match = re.search(r'(\d+(\.\d+)*)', version_str)
     return match.group(1) if match else None
 
+
 def has_upper_bound(dep):
     # Check if the dependency string already contains an upper bound
     return any(part.strip().startswith('<') for part in dep.split(','))
 
+
 def has_comparison_operator(dep):
     # Check if the dependency string contains a comparison operator
     return any(op in dep for op in ['<', '>', '='])
+
 
 def update_numpy_dependencies(fn, record, instructions):
     depends = record.get("depends", [])
@@ -291,7 +293,7 @@ def update_numpy_dependencies(fn, record, instructions):
                     version_str = parts[1] if len(parts) > 1 else None
                     version = parse_version(version_str) if version_str else None
                     protect_version = parse_version(numpy2_protect_dict[pkg])
-                    
+
                     if version and protect_version:
                         try:
                             if VersionOrder(version) <= VersionOrder(protect_version):
