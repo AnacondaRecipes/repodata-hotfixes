@@ -142,8 +142,8 @@ REVOKED = {
         # and uninstallers to break under certain circumstances.
         "anaconda-navigator-2.6.0-*_1.*",
         "anaconda-navigator-2.6.1-*_1.*",
-        "git-2.40.1-haa95532_2.*",
-        "git-2.40.1-haa95532_3.*",
+        "git-2.40.1-*_2.*",
+        "git-2.40.1-*_3.*",
         "notebook-7.0.8-*_1.*",
         "spyder-5.5.1-*_1.*",
         "spyder-5.5.1-*_2.*",
