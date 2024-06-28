@@ -1,6 +1,4 @@
 add_bound_to_unspecified: true  # Set to true if you want to add bounds to unlisted packages
-numpy: '1.25.0'
-numpy-base: '1.25.0'
 pandas: '2.2.2'
 scikit-learn: '1.4.2'
 # Add more packages as needed

@@ -13,6 +13,16 @@ from conda.models.version import VersionOrder
 
 import requests
 
+import logging
+
+# Configure the logging
+logging.basicConfig(level=logging.DEBUG,
+                    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+                    handlers=[logging.FileHandler('hotfixes.log', mode='w'),
+                              logging.StreamHandler()])
+# Create a logger object
+logger = logging.getLogger(__name__)
+
 CHANNEL_NAME = "main"
 CHANNEL_ALIAS = "https://repo.anaconda.com/pkgs"
 SUBDIRS = (
@@ -276,19 +286,18 @@ def has_upper_bound(dep):
     # Check if the dependency string already contains an upper bound
     return any(part.strip().startswith('<') for part in dep.split(','))
 
-
-def has_comparison_operator(dep):
-    # Check if the dependency string contains a comparison operator
-    return any(op in dep for op in ['<', '>', '='])
-
-
-def update_numpy_dependencies(fn, record, instructions):
+def update_numpy_dependencies(record):
     depends = record.get("depends", [])
     updated = False
     for i, dep in enumerate(depends):
         parts = dep.split()
         pkg = parts[0]
         if pkg in ["numpy", "numpy-base"]:
+            pkg_name = record["name"]
+            pkg_version = record["version"]
+            pkg_build = record["build"]
+            pkg_build_number = record["build_number"]
+            id_str = f"{pkg_name}, {pkg_version}, {pkg_build}, {pkg_build_number}"
             if not has_upper_bound(dep):
                 if pkg in numpy2_protect_dict:
                     version_str = parts[1] if len(parts) > 1 else None
@@ -298,21 +307,34 @@ def update_numpy_dependencies(fn, record, instructions):
                     if version and protect_version:
                         try:
                             if VersionOrder(version) <= VersionOrder(protect_version):
-                                if has_comparison_operator(dep):
+                                if len(parts) > 1:
                                     depends[i] = f"{dep},<2.0a0"
-                                    updated = True
+                                else:
+                                    depends[i] = f"{dep} <2.0a0"
+                                updated = True
+                                logger.info(f"NUMPY2 {id_str} : dep {dep} updated to {depends[i]} (case 1)")
                         except ValueError:
                             # If we can't compare versions, we'll add the bound to be safe
-                            if has_comparison_operator(dep):
+                            if len(parts) > 1:
                                 depends[i] = f"{dep},<2.0a0"
-                                updated = True
+                            else:
+                                depends[i] = f"{dep} <2.0a0"
+                            updated = True
+                            logger.info(f"NUMPY2 {id_str} : dep {dep} updated to {depends[i]} (case 2)")
+                    else:
+                        logger.info(f"NUMPY2 {id_str} : dep {dep} untouched (case 5)")
                 # Only add bound if explicitly specified in config and no upper bound exists
                 elif numpy2_protect_dict.get('add_bound_to_unspecified', False):
-                    if has_comparison_operator(dep):
+                    if len(parts) > 1:
                         depends[i] = f"{dep},<2.0a0"
-                        updated = True
-    if updated:
-        instructions["packages"][fn]['depends'] = depends
+                    else:
+                        depends[i] = f"{dep} <2.0a0"
+                    updated = True
+                    logger.info(f"NUMPY2 {id_str} : dep {dep} updated to {depends[i]} (case 3)")
+                else:
+                    logger.info(f"NUMPY2 {id_str} : dep {dep} untouched (case 4)")
+            else:
+                logger.info(f"NUMPY2 {id_str} : dep {dep} untouched (case 5)")
     return updated
 
 
@@ -726,17 +748,22 @@ def patch_record_in_place(fn, record, subdir):
                 depends[i] = depends[i].replace(">=1.21.5,", ">=1.21.2,")
                 break
 
-    # to update dependencies for preperation for numpy 2.0.0
-    numpy_instructions = {
-        "patch_instructions_version": 1,
-        "packages": defaultdict(dict),
-        "revoke": [],
-        "remove": [],
-    }
-
-    for i, dep in enumerate(depends):
-        if dep.split()[0] in ["numpy", "numpy-base"] and name != "_anaconda_depends":
-            update_numpy_dependencies(fn, record, numpy_instructions)
+    # To update dependencies for preperation for numpy 2.0.0
+    # Do not patch packages depending on lower versions than 3.9 as there is no numpy2 for 3.8 and below.
+    # Do not patch packages depending on 3.13 and above as numpy2 will be the base version.
+    # TODO Verify noarch packages.
+    # TODO output as csv instead of logs for further analysis
+    # TODO simulate solves with rattler? https://github.com/anaconda/rbr-tooling/blob/main/scripts/multi-versions-stats.py
+    # TODO Identify edge cases. (Weird constraints...)
+    # TODO Also patch constraints field (run_constrained)
+    if "py39" in fn or "py310" in fn or "py311" in fn or "py312" in fn: 
+        if name not in ["anaconda", "_anaconda_depends"]:
+            for i, dep in enumerate(depends):
+                if dep.split()[0] in ["numpy", "numpy-base"]:
+                    update_numpy_dependencies(record)
+                    break
+    else:
+        logger.info(f"NUMPY2 skip {fn}")
     ###########
     # pytorch #
     ###########
