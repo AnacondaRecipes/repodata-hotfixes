@@ -6,12 +6,24 @@ import yaml
 import os
 import re
 import sys
+import datetime
 from collections import defaultdict
 from os.path import dirname, isdir, isfile, join
-
+import rattler
+from typing import List, Dict, Any, Sequence, Optional
 from conda.models.version import VersionOrder
 
 import requests
+
+import logging
+
+# Configure the logging
+logging.basicConfig(level=logging.DEBUG,
+                    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+                    handlers=[logging.FileHandler('hotfixes.log', mode='w'),
+                              logging.StreamHandler()])
+# Create a logger object
+logger = logging.getLogger(__name__)
 
 CHANNEL_NAME = "main"
 CHANNEL_ALIAS = "https://repo.anaconda.com/pkgs"
@@ -265,6 +277,42 @@ LIBFFI_HOTFIX_EXCLUDES = [
 with open('numpy2_protect.yaml', 'r') as f:
     numpy2_protect_dict = yaml.safe_load(f)
 
+async def solve_dependencies(
+    record: rattler.RepoDataRecord,
+    channels: Sequence[rattler.Channel | str],
+    platforms: Sequence[rattler.Platform | rattler.platform.PlatformLiteral],
+    virtual_packages: Sequence[rattler.GenericVirtualPackage | rattler.VirtualPackage]
+) -> List[rattler.RepoDataRecord]:
+    try:
+        # Create a MatchSpec for the current package
+        name = record.name.normalized
+        if name == '_anaconda_depends':
+            return []
+        version = record.version._source
+        build = record.build
+        package_spec = rattler.MatchSpec(f"{name}={version}={build}")
+        
+        # Create MatchSpecs for all dependencies
+        dep_specs = [rattler.MatchSpec(dep) for dep in record.depends]
+        
+        # Combine the package spec and dependency specs
+        all_specs = [package_spec] + dep_specs
+        
+        # Solve dependencies
+        solved_packages = await rattler.solve(
+            channels=channels,
+            specs=all_specs,
+            platforms=platforms,
+            virtual_packages=virtual_packages,
+            timeout=datetime.timedelta(seconds=10),
+            strategy="highest"  # You can adjust this if needed
+        )
+        logger.info(f"Solved dependencies for {name}")
+        return solved_packages
+    except Exception as exc:
+        logger.error(f"Failed to solve dependencies for {name}: {exc}")
+        return []
+
 
 def parse_version(version_str):
     # Extract the version number without any comparison operators
@@ -277,42 +325,72 @@ def has_upper_bound(dep):
     return any(part.strip().startswith('<') for part in dep.split(','))
 
 
-def has_comparison_operator(dep):
-    # Check if the dependency string contains a comparison operator
-    return any(op in dep for op in ['<', '>', '='])
+def patch_record_with_fixed_deps(dependency, parts):
+    # Fix the dependency string by adding an upper bound
+    # If it has a fixed value without == operator, leave it untouched
+    # If it has a fixed value with == operator, leave it untouched
+    # If it has a lower bound, add an upper bound
+    # If it has an upper bound, leave it untouched
+
+    # Extract the version number without any comparison operators
+    version_str = parts[1]
+    version = parse_version(version_str)
+    if version:
+        if version_str.startswith('=='):
+            return dependency
+        if version_str.startswith('<'):
+            return dependency
+        if version_str.startswith('>') or version_str.startswith('>='):
+            dependency = f"{dependency},<2.0a0"
+        else:
+            dependency = f"{dependency} <2.0a0"
 
 
-def update_numpy_dependencies(fn, record, instructions):
-    depends = record.get("depends", [])
+def update_numpy_dependencies(dep_list, record, dep_type):
     updated = False
-    for i, dep in enumerate(depends):
+    non_update_logging = False
+    for i, dep in enumerate(dep_list):
         parts = dep.split()
         pkg = parts[0]
         if pkg in ["numpy", "numpy-base"]:
+            pkg_info = f"{record['name']} v{record['version']} (build: {record['build']}, build_number: {record['build_number']})"
             if not has_upper_bound(dep):
                 if pkg in numpy2_protect_dict:
                     version_str = parts[1] if len(parts) > 1 else None
                     version = parse_version(version_str) if version_str else None
                     protect_version = parse_version(numpy2_protect_dict[pkg])
-
                     if version and protect_version:
                         try:
                             if VersionOrder(version) <= VersionOrder(protect_version):
-                                if has_comparison_operator(dep):
-                                    depends[i] = f"{dep},<2.0a0"
-                                    updated = True
-                        except ValueError:
-                            # If we can't compare versions, we'll add the bound to be safe
-                            if has_comparison_operator(dep):
-                                depends[i] = f"{dep},<2.0a0"
+                                dep_list[i] = f"{dep},<2.0a0" if len(parts) > 1 else f"{dep} <2.0a0"
                                 updated = True
-                # Only add bound if explicitly specified in config and no upper bound exists
+                                logger.info(f"numpy 2.0.0: Updated {dep_type} for {pkg_info}. Original: '{dep}' -> New: '{dep_list[i]}' (Version <= protect_version)")
+                        except ValueError:
+                            dep_list[i] = f"{dep},<2.0a0" if len(parts) > 1 else f"{dep} <2.0a0"
+                            updated = True
+                            logger.info(f"numpy 2.0.0: Updated {dep_type} for {pkg_info}. Original: '{dep}' -> New: '{dep_list[i]}' (Version comparison failed)")
+                    elif non_update_logging:
+                        logger.info(f"numpy 2.0.0: No change to {dep_type} for {pkg_info}. Dependency: '{dep}' (Missing version or protect_version)")
                 elif numpy2_protect_dict.get('add_bound_to_unspecified', False):
-                    if has_comparison_operator(dep):
-                        depends[i] = f"{dep},<2.0a0"
-                        updated = True
-    if updated:
-        instructions["packages"][fn]['depends'] = depends
+                    version_str = parts[1] if len(parts) > 1 else None
+                    version = parse_version(version_str) if version_str else None
+                    if version and non_update_logging:
+                        logger.info(f"numpy 2.0.0: No change to {dep_type} for {pkg_info}. Dependency: '{dep}' (Version: {version})")
+                    else:
+                        if len(parts) > 1:
+                            dependency = patch_record_with_fixed_deps(dep_list[i], parts)
+                            if dependency:
+                                dep_list[i] = dependency
+                                updated = True
+                                logger.info(f"numpy 2.0.0: Updated {dep_type} for {pkg_info}. Original: '{dep}' -> New: '{dep_list[i]}' (Unspecified bound added)")
+                        else:
+                            dep_list[i] = f"{dep} <2.0a0"
+                            logger.info(f"numpy 2.0.0: Updated {dep_type} for {pkg_info}. Original: '{dep}' -> New: '{dep_list[i]}' (Unspecified bound added)")
+                elif non_update_logging:
+                    logger.info(f"numpy 2.0.0: No change to {dep_type} for {pkg_info}. Dependency: '{dep}' (Not in protect_dict, no unspecified bound)")
+            elif non_update_logging:
+                logger.info(f"numpy 2.0.0: No change to {dep_type} for {pkg_info}. Dependency: '{dep}' (Already has upper bound)")
+    
     return updated
 
 
@@ -514,6 +592,18 @@ def _fix_cudnn_depends(depends, subdir):
     idx = depends.index(original_cudnn_depend)
     depends[idx] = correct_cudnn_depends
 
+def filter_packages(repo_data, substring):
+    
+    # Initialize the new dictionary to store filtered results
+    filtered_dict = {}
+    
+    # Loop through each key-value pair in the 'Packages' dictionary
+    for key, value in repo_data.items():
+        # If the key contains the desired substring, add it to the filtered dictionary
+        if substring in key:
+            filtered_dict[key] = value
+    
+    return filtered_dict
 
 def _patch_repodata(repodata, subdir):
     index = repodata["packages"]
@@ -726,17 +816,27 @@ def patch_record_in_place(fn, record, subdir):
                 depends[i] = depends[i].replace(">=1.21.5,", ">=1.21.2,")
                 break
 
-    # to update dependencies for preperation for numpy 2.0.0
-    numpy_instructions = {
-        "patch_instructions_version": 1,
-        "packages": defaultdict(dict),
-        "revoke": [],
-        "remove": [],
-    }
-
-    for i, dep in enumerate(depends):
-        if dep.split()[0] in ["numpy", "numpy-base"] and name != "_anaconda_depends":
-            update_numpy_dependencies(fn, record, numpy_instructions)
+    # To update dependencies for preperation for numpy 2.0.0
+    # Do not patch packages depending on lower versions than 3.9 as there is no numpy2 for 3.8 and below.
+    # Do not patch packages depending on 3.13 and above as numpy2 will be the base version.
+    # TODO Verify noarch packages.
+    # TODO output as csv instead of logs for further analysis
+    # TODO simulate solves with rattler? https://github.com/anaconda/rbr-tooling/blob/main/scripts/multi-versions-stats.py
+    # TODO Identify edge cases. (Weird constraints...)
+    skip_log = False
+    if "py39" in fn or "py310" in fn or "py311" in fn or "py312" in fn: 
+        if name not in ["anaconda", "_anaconda_depends"]:
+            for i, dep in enumerate(depends):
+                if dep.split()[0] in ["numpy", "numpy-base"]:
+                    update_numpy_dependencies(depends, record, "dep")
+                elif skip_log:
+                    logger.debug(f"numpy 2.0.0 skip {fn}")
+            for i, constrain in enumerate(constrains):
+                if constrain.split()[0] in ["numpy", "numpy-base"]:
+                    update_numpy_dependencies(constrains, record, "constr")
+                    break
+                elif skip_log:
+                    logger.debug(f"numpy 2.0.0 skip {fn}")
     ###########
     # pytorch #
     ###########
