@@ -2,7 +2,6 @@ import bisect
 import copy
 import fnmatch
 import json
-import yaml
 import os
 import re
 import sys
@@ -12,8 +11,9 @@ from os.path import dirname, isdir, isfile, join
 import rattler
 from typing import List, Dict, Any, Sequence, Optional
 from conda.models.version import VersionOrder
-
+import csv
 import requests
+from numpy2_config import numpy2_protect_dict
 
 import logging
 
@@ -272,10 +272,6 @@ LINUX_RUNTIME_DEPS = ("libgcc-ng", "libstdcxx-ng", "libgfortran-ng")
 LIBFFI_HOTFIX_EXCLUDES = [
     "_anaconda_depends",
 ]
-
-# Load the configuration file
-with open('numpy2_protect.yaml', 'r') as f:
-    numpy2_protect_dict = yaml.safe_load(f)
 
 async def solve_dependencies(
     record: rattler.RepoDataRecord,
