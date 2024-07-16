@@ -1358,11 +1358,16 @@ def patch_record_in_place(fn, record, subdir):
             # https://github.com/conda/conda-libmamba-solver/issues/132
             replace_dep(depends, "conda >=22.11.0", "conda >=22.11.0,<23.1.0a")
         # conda 23.3 changed an internal SubdirData API needed with S3/FTP channels
-        # conda depricated Boltons leading to a breakage in the solver api interface
+        # conda deprecated Boltons leading to a breakage in the solver api interface
         if VersionOrder(version) < VersionOrder("23.2.0a0"):
             # https://github.com/conda/conda-libmamba-solver/issues/153
             # https://github.com/conda/conda-libmamba-solver/issues/152
             replace_dep(depends, "conda >=22.11.0", "conda >=22.11.0,<23.2.0a")
+        if VersionOrder(version) < VersionOrder("24.7.0a0"):
+            # https://github.com/conda/conda-libmamba-solver/pull/492
+            replace_dep(depends, "libmambapy >=1.5.6", "libmambapy >=1.5.6,<2.0.0a0")
+            replace_dep(depends, "libmambapy >=0.23", "libmambapy >=0.23,<2.0.0a0")
+            replace_dep(depends, "libmambapy >=0.22.1", "libmambapy >=0.22.1,<2.0.0a0")
 
     if name == "conda-token" and VersionOrder(version) < VersionOrder("0.5.0"):
         replace_dep(depends, "conda >=4.3", "conda >=4.3,<23.9")
