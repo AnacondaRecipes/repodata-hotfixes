@@ -704,8 +704,6 @@ def patch_record_in_place(fn, record, subdir):
     depends = record["depends"]
     constrains = record.get("constrains", [])
 
-    # depends = [dep for dep in depends if dep is not None]
-
     ##########
     # subdir #
     ##########
@@ -895,7 +893,6 @@ def patch_record_in_place(fn, record, subdir):
     ######################
     # scipy dependencies #
     ######################
-    depends = [dep for dep in depends if dep is not None]
     # scipy 1.8 and 1.9 introduce breaking API changes impacting these packages
     if name == "theano":
         if version in ["1.0.4", "1.0.5"]:
@@ -1130,7 +1127,6 @@ def patch_record_in_place(fn, record, subdir):
 
     # kealib 1.4.8 changed sonames, add new upper bound to existing packages
     replace_dep(depends, "kealib >=1.4.7,<1.5.0a0", "kealib >=1.4.7,<1.4.8.0a0")
-    depends = [dep for dep in depends if dep is not None]
     # Other broad replacements
     for i, dep in enumerate(depends):
         # glib is compatible up to the major version
