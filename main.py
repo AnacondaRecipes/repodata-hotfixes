@@ -9,7 +9,7 @@ import datetime
 from collections import defaultdict
 from os.path import dirname, isdir, isfile, join
 import rattler
-from typing import List, Dict, Any, Sequence, Optional
+from typing import List, Sequence
 from conda.models.version import VersionOrder
 import csv
 from collections import defaultdict
