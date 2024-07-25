@@ -19,7 +19,6 @@ channel_map = {
     "main": "https://repo.anaconda.com/pkgs/main",
     "r": "https://repo.anaconda.com/pkgs/r",
     "msys2": "https://repo.anaconda.com/pkgs/msys2",
-    "numpy2": "https://anaconda.org/ad-testing/numpy",
 }
 
 
