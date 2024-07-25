@@ -12,10 +12,14 @@ import rattler
 from typing import List, Dict, Any, Sequence, Optional
 from conda.models.version import VersionOrder
 import csv
+from collections import defaultdict
 import requests
 from numpy2_config import numpy2_protect_dict
 
 import logging
+
+# Global dictionary to store data for CSV output
+csv_data = defaultdict(list)
 
 # Configure the logging
 logging.basicConfig(level=logging.DEBUG,
@@ -273,12 +277,86 @@ LIBFFI_HOTFIX_EXCLUDES = [
     "_anaconda_depends",
 ]
 
+def load_numpy_changes():
+    try:
+        with open('proposed_numpy_changes.json', 'r') as f:
+            return json.load(f)
+    except FileNotFoundError:
+        logger.warning("proposed_numpy_changes.json not found. No numpy changes will be applied.")
+        return {}
+    
+NUMPY_CHANGES = load_numpy_changes()
+    
+
+def apply_numpy_changes(record, subdir, filename):
+    """
+    Applies predefined numpy changes to a record based on its directory and filename.
+
+    Parameters:
+    - record: The record to update.
+    - subdir: The subdirectory of the record.
+    - filename: The filename of the record.
+    """
+    if subdir not in NUMPY_CHANGES or filename not in NUMPY_CHANGES[subdir]:
+        return
+
+    changes = NUMPY_CHANGES[subdir][filename]
+    for change in changes:
+        depends = _get_dependency_list(record, change['type'])
+        if depends is None:
+            continue
+
+        _apply_changes_to_dependencies(depends, change, record, filename, 'type')
+
+def _get_dependency_list(record, change_type):
+    """
+    Returns the appropriate dependency list based on the change type.
+
+    Parameters:
+    - record (dict): The record containing dependency information.
+    - change_type (str): The type of change ('dep' for dependencies, 'constr' for constraints).
+
+    Returns:
+    - list: The list of dependencies or constraints based on the change type, or None if the change type is unrecognized.
+    """
+    if change_type == 'dep':
+        return record['depends']
+    elif change_type == 'constr':
+        return record.get('constrains', [])
+    return None
+
+def _apply_changes_to_dependencies(depends, change, record, filename, sort_type='reason'):
+    """
+    Applies changes to dependencies and logs the changes.
+
+    Parameters:
+    - depends (list): The list of dependencies to be modified.
+    - change (dict): A dictionary containing the 'original' dependency, the 'updated' dependency, and the 'reason' for the change.
+    - record (dict): The record to which the changes apply.
+    - filename (str): The name of the file being processed.
+    - sort_type (str, optional): The key in the 'change' dictionary to sort the CSV data by. Defaults to 'reason'.
+    """
+    for i, dep in enumerate(depends):
+        if dep == change['original']:
+            depends[i] = change['updated']
+            if change['reason'] == 'Upper bound added':
+                logger.info(f"Applied numpy change for {filename}: {change['original']} -> {change['updated']}")
+            # Add to csv_data for later CSV export
+            csv_data[change[sort_type]].append([
+                record['name'], record['version'], record['build'], 
+                record['build_number'], change['original'], 
+                change['updated'], change['reason']
+            ])
+
+
 async def solve_dependencies(
     record: rattler.RepoDataRecord,
     channels: Sequence[rattler.Channel | str],
     platforms: Sequence[rattler.Platform | rattler.platform.PlatformLiteral],
     virtual_packages: Sequence[rattler.GenericVirtualPackage | rattler.VirtualPackage]
 ) -> List[rattler.RepoDataRecord]:
+    # This is left in the file as it will be useful for future development
+    # and testing. It is not used in the current implementation.
     try:
         # Create a MatchSpec for the current package
         name = record.name.normalized
@@ -310,84 +388,17 @@ async def solve_dependencies(
         return []
 
 
-def parse_version(version_str):
-    # Extract the version number without any comparison operators
-    match = re.search(r'(\d+(\.\d+)*)', version_str)
-    return match.group(1) if match else None
-
-
-def has_upper_bound(dep):
-    # Check if the dependency string already contains an upper bound
-    return any(part.strip().startswith('<') for part in dep.split(','))
-
-
-def patch_record_with_fixed_deps(dependency, parts):
-    # Fix the dependency string by adding an upper bound
-    # If it has a fixed value without == operator, leave it untouched
-    # If it has a fixed value with == operator, leave it untouched
-    # If it has a lower bound, add an upper bound
-    # If it has an upper bound, leave it untouched
-
-    # Extract the version number without any comparison operators
-    version_str = parts[1]
-    version = parse_version(version_str)
-    if version:
-        if version_str.startswith('=='):
-            return dependency
-        if version_str.startswith('<'):
-            return dependency
-        if version_str.startswith('>') or version_str.startswith('>='):
-            dependency = f"{dependency},<2.0a0"
-        else:
-            dependency = f"{dependency} <2.0a0"
-
-
-def update_numpy_dependencies(dep_list, record, dep_type):
-    updated = False
-    non_update_logging = False
-    for i, dep in enumerate(dep_list):
-        parts = dep.split()
-        pkg = parts[0]
-        if pkg in ["numpy", "numpy-base"]:
-            pkg_info = f"{record['name']} v{record['version']} (build: {record['build']}, build_number: {record['build_number']})"
-            if not has_upper_bound(dep):
-                if pkg in numpy2_protect_dict:
-                    version_str = parts[1] if len(parts) > 1 else None
-                    version = parse_version(version_str) if version_str else None
-                    protect_version = parse_version(numpy2_protect_dict[pkg])
-                    if version and protect_version:
-                        try:
-                            if VersionOrder(version) <= VersionOrder(protect_version):
-                                dep_list[i] = f"{dep},<2.0a0" if len(parts) > 1 else f"{dep} <2.0a0"
-                                updated = True
-                                logger.info(f"numpy 2.0.0: Updated {dep_type} for {pkg_info}. Original: '{dep}' -> New: '{dep_list[i]}' (Version <= protect_version)")
-                        except ValueError:
-                            dep_list[i] = f"{dep},<2.0a0" if len(parts) > 1 else f"{dep} <2.0a0"
-                            updated = True
-                            logger.info(f"numpy 2.0.0: Updated {dep_type} for {pkg_info}. Original: '{dep}' -> New: '{dep_list[i]}' (Version comparison failed)")
-                    elif non_update_logging:
-                        logger.info(f"numpy 2.0.0: No change to {dep_type} for {pkg_info}. Dependency: '{dep}' (Missing version or protect_version)")
-                elif numpy2_protect_dict.get('add_bound_to_unspecified', False):
-                    version_str = parts[1] if len(parts) > 1 else None
-                    version = parse_version(version_str) if version_str else None
-                    if version and non_update_logging:
-                        logger.info(f"numpy 2.0.0: No change to {dep_type} for {pkg_info}. Dependency: '{dep}' (Version: {version})")
-                    else:
-                        if len(parts) > 1:
-                            dependency = patch_record_with_fixed_deps(dep_list[i], parts)
-                            if dependency:
-                                dep_list[i] = dependency
-                                updated = True
-                                logger.info(f"numpy 2.0.0: Updated {dep_type} for {pkg_info}. Original: '{dep}' -> New: '{dep_list[i]}' (Unspecified bound added)")
-                        else:
-                            dep_list[i] = f"{dep} <2.0a0"
-                            logger.info(f"numpy 2.0.0: Updated {dep_type} for {pkg_info}. Original: '{dep}' -> New: '{dep_list[i]}' (Unspecified bound added)")
-                elif non_update_logging:
-                    logger.info(f"numpy 2.0.0: No change to {dep_type} for {pkg_info}. Dependency: '{dep}' (Not in protect_dict, no unspecified bound)")
-            elif non_update_logging:
-                logger.info(f"numpy 2.0.0: No change to {dep_type} for {pkg_info}. Dependency: '{dep}' (Already has upper bound)")
+def write_csv():
+    """
+    Writes update data to CSV files in the 'updates' directory.
+    """
+    if not os.path.exists("updates"):
+        os.makedirs("updates")
     
-    return updated
+    for issue_type, data in csv_data.items():
+        with open(f"updates/{issue_type}_numpy2_updates.csv", 'w', newline='') as csvfile:
+            csv.writer(csvfile).writerow(['Package', 'Version', 'Build', 'Build Number', 'Original Dependency', 'Updated Dependency', 'Reason'])
+            csv.writer(csvfile).writerows(data)
 
 
 def _replace_vc_features_with_vc_pkg_deps(name, record, depends):
@@ -689,6 +700,8 @@ def patch_record_in_place(fn, record, subdir):
     depends = record["depends"]
     constrains = record.get("constrains", [])
 
+    # depends = [dep for dep in depends if dep is not None]
+
     ##########
     # subdir #
     ##########
@@ -812,27 +825,9 @@ def patch_record_in_place(fn, record, subdir):
                 depends[i] = depends[i].replace(">=1.21.5,", ">=1.21.2,")
                 break
 
-    # To update dependencies for preperation for numpy 2.0.0
-    # Do not patch packages depending on lower versions than 3.9 as there is no numpy2 for 3.8 and below.
-    # Do not patch packages depending on 3.13 and above as numpy2 will be the base version.
-    # TODO Verify noarch packages.
-    # TODO output as csv instead of logs for further analysis
-    # TODO simulate solves with rattler? https://github.com/anaconda/rbr-tooling/blob/main/scripts/multi-versions-stats.py
-    # TODO Identify edge cases. (Weird constraints...)
-    skip_log = False
-    if "py39" in fn or "py310" in fn or "py311" in fn or "py312" in fn: 
-        if name not in ["anaconda", "_anaconda_depends"]:
-            for i, dep in enumerate(depends):
-                if dep.split()[0] in ["numpy", "numpy-base"]:
-                    update_numpy_dependencies(depends, record, "dep")
-                elif skip_log:
-                    logger.debug(f"numpy 2.0.0 skip {fn}")
-            for i, constrain in enumerate(constrains):
-                if constrain.split()[0] in ["numpy", "numpy-base"]:
-                    update_numpy_dependencies(constrains, record, "constr")
-                    break
-                elif skip_log:
-                    logger.debug(f"numpy 2.0.0 skip {fn}")
+    if NUMPY_CHANGES is not {}:
+        apply_numpy_changes(record, subdir, fn)
+    
     ###########
     # pytorch #
     ###########
@@ -896,7 +891,7 @@ def patch_record_in_place(fn, record, subdir):
     ######################
     # scipy dependencies #
     ######################
-
+    depends = [dep for dep in depends if dep is not None]
     # scipy 1.8 and 1.9 introduce breaking API changes impacting these packages
     if name == "theano":
         if version in ["1.0.4", "1.0.5"]:
@@ -1131,7 +1126,7 @@ def patch_record_in_place(fn, record, subdir):
 
     # kealib 1.4.8 changed sonames, add new upper bound to existing packages
     replace_dep(depends, "kealib >=1.4.7,<1.5.0a0", "kealib >=1.4.7,<1.4.8.0a0")
-
+    depends = [dep for dep in depends if dep is not None]
     # Other broad replacements
     for i, dep in enumerate(depends):
         # glib is compatible up to the major version
@@ -1696,6 +1691,8 @@ def do_hotfixes(base_dir):
 def main():
     base_dir = join(dirname(__file__), CHANNEL_NAME)
     do_hotfixes(base_dir)
+    if NUMPY_CHANGES != {}:
+        write_csv()
 
 
 if __name__ == "__main__":
