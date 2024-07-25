@@ -282,7 +282,9 @@ def load_numpy_changes():
         logger.warning("proposed_numpy_changes.json not found. No numpy changes will be applied.")
         return {}
 
+
 NUMPY_CHANGES = load_numpy_changes()
+
 
 def apply_numpy_changes(record, subdir, filename):
     """
@@ -295,13 +297,11 @@ def apply_numpy_changes(record, subdir, filename):
     """
     if subdir not in NUMPY_CHANGES or filename not in NUMPY_CHANGES[subdir]:
         return
-
     changes = NUMPY_CHANGES[subdir][filename]
     for change in changes:
         depends = _get_dependency_list(record, change['type'])
         if depends is None:
             continue
-
         _apply_changes_to_dependencies(depends, change, record, filename, 'type')
 
 
@@ -329,7 +329,7 @@ def _apply_changes_to_dependencies(depends, change, record, filename, sort_type=
 
     Parameters:
     - depends (list): The list of dependencies to be modified.
-    - change (dict): A dictionary containing the 'original' dependency, the 'updated' dependency, and the 'reason' for the change.
+    - change (dict): A dictionary containing the 'original' dependency, the 'updated' dependency, the 'reason' for the change.
     - record (dict): The record to which the changes apply.
     - filename (str): The name of the file being processed.
     - sort_type (str, optional): The key in the 'change' dictionary to sort the CSV data by. Defaults to 'reason'.
@@ -395,7 +395,10 @@ def write_csv():
 
     for issue_type, data in csv_data.items():
         with open(f"updates/{issue_type}_numpy2_updates.csv", 'w', newline='') as csvfile:
-            csv.writer(csvfile).writerow(['Package', 'Version', 'Build', 'Build Number', 'Original Dependency', 'Updated Dependency', 'Reason'])
+            csv.writer(csvfile).writerow(['Package', 'Version', 
+                                          'Build', 'Build Number', 
+                                          'Original Dependency', 'Updated Dependency', 
+                                          'Reason'])
             csv.writer(csvfile).writerows(data)
 
 
@@ -597,6 +600,7 @@ def _fix_cudnn_depends(depends, subdir):
     idx = depends.index(original_cudnn_depend)
     depends[idx] = correct_cudnn_depends
 
+
 def filter_packages(repo_data, substring):
 
     # Initialize the new dictionary to store filtered results
@@ -609,6 +613,7 @@ def filter_packages(repo_data, substring):
             filtered_dict[key] = value
 
     return filtered_dict
+
 
 def _patch_repodata(repodata, subdir):
     index = repodata["packages"]
