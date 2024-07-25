@@ -39,10 +39,11 @@ SUBDIRS = (
     "win-64",
 )
 
+
 def collect_proposed_change(subdirectory, filename, change_type, original_dependency, updated_dependency, reason):
     """
     Collects a proposed change to a dependency for later processing.
-    
+
     Parameters:
     - subdirectory: The subdirectory where the file is located.
     - filename: The name of the file being modified.
@@ -58,39 +59,42 @@ def collect_proposed_change(subdirectory, filename, change_type, original_depend
         "reason": reason
     })
 
+
 def parse_version(version_str):
     """
     Extracts the version number from a version string.
-    
+
     Parameters:
     - version_str: The version string to parse.
-    
+
     Returns:
     The extracted version number or None if not found.
     """
     match = re.search(r'(\d+(\.\d+)*)', version_str)
     return match.group(1) if match else None
 
+
 def has_upper_bound(dependency):
     """
     Checks if a dependency string contains an upper bound.
-    
+
     Parameters:
     - dependency: The dependency string to check.
-    
+
     Returns:
     True if an upper bound is found, False otherwise.
     """
     return any(part.strip().startswith('<') for part in dependency.split(','))
 
+
 def patch_record_with_fixed_deps(dependency, parts):
     """
     Adds an upper bound to a dependency if necessary.
-    
+
     Parameters:
     - dependency: The original dependency string.
     - parts: The parts of the dependency string, split by spaces.
-    
+
     Returns:
     The potentially modified dependency string.
     """
@@ -104,6 +108,7 @@ def patch_record_with_fixed_deps(dependency, parts):
         return f"{dependency} <2.0a0"
     return dependency
 
+
 def write_csv():
     """
     Writes collected data to CSV files, one per issue type.
@@ -112,14 +117,15 @@ def write_csv():
         filename = f"{issue_type}_numpy2_updates.csv"
         with open(filename, 'w', newline='') as csvfile:
             writer = csv.writer(csvfile)
-            writer.writerow(['Package', 'Version', 'Build', 'Build Number', 'Original Dependency', 'Updated Dependency', 'Reason'])
+            writer.writerow(['Package', 'Version', 'Build', 'Build Number',
+                             'Original Dependency', 'Updated Dependency', 'Reason'])
             writer.writerows(data)
 
 
 def log_and_collect(issue_type, package_info, original_dependency, updated_dependency, reason):
     """
     Logs and collects data on dependency modifications for reporting.
-    
+
     Parameters:
     - issue_type: Type of issue prompting modification.
     - package_info: Package name, version, build, and build number.
@@ -127,17 +133,20 @@ def log_and_collect(issue_type, package_info, original_dependency, updated_depen
     - updated_dependency: Updated dependency specification.
     - reason: Reason for modification.
     """
-    logger.info(f"numpy 2.0.0: {issue_type} for {package_info}. Original: '{original_dependency}' -> New: '{updated_dependency}' ({reason})")
-    name, version, build, build_number = package_info.split(' v')[0], package_info.split(' v')[1].split(' (')[0], package_info.split('build: ')[1].split(',')[0], package_info.split('build_number: ')[1][:-1]
+    logger.info(f"numpy 2.0.0: {issue_type} for {package_info}. "
+                f"Original: '{original_dependency}' -> New: '{updated_dependency}' ({reason})")
+
+    name, version = package_info.split(' v')[0], package_info.split(' v')[1].split(' (')[0]
+    build = package_info.split('build: ')[1].split(',')[0]
+    build_number = package_info.split('build_number: ')[1][:-1]
     csv_data[issue_type].append([name, version, build, build_number, original_dependency, updated_dependency, reason])
 
 
 def update_numpy_dependencies(dependencies_list, package_record, dependency_type, package_subdir, filename):
     """
     Adds upper bounds to numpy dependencies as needed.
-    
     Iterates through dependencies, modifying those without upper bounds and meeting specific criteria.
-    
+
     Parameters:
     - dependencies_list: Dependencies to check and modify.
     - package_record: Metadata about the current package.
@@ -148,47 +157,44 @@ def update_numpy_dependencies(dependencies_list, package_record, dependency_type
     for i, dependency in enumerate(dependencies_list):
         parts = dependency.split()
         package_name = parts[0]
-        
-        # Check for numpy or numpy-base packages and proceed if found
         if package_name in ["numpy", "numpy-base"]:
-            # Construct package info string for logging
-            package_info = f"{package_record['name']} v{package_record['version']} (build: {package_record['build']}, build_number: {package_record['build_number']})"
-            
-            # Proceed if no upper bound exists in the dependency
             if not has_upper_bound(dependency):
-                # Check if package is in the protection dictionary
                 if package_name in numpy2_protect_dict:
                     version_str = parts[1] if len(parts) > 1 else None
                     version = parse_version(version_str) if version_str else None
                     protected_version = parse_version(numpy2_protect_dict[package_name])
-                    
-                    # Attempt to add an upper bound if version conditions are met
                     if version and protected_version:
                         try:
                             if VersionOrder(version) <= VersionOrder(protected_version):
                                 new_dependency = f"{dependency},<2.0a0" if len(parts) > 1 else f"{dependency} <2.0a0"
-                                collect_proposed_change(package_subdir, filename, dependency_type, dependency, new_dependency, "Version <= protected_version")
+                                collect_proposed_change(package_subdir, filename, dependency_type, dependency,
+                                                        new_dependency, "Version <= protected_version")
                         except ValueError:
                             new_dependency = f"{dependency},<2.0a0" if len(parts) > 1 else f"{dependency} <2.0a0"
-                            collect_proposed_change(package_subdir, filename, dependency_type, dependency, new_dependency, "Version comparison failed")
+                            collect_proposed_change(package_subdir, filename, dependency_type, dependency,
+                                                    new_dependency, "Version comparison failed")
                     else:
-                        collect_proposed_change(package_subdir, filename, dependency_type, dependency, dependency, "Missing version or protected_version")
+                        collect_proposed_change(package_subdir, filename, dependency_type, dependency,
+                                                dependency, "Missing version or protected_version")
                 elif numpy2_protect_dict.get('add_bound_to_unspecified', False):
-                    # Handle dependencies without specified bounds
                     if len(parts) > 1:
                         new_dependency = patch_record_with_fixed_deps(dependency, parts)
                         if new_dependency != dependency:
-                            collect_proposed_change(package_subdir, filename, dependency_type, dependency, new_dependency, "Upper bound added")
+                            collect_proposed_change(package_subdir, filename, dependency_type, dependency,
+                                                    new_dependency, "Upper bound added")
                         else:
-                            collect_proposed_change(package_subdir, filename, dependency_type, dependency, dependency, "No unspecified bound")
+                            collect_proposed_change(package_subdir, filename, dependency_type, dependency,
+                                                    dependency, "No unspecified bound")
                     else:
                         new_dependency = f"{dependency} <2.0a0"
-                        collect_proposed_change(package_subdir, filename, dependency_type, dependency, new_dependency, "Upper bound added")
+                        collect_proposed_change(package_subdir, filename, dependency_type, dependency,
+                                                new_dependency, "Upper bound added")
                 else:
-                    collect_proposed_change(package_subdir, filename, dependency_type, dependency, dependency, "Not in protect_dict, no unspecified bound")
+                    collect_proposed_change(package_subdir, filename, dependency_type, dependency,
+                                            dependency, "Not in protect_dict, no unspecified bound")
             else:
-                # Log if dependency already has an upper bound
-                collect_proposed_change(package_subdir, filename, dependency_type, dependency, dependency, "Already has upper bound")
+                collect_proposed_change(package_subdir, filename, dependency_type, dependency,
+                                        dependency, "Already has upper bound")
 
 
 def main():
@@ -225,9 +231,9 @@ def main():
             constrains = record.get("constrains", [])
 
             depends = [dep for dep in depends if dep is not None]
-            if "py39" in fn or "py310" in fn or "py311" in fn or "py312" in fn: 
+            if "py39" in fn or "py310" in fn or "py311" in fn or "py312" in fn:
                 if name not in ["anaconda", "_anaconda_depends", "__anaconda_core_depends", "_anaconda_core"]:
-                    try: 
+                    try:
                         for dep in depends:
                             if dep.split()[0] in ["numpy", "numpy-base"]:
                                 update_numpy_dependencies(depends, record, "dep", subdir, fn)
@@ -236,12 +242,14 @@ def main():
                                 update_numpy_dependencies(constrains, record, "constr", subdir, fn)
                     except Exception as e:
                         logger.error(f"numpy 2.0.0 error {fn}: {e}")
-    
+
     # Write proposed changes to a JSON file
-    with open('proposed_numpy_changes.json', 'w') as f:
+    json_filename = "proposed_numpy_changes.json"
+    with open(json_filename, 'w') as f:
         json.dump(proposed_changes, f, indent=2)
 
-    logger.info(f"Proposed changes have been written to proposed_numpy_changes.json")
-            
+    logger.info(f"Proposed changes have been written to {json_filename}")
+
+
 if __name__ == "__main__":
     main()

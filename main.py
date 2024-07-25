@@ -274,6 +274,7 @@ LIBFFI_HOTFIX_EXCLUDES = [
     "_anaconda_depends",
 ]
 
+
 def load_numpy_changes():
     try:
         with open('proposed_numpy_changes.json', 'r') as f:
@@ -314,7 +315,7 @@ def _get_dependency_list(record, change_type):
     - change_type (str): The type of change ('dep' for dependencies, 'constr' for constraints).
 
     Returns:
-    - list: The list of dependencies or constraints based on the change type, or None if the change type is unrecognized.
+    - list: The list of dependencies or constraints based on the change type, None if the change type is unrecognized.
     """
     if change_type == 'dep':
         return record['depends']
@@ -329,7 +330,7 @@ def _apply_changes_to_dependencies(depends, change, record, filename, sort_type=
 
     Parameters:
     - depends (list): The list of dependencies to be modified.
-    - change (dict): A dictionary containing the 'original' dependency, the 'updated' dependency, the 'reason' for the change.
+    - change (dict): A dict containing the original dependency, the updated dependency, the reason for the change.
     - record (dict): The record to which the changes apply.
     - filename (str): The name of the file being processed.
     - sort_type (str, optional): The key in the 'change' dictionary to sort the CSV data by. Defaults to 'reason'.
@@ -395,9 +396,9 @@ def write_csv():
 
     for issue_type, data in csv_data.items():
         with open(f"updates/{issue_type}_numpy2_updates.csv", 'w', newline='') as csvfile:
-            csv.writer(csvfile).writerow(['Package', 'Version', 
-                                          'Build', 'Build Number', 
-                                          'Original Dependency', 'Updated Dependency', 
+            csv.writer(csvfile).writerow(['Package', 'Version',
+                                          'Build', 'Build Number',
+                                          'Original Dependency', 'Updated Dependency',
                                           'Reason'])
             csv.writer(csvfile).writerows(data)
 
