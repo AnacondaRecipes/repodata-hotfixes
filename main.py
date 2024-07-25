@@ -12,10 +12,7 @@ import rattler
 from typing import List, Sequence
 from conda.models.version import VersionOrder
 import csv
-from collections import defaultdict
 import requests
-from numpy2_config import numpy2_protect_dict
-
 import logging
 
 # Global dictionary to store data for CSV output
@@ -284,9 +281,8 @@ def load_numpy_changes():
     except FileNotFoundError:
         logger.warning("proposed_numpy_changes.json not found. No numpy changes will be applied.")
         return {}
-    
+
 NUMPY_CHANGES = load_numpy_changes()
-    
 
 def apply_numpy_changes(record, subdir, filename):
     """
@@ -308,6 +304,7 @@ def apply_numpy_changes(record, subdir, filename):
 
         _apply_changes_to_dependencies(depends, change, record, filename, 'type')
 
+
 def _get_dependency_list(record, change_type):
     """
     Returns the appropriate dependency list based on the change type.
@@ -324,6 +321,7 @@ def _get_dependency_list(record, change_type):
     elif change_type == 'constr':
         return record.get('constrains', [])
     return None
+
 
 def _apply_changes_to_dependencies(depends, change, record, filename, sort_type='reason'):
     """
@@ -343,8 +341,8 @@ def _apply_changes_to_dependencies(depends, change, record, filename, sort_type=
                 logger.info(f"Applied numpy change for {filename}: {change['original']} -> {change['updated']}")
             # Add to csv_data for later CSV export
             csv_data[change[sort_type]].append([
-                record['name'], record['version'], record['build'], 
-                record['build_number'], change['original'], 
+                record['name'], record['version'], record['build'],
+                record['build_number'], change['original'],
                 change['updated'], change['reason']
             ])
 
@@ -365,13 +363,13 @@ async def solve_dependencies(
         version = record.version._source
         build = record.build
         package_spec = rattler.MatchSpec(f"{name}={version}={build}")
-        
+
         # Create MatchSpecs for all dependencies
         dep_specs = [rattler.MatchSpec(dep) for dep in record.depends]
-        
+
         # Combine the package spec and dependency specs
         all_specs = [package_spec] + dep_specs
-        
+
         # Solve dependencies
         solved_packages = await rattler.solve(
             channels=channels,
@@ -394,7 +392,7 @@ def write_csv():
     """
     if not os.path.exists("updates"):
         os.makedirs("updates")
-    
+
     for issue_type, data in csv_data.items():
         with open(f"updates/{issue_type}_numpy2_updates.csv", 'w', newline='') as csvfile:
             csv.writer(csvfile).writerow(['Package', 'Version', 'Build', 'Build Number', 'Original Dependency', 'Updated Dependency', 'Reason'])
@@ -600,16 +598,16 @@ def _fix_cudnn_depends(depends, subdir):
     depends[idx] = correct_cudnn_depends
 
 def filter_packages(repo_data, substring):
-    
+
     # Initialize the new dictionary to store filtered results
     filtered_dict = {}
-    
+
     # Loop through each key-value pair in the 'Packages' dictionary
     for key, value in repo_data.items():
         # If the key contains the desired substring, add it to the filtered dictionary
         if substring in key:
             filtered_dict[key] = value
-    
+
     return filtered_dict
 
 def _patch_repodata(repodata, subdir):
@@ -827,7 +825,7 @@ def patch_record_in_place(fn, record, subdir):
 
     if NUMPY_CHANGES is not {}:
         apply_numpy_changes(record, subdir, fn)
-    
+
     ###########
     # pytorch #
     ###########
