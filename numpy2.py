@@ -226,6 +226,7 @@ def main():
             constrains = record.get("constrains", [])
 
             depends = [dep for dep in depends if dep is not None]
+            # numpy 2 is introduced for python 3.9. Packages for python 3.13 will be built with numpy2 from the start.
             if "py39" in fn or "py310" in fn or "py311" in fn or "py312" in fn:
                 if name not in ["anaconda", "_anaconda_depends", "__anaconda_core_depends", "_anaconda_core"]:
                     try:
