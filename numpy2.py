@@ -240,7 +240,7 @@ def main():
                         logger.error(f"numpy 2.0.0 error {fn}: {e}")
 
     # Write proposed changes to a JSON file
-    json_filename = "proposed_numpy_changes.json"
+    json_filename = "numpy2_patch.json"
     with open(json_filename, 'w') as f:
         json.dump(proposed_changes, f, indent=2)
 

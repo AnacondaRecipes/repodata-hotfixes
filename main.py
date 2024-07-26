@@ -8,7 +8,6 @@ import sys
 import datetime
 from collections import defaultdict
 from os.path import dirname, isdir, isfile, join
-import rattler
 from typing import List, Sequence
 from conda.models.version import VersionOrder
 import csv
@@ -275,19 +274,19 @@ LIBFFI_HOTFIX_EXCLUDES = [
 ]
 
 
-def load_numpy_changes():
+def load_numpy2_changes():
     try:
-        with open('proposed_numpy_changes.json', 'r') as f:
+        with open('numpy2_patch.json', 'r') as f:
             return json.load(f)
     except FileNotFoundError:
-        logger.warning("proposed_numpy_changes.json not found. No numpy changes will be applied.")
-        return {}
+        logger.error("numpy2_patch.json not found. Aborting hotfixes.")
+        sys.exit(1)
 
 
-NUMPY_CHANGES = load_numpy_changes()
+NUMPY_CHANGES = load_numpy2_changes()
 
 
-def apply_numpy_changes(record, subdir, filename):
+def apply_numpy2_changes(record, subdir, filename):
     """
     Applies predefined numpy changes to a record based on its directory and filename.
 
@@ -346,46 +345,6 @@ def _apply_changes_to_dependencies(depends, change, record, filename, sort_type=
                 record['build_number'], change['original'],
                 change['updated'], change['reason']
             ])
-
-
-async def solve_dependencies(
-    record: rattler.RepoDataRecord,
-    channels: Sequence[rattler.Channel | str],
-    platforms: Sequence[rattler.Platform | rattler.platform.PlatformLiteral],
-    virtual_packages: Sequence[rattler.GenericVirtualPackage | rattler.VirtualPackage]
-) -> List[rattler.RepoDataRecord]:
-    # This is left in the file as it will be useful for future development
-    # and testing. It is not used in the current implementation.
-    try:
-        # Create a MatchSpec for the current package
-        name = record.name.normalized
-        if name == '_anaconda_depends':
-            return []
-        version = record.version._source
-        build = record.build
-        package_spec = rattler.MatchSpec(f"{name}={version}={build}")
-
-        # Create MatchSpecs for all dependencies
-        dep_specs = [rattler.MatchSpec(dep) for dep in record.depends]
-
-        # Combine the package spec and dependency specs
-        all_specs = [package_spec] + dep_specs
-
-        # Solve dependencies
-        solved_packages = await rattler.solve(
-            channels=channels,
-            specs=all_specs,
-            platforms=platforms,
-            virtual_packages=virtual_packages,
-            timeout=datetime.timedelta(seconds=10),
-            strategy="highest"  # You can adjust this if needed
-        )
-        logger.info(f"Solved dependencies for {name}")
-        return solved_packages
-    except Exception as exc:
-        logger.error(f"Failed to solve dependencies for {name}: {exc}")
-        return []
-
 
 def write_csv():
     """
@@ -814,7 +773,7 @@ def patch_record_in_place(fn, record, subdir):
                 break
 
     if NUMPY_CHANGES is not {}:
-        apply_numpy_changes(record, subdir, fn)
+        apply_numpy2_changes(record, subdir, fn)
 
     ###########
     # pytorch #
