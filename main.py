@@ -5,10 +5,8 @@ import json
 import os
 import re
 import sys
-import datetime
 from collections import defaultdict
 from os.path import dirname, isdir, isfile, join
-from typing import List, Sequence
 from conda.models.version import VersionOrder
 import csv
 import requests
@@ -345,6 +343,7 @@ def _apply_changes_to_dependencies(depends, change, record, filename, sort_type=
                 record['build_number'], change['original'],
                 change['updated'], change['reason']
             ])
+
 
 def write_csv():
     """
