@@ -61,7 +61,7 @@ python numpy2.py
 1. Scans through the repodata for packages depending on numpy.
 2. Checks if these dependencies need updates to ensure compatibility with numpy 2.0.
 3. Proposes changes to add upper bounds to numpy dependencies where necessary.
-4. Generates a `proposed_numpy_changes.json` file containing all proposed changes.
+4. Generates a `numpy2_patch.json` file containing all proposed changes.
 
 ### When to use numpy2.py
 
@@ -72,16 +72,16 @@ Use `numpy2.py` when:
 
 ### Running main.py with proposed_numpy_changes.json
 
-After running `numpy2.py`, you'll have a `proposed_numpy_changes.json` file. To apply these changes:
+After running `numpy2.py`, you'll have a `numpy2_patch.json` file. To apply these changes:
 
-1. Ensure `proposed_numpy_changes.json` is in the same directory as `main.py`.
+1. Ensure `numpy2_patch.json` is in the same directory as `main.py`.
 2. Run `main.py` as usual:
 
 ```
 python main.py
 ```
 
-`main.py` will automatically detect and incorporate the changes from `proposed_numpy_changes.json` into the hotfix process.
+`main.py` will automatically detect and incorporate the changes from `numpy2_patch.json` into the hotfix process.
 
 ## Reviewing CSV Updates
 
