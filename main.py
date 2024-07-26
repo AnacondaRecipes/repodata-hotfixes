@@ -602,20 +602,6 @@ def _fix_cudnn_depends(depends, subdir):
     depends[idx] = correct_cudnn_depends
 
 
-def filter_packages(repo_data, substring):
-
-    # Initialize the new dictionary to store filtered results
-    filtered_dict = {}
-
-    # Loop through each key-value pair in the 'Packages' dictionary
-    for key, value in repo_data.items():
-        # If the key contains the desired substring, add it to the filtered dictionary
-        if substring in key:
-            filtered_dict[key] = value
-
-    return filtered_dict
-
-
 def _patch_repodata(repodata, subdir):
     index = repodata["packages"]
     instructions = {

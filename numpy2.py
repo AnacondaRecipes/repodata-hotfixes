@@ -26,16 +26,11 @@ CHANNEL_NAME = "main"
 CHANNEL_ALIAS = "https://repo.anaconda.com/pkgs"
 SUBDIRS = (
     "noarch",
-    "linux-32",
     "linux-64",
     "linux-aarch64",
-    "linux-armv6l",
-    "linux-armv7l",
-    "linux-ppc64le",
     "linux-s390x",
     "osx-64",
     "osx-arm64",
-    "win-32",
     "win-64",
 )
 
