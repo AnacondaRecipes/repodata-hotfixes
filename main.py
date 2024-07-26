@@ -283,7 +283,7 @@ def load_numpy2_changes():
         sys.exit(1)
 
 
-NUMPY_CHANGES = load_numpy2_changes()
+NUMPY_2_CHANGES = load_numpy2_changes()
 
 
 def apply_numpy2_changes(record, subdir, filename):
@@ -295,9 +295,9 @@ def apply_numpy2_changes(record, subdir, filename):
     - subdir: The subdirectory of the record.
     - filename: The filename of the record.
     """
-    if subdir not in NUMPY_CHANGES or filename not in NUMPY_CHANGES[subdir]:
+    if subdir not in NUMPY_2_CHANGES or filename not in NUMPY_2_CHANGES[subdir]:
         return
-    changes = NUMPY_CHANGES[subdir][filename]
+    changes = NUMPY_2_CHANGES[subdir][filename]
     for change in changes:
         depends = _get_dependency_list(record, change['type'])
         if depends is None:
@@ -772,7 +772,7 @@ def patch_record_in_place(fn, record, subdir):
                 depends[i] = depends[i].replace(">=1.21.5,", ">=1.21.2,")
                 break
 
-    if NUMPY_CHANGES is not {}:
+    if NUMPY_2_CHANGES is not {}:
         apply_numpy2_changes(record, subdir, fn)
 
     ###########
@@ -1636,7 +1636,7 @@ def do_hotfixes(base_dir):
 def main():
     base_dir = join(dirname(__file__), CHANNEL_NAME)
     do_hotfixes(base_dir)
-    if NUMPY_CHANGES != {}:
+    if NUMPY_2_CHANGES != {}:
         write_csv()
 
 
