@@ -168,28 +168,16 @@ def update_numpy_dependencies(dependencies_list, package_record, dependency_type
                             new_dependency = f"{dependency},<2.0a0" if len(parts) > 1 else f"{dependency} <2.0a0"
                             collect_proposed_change(package_subdir, filename, dependency_type, dependency,
                                                     new_dependency, "Version comparison failed")
-                    else:
-                        collect_proposed_change(package_subdir, filename, dependency_type, dependency,
-                                                dependency, "Missing version or protected_version")
                 elif numpy2_protect_dict.get('add_bound_to_unspecified', False):
                     if len(parts) > 1:
                         new_dependency = patch_record_with_fixed_deps(dependency, parts)
                         if new_dependency != dependency:
                             collect_proposed_change(package_subdir, filename, dependency_type, dependency,
                                                     new_dependency, "Upper bound added")
-                        else:
-                            collect_proposed_change(package_subdir, filename, dependency_type, dependency,
-                                                    dependency, "No unspecified bound")
                     else:
                         new_dependency = f"{dependency} <2.0a0"
                         collect_proposed_change(package_subdir, filename, dependency_type, dependency,
                                                 new_dependency, "Upper bound added")
-                else:
-                    collect_proposed_change(package_subdir, filename, dependency_type, dependency,
-                                            dependency, "Not in protect_dict, no unspecified bound")
-            else:
-                collect_proposed_change(package_subdir, filename, dependency_type, dependency,
-                                        dependency, "Already has upper bound")
 
 
 def main():
