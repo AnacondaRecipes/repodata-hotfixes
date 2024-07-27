@@ -112,6 +112,8 @@ REMOVALS = {
         "numpy-devel-1.14.3*",
         # anaconda-client<1.10.0 is incompatible with python 3.10
         "anaconda-client-1.9.0-py310*",
+        # navigator-updater=0.5.0 is incompatible with anaconda-navigator
+        "navigator-updater-0.5.0-*"
     },
 }
 
@@ -146,7 +148,17 @@ REVOKED = {
     "win-64": [
         "spyder-kernels-1.0.1-*_0",
     ],
-    "any": [],
+    "any": [
+        # Packages with bad shortcuts that can cause installers
+        # and uninstallers to break under certain circumstances.
+        "anaconda-navigator-2.6.0-*_1.*",
+        "anaconda-navigator-2.6.1-*_1.*",
+        "git-2.40.1-*_2.*",
+        "git-2.40.1-*_3.*",
+        "notebook-7.0.8-*_1.*",
+        "spyder-5.5.1-*_1.*",
+        "spyder-5.5.1-*_2.*",
+    ],
 }
 
 # This is a list of numpy-base packages for each subdir which multiple numpy
@@ -612,6 +624,8 @@ def patch_record(fn, record, subdir, instructions, index):
     original_record = copy.deepcopy(record)
     patch_record_in_place(fn, record, subdir)
     keys_to_check = [
+        "app_entry",
+        "app_type",
         "constrains",
         "depends",
         "features",
@@ -619,6 +633,7 @@ def patch_record(fn, record, subdir, instructions, index):
         "license_family",
         "subdir",
         "track_features",
+        "type",
     ]
     for key in keys_to_check:
         if record.get(key) != original_record.get(key):
@@ -947,6 +962,18 @@ def patch_record_in_place(fn, record, subdir):
     #############################################
     # anaconda, conda, conda-build, constructor #
     #############################################
+
+    # Remove new shortcut packages from Navigator panel until they are ready
+    if name in [
+        "anconda_prompt",
+        "anaconda_powershell_prompt",
+    ]:
+        if "app_entry" in record:
+            del record["app_entry"]
+        if "app_type" in record:
+            del record["app_type"]
+        if record.get("type") == "app":
+            del record["type"]
 
     if (
         name == "anaconda"
@@ -1432,11 +1459,19 @@ def patch_record_in_place(fn, record, subdir):
             # https://github.com/conda/conda-libmamba-solver/issues/132
             replace_dep(depends, "conda >=22.11.0", "conda >=22.11.0,<23.1.0a")
         # conda 23.3 changed an internal SubdirData API needed with S3/FTP channels
-        # conda depricated Boltons leading to a breakage in the solver api interface
+        # conda deprecated Boltons leading to a breakage in the solver api interface
         if VersionOrder(version) < VersionOrder("23.2.0a0"):
             # https://github.com/conda/conda-libmamba-solver/issues/153
             # https://github.com/conda/conda-libmamba-solver/issues/152
             replace_dep(depends, "conda >=22.11.0", "conda >=22.11.0,<23.2.0a")
+        if VersionOrder(version) < VersionOrder("24.7.0a0"):
+            # https://github.com/conda/conda-libmamba-solver/pull/492
+            replace_dep(depends, "libmambapy >=1.5.6", "libmambapy >=1.5.6,<2.0.0a0")
+            replace_dep(depends, "libmambapy >=0.23", "libmambapy >=0.23,<2.0.0a0")
+            replace_dep(depends, "libmambapy >=0.22.1", "libmambapy >=0.22.1,<2.0.0a0")
+
+    if name == "conda-token" and VersionOrder(version) < VersionOrder("0.5.0"):
+        replace_dep(depends, "conda >=4.3", "conda >=4.3,<23.9")
 
     # snowflake-snowpark-python cloudpickle pins
     if name == "snowflake-snowpark-python" and version == '0.6.0':
