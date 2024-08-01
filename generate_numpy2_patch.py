@@ -1,13 +1,12 @@
-from os.path import dirname, isdir, isfile, join
-from conda.models.version import VersionOrder
 import requests
 import logging
 import json
-import os
 import re
+from collections import defaultdict
+from pathlib import Path
+from conda.models.version import VersionOrder
 
 numpy2_protect_dict = {
-    'add_bound_to_unspecified': True,
     'pandas': '2.2.2',
     'scikit-learn': '1.4.2',
     'pyamg': '4.2.3',
@@ -36,6 +35,10 @@ SUBDIRS = (
 )
 
 
+# Initialize NUMPY_2_CHANGES with a nested defaultdict structure
+NUMPY_2_CHANGES = defaultdict(lambda: defaultdict(dict))
+
+
 def collect_proposed_change(subdirectory, filename, change_type, original_dependency, updated_dependency, reason):
     """
     Collects a proposed change to a dependency for later processing.
@@ -43,18 +46,22 @@ def collect_proposed_change(subdirectory, filename, change_type, original_depend
     Parameters:
     - subdirectory: The subdirectory where the file is located.
     - filename: The name of the file being modified.
-    - change_type: The type of change (e.g., 'version update').
+    - change_type: The type of change (e.g., 'dep', 'constr').
     - original_dependency: The original dependency string.
     - updated_dependency: The updated dependency string.
     - reason: The reason for the change.
     """
-    proposed_changes.append({
-        "subdirectory": subdirectory,
-        "filename": filename,
+    # change dep and constr to dependency and constraint
+    if change_type == "dep":
+        change_type = "depends"
+    elif change_type == "constr":
+        change_type = "constrains"
+
+    NUMPY_2_CHANGES[subdirectory][filename] = {
         "type": change_type,
         "original": original_dependency,
-        "updated": updated_dependency,
-    })
+        "updated": updated_dependency
+    }
 
     logger.info(f"numpy 2.0.0: {reason} for {filename}. "
                 f"Original: '{original_dependency}' -> New: '{updated_dependency}' ({reason})")
@@ -121,6 +128,7 @@ def update_numpy_dependencies(dependencies_list, package_record, dependency_type
     - package_subdir: Package location subdirectory.
     - filename: Package filename.
     """
+    add_bound_to_unspecified = True
     for _, dependency in enumerate(dependencies_list):
         parts = dependency.split()
         package_name = parts[0]
@@ -140,7 +148,7 @@ def update_numpy_dependencies(dependencies_list, package_record, dependency_type
                             new_dependency = f"{dependency},<2.0a0" if len(parts) > 1 else f"{dependency} <2.0a0"
                             collect_proposed_change(package_subdir, filename, dependency_type, dependency,
                                                     new_dependency, "Version comparison failed")
-                elif numpy2_protect_dict.get('add_bound_to_unspecified', False):
+                elif add_bound_to_unspecified:
                     if len(parts) > 1:
                         new_dependency = patch_record_with_fixed_deps(dependency, parts)
                         if new_dependency != dependency:
@@ -153,24 +161,20 @@ def update_numpy_dependencies(dependencies_list, package_record, dependency_type
 
 
 def main():
-    base_dir = join(dirname(__file__), CHANNEL_NAME)
-    # Step 1. Collect initial repodata for all subdirs.
+    base_dir = Path(__file__).parent / CHANNEL_NAME
     repodatas = {}
     for subdir in SUBDIRS:
-        repodata_path = join(base_dir, subdir, "repodata_from_packages.json")
-        if isfile(repodata_path):
-            with open(repodata_path) as fh:
+        repodata_path = base_dir / subdir / "repodata_from_packages.json"
+        if repodata_path.is_file():
+            with repodata_path.open() as fh:
                 repodatas[subdir] = json.load(fh)
         else:
-            repodata_url = "/".join(
-                (CHANNEL_ALIAS, CHANNEL_NAME, subdir, "repodata_from_packages.json")
-            )
+            repodata_url = f"{CHANNEL_ALIAS}/{CHANNEL_NAME}/{subdir}/repodata_from_packages.json"
             response = requests.get(repodata_url)
             response.raise_for_status()
             repodatas[subdir] = response.json()
-            if not isdir(dirname(repodata_path)):
-                os.makedirs(dirname(repodata_path))
-            with open(repodata_path, "w") as fh:
+            repodata_path.parent.mkdir(parents=True, exist_ok=True)
+            with repodata_path.open('w') as fh:
                 json.dump(
                     repodatas[subdir],
                     fh,
@@ -186,8 +190,7 @@ def main():
             constrains = record.get("constrains", [])
 
             depends = [dep for dep in depends if dep is not None]
-            # numpy 2 is introduced for python 3.9. Packages for python 3.13 will be built with numpy2 from the start.
-            if "py39" in fn or "py310" in fn or "py311" in fn or "py312" in fn:
+            if any(py_ver in fn for py_ver in ["py39", "py310", "py311", "py312"]):
                 if name not in ["anaconda", "_anaconda_depends", "__anaconda_core_depends", "_anaconda_core"]:
                     try:
                         for dep in depends:
@@ -199,10 +202,9 @@ def main():
                     except Exception as e:
                         logger.error(f"numpy 2.0.0 error {fn}: {e}")
 
-    # Write proposed changes to a JSON file
-    json_filename = "numpy2_patch.json"
-    with open(json_filename, 'w') as f:
-        json.dump(proposed_changes, f, indent=2)
+    json_filename = Path("numpy2_patch.json")
+    with json_filename.open('w') as f:
+        json.dump(dict(NUMPY_2_CHANGES), f, indent=2)
 
     logger.info(f"Proposed changes have been written to {json_filename}")
 

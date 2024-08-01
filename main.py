@@ -3,14 +3,14 @@ import copy
 import fnmatch
 import json
 import os
+from os.path import dirname, isdir, isfile, join
 import re
 import sys
-import requests
 from collections import defaultdict
-from os.path import dirname, isdir, isfile, join
-from conda.models.version import VersionOrder
 from pathlib import Path
 
+from conda.models.version import VersionOrder
+import requests
 
 CHANNEL_NAME = "main"
 CHANNEL_ALIAS = "https://repo.anaconda.com/pkgs"
@@ -279,43 +279,22 @@ NUMPY_2_CHANGES = json.loads(Path("numpy2_patch.json").read_text())
 def apply_numpy2_changes(record, subdir, filename):
     """
     Applies predefined numpy changes to a record based on its directory and filename.
-
     Parameters:
     - record: The record to update.
     - subdir: The subdirectory of the record.
     - filename: The filename of the record.
     """
-    relevant_changes = [
-        change for change in NUMPY_2_CHANGES
-        if change['subdirectory'] == subdir and change['filename'] == filename
-    ]
-
-    if not relevant_changes:
+    if subdir not in NUMPY_2_CHANGES:
         return
 
-    for change in relevant_changes:
-        depends = _get_dependency_list(record, change['type'])
-        if depends is None:
-            continue
-        replace_dep(depends, change["original"], change["updated"])
-
-
-def _get_dependency_list(record, change_type):
-    """
-    Returns the appropriate dependency list based on the change type.
-
-    Parameters:
-    - record (dict): The record containing dependency information.
-    - change_type (str): The type of change ('dep' for dependencies, 'constr' for constraints).
-
-    Returns:
-    - list: The list of dependencies or constraints based on the change type, None if the change type is unrecognized.
-    """
-    if change_type == 'dep':
-        return record['depends']
-    elif change_type == 'constr':
-        return record.get('constrains', [])
-    return None
+    change = NUMPY_2_CHANGES[subdir].get(filename)
+    if not change:
+        return
+    else:
+        try:
+            replace_dep(record[change["type"]], change["original"], change["updated"])
+        except KeyError:
+            pass
 
 
 def _replace_vc_features_with_vc_pkg_deps(name, record, depends):
@@ -730,9 +709,6 @@ def patch_record_in_place(fn, record, subdir):
             if dep.startswith("numpy >=1.21.5,"):
                 depends[i] = depends[i].replace(">=1.21.5,", ">=1.21.2,")
                 break
-
-    if NUMPY_2_CHANGES:
-        apply_numpy2_changes(record, subdir, fn)
 
     ###########
     # pytorch #
@@ -1489,6 +1465,14 @@ def patch_record_in_place(fn, record, subdir):
             depends[:] = ["cctools", "clang 4.0.1.*", "compiler-rt 4.0.1.*", "ld64"]
         if name == "clangxx_osx-64" and version == "4.0.1" and int(build_number) < 17:
             depends[:] = ["clang_osx-64 >=4.0.1,<4.0.2.0a0", "clangxx", "libcxx"]
+
+    ###########
+    # numpy 2 #
+    ###########
+
+    # Numpy 2.0.0 Patch
+    if NUMPY_2_CHANGES:
+        apply_numpy2_changes(record, subdir, fn)
 
 
 def replace_dep(depends, old, new, *, append=False):
