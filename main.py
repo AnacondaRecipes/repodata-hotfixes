@@ -273,7 +273,6 @@ LIBFFI_HOTFIX_EXCLUDES = [
 ]
 
 
-
 NUMPY_2_CHANGES = json.loads(Path("numpy2_patch.json").read_text())
 
 
@@ -287,13 +286,13 @@ def apply_numpy2_changes(record, subdir, filename):
     - filename: The filename of the record.
     """
     relevant_changes = [
-        change for change in NUMPY_2_CHANGES 
+        change for change in NUMPY_2_CHANGES
         if change['subdirectory'] == subdir and change['filename'] == filename
     ]
-    
+
     if not relevant_changes:
         return
-    
+
     for change in relevant_changes:
         depends = _get_dependency_list(record, change['type'])
         if depends is None:
@@ -1616,9 +1615,6 @@ def do_hotfixes(base_dir):
 def main():
     base_dir = join(dirname(__file__), CHANNEL_NAME)
     do_hotfixes(base_dir)
-    if NUMPY_2_CHANGES != {}:
-        # write_csv()
-        pass
 
 
 if __name__ == "__main__":
