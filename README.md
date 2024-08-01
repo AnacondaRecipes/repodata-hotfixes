@@ -47,17 +47,17 @@ We should put things on the revoke list when:
 
 ## Numpy 2.0 Compatibility Checks and Updates
 
-### Running numpy2.py
+### Running `generate_numpy2_patch.py`
 
-The `numpy2.py` script is used to check and update package dependencies for compatibility with numpy 2.0. To run the script, use the following command:
+The `generate_numpy2_patch.py` script is used to check and update package dependencies for compatibility with numpy 2.0. To run the script, use the following command:
 
 ```
-python numpy2.py
+python `generate_numpy2_patch.py`
 ```
 
 ### What numpy2.py does
 
-`numpy2.py` performs the following tasks:
+`generate_numpy2_patch.py` performs the following tasks:
 1. Scans through the repodata for packages depending on numpy.
 2. Checks if these dependencies need updates to ensure compatibility with numpy 2.0.
 3. Proposes changes to add upper bounds to numpy dependencies where necessary.
@@ -65,14 +65,14 @@ python numpy2.py
 
 ### When to use numpy2.py
 
-Use `numpy2.py` when:
+Use `generate_numpy2_patch.py` when:
 - Preparing for a major numpy version update (e.g., transitioning to numpy 2.0).
 - You need to audit and update numpy dependencies across many packages.
 - You want to ensure compatibility of the ecosystem with upcoming numpy versions.
 
 ### Running main.py with proposed_numpy_changes.json
 
-After running `numpy2.py`, you'll have a `numpy2_patch.json` file. To apply these changes:
+After running `generate_numpy2_patch.py`, you'll have a `numpy2_patch.json` file. To apply these changes:
 
 1. Ensure `numpy2_patch.json` is in the same directory as `main.py`.
 2. Run `main.py` as usual:
@@ -82,31 +82,6 @@ python main.py
 ```
 
 `main.py` will automatically detect and incorporate the changes from `numpy2_patch.json` into the hotfix process.
-
-## Reviewing CSV Updates
-
-After running `numpy2.py` or `main.py`, CSV files are generated containing detailed information about the proposed changes. To review these updates:
-
-1. Locate the generated CSV files in your working directory. They will be named according to the type of update, e.g., `dep_numpy2_updates.csv`, `constr_numpy2_updates.csv`.
-
-2. For a quick review, you can open these files with any spreadsheet application on your local machine.
-
-3. For a more collaborative review or to share the updates with your team, you can upload the CSV files to a cloud-based service:
-
-   - Google Sheets: 
-     1. Go to [Google Sheets](https://sheets.google.com).
-     2. Click on "Blank" to create a new spreadsheet.
-     3. Go to File > Import > Upload and select your CSV file.
-     4. Choose your import options and click "Import data".
-
-4. Once uploaded, you can easily sort, filter, and analyze the proposed changes. Look for:
-   - Packages affected
-   - Types of changes (e.g., adding upper bounds, modifying existing bounds)
-   - Reasons for changes
-
-5. Use this review to make informed decisions about which changes to approve or modify before applying the hotfixes.
-
-Remember to handle these CSVs securely, especially if they contain sensitive package information.
 
 ## Utility scripts:
 
