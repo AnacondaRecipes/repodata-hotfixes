@@ -5,23 +5,12 @@ import json
 import os
 import re
 import sys
+import requests
 from collections import defaultdict
 from os.path import dirname, isdir, isfile, join
 from conda.models.version import VersionOrder
-import csv
-import requests
-import logging
+from pathlib import Path
 
-# Global dictionary to store data for CSV output
-csv_data = defaultdict(list)
-
-# Configure the logging
-logging.basicConfig(level=logging.DEBUG,
-                    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-                    handlers=[logging.FileHandler('hotfixes.log', mode='w'),
-                              logging.StreamHandler()])
-# Create a logger object
-logger = logging.getLogger(__name__)
 
 CHANNEL_NAME = "main"
 CHANNEL_ALIAS = "https://repo.anaconda.com/pkgs"
@@ -284,16 +273,8 @@ LIBFFI_HOTFIX_EXCLUDES = [
 ]
 
 
-def load_numpy2_changes():
-    try:
-        with open('numpy2_patch.json', 'r') as f:
-            return json.load(f)
-    except FileNotFoundError:
-        logger.error("numpy2_patch.json not found. Aborting hotfixes.")
-        sys.exit(1)
 
-
-NUMPY_2_CHANGES = load_numpy2_changes()
+NUMPY_2_CHANGES = json.loads(Path("numpy2_patch.json").read_text())
 
 
 def apply_numpy2_changes(record, subdir, filename):
@@ -305,14 +286,19 @@ def apply_numpy2_changes(record, subdir, filename):
     - subdir: The subdirectory of the record.
     - filename: The filename of the record.
     """
-    if subdir not in NUMPY_2_CHANGES or filename not in NUMPY_2_CHANGES[subdir]:
+    relevant_changes = [
+        change for change in NUMPY_2_CHANGES 
+        if change['subdirectory'] == subdir and change['filename'] == filename
+    ]
+    
+    if not relevant_changes:
         return
-    changes = NUMPY_2_CHANGES[subdir][filename]
-    for change in changes:
+    
+    for change in relevant_changes:
         depends = _get_dependency_list(record, change['type'])
         if depends is None:
             continue
-        _apply_changes_to_dependencies(depends, change, record, filename, 'type')
+        replace_dep(depends, change["original"], change["updated"])
 
 
 def _get_dependency_list(record, change_type):
@@ -331,46 +317,6 @@ def _get_dependency_list(record, change_type):
     elif change_type == 'constr':
         return record.get('constrains', [])
     return None
-
-
-def _apply_changes_to_dependencies(depends, change, record, filename, sort_type='reason'):
-    """
-    Applies changes to dependencies and logs the changes.
-
-    Parameters:
-    - depends (list): The list of dependencies to be modified.
-    - change (dict): A dict containing the original dependency, the updated dependency, the reason for the change.
-    - record (dict): The record to which the changes apply.
-    - filename (str): The name of the file being processed.
-    - sort_type (str, optional): The key in the 'change' dictionary to sort the CSV data by. Defaults to 'reason'.
-    """
-    for i, dep in enumerate(depends):
-        if dep == change['original']:
-            depends[i] = change['updated']
-            if change['reason'] == 'Upper bound added':
-                logger.info(f"Applied numpy change for {filename}: {change['original']} -> {change['updated']}")
-            # Add to csv_data for later CSV export
-            csv_data[change[sort_type]].append([
-                record['name'], record['version'], record['build'],
-                record['build_number'], change['original'],
-                change['updated'], change['reason']
-            ])
-
-
-def write_csv():
-    """
-    Writes update data to CSV files in the 'updates' directory.
-    """
-    if not os.path.exists("updates"):
-        os.makedirs("updates")
-
-    for issue_type, data in csv_data.items():
-        with open(f"updates/{issue_type}_numpy2_updates.csv", 'w', newline='') as csvfile:
-            csv.writer(csvfile).writerow(['Package', 'Version',
-                                          'Build', 'Build Number',
-                                          'Original Dependency', 'Updated Dependency',
-                                          'Reason'])
-            csv.writer(csvfile).writerows(data)
 
 
 def _replace_vc_features_with_vc_pkg_deps(name, record, depends):
@@ -786,7 +732,7 @@ def patch_record_in_place(fn, record, subdir):
                 depends[i] = depends[i].replace(">=1.21.5,", ">=1.21.2,")
                 break
 
-    if NUMPY_2_CHANGES is not {}:
+    if NUMPY_2_CHANGES:
         apply_numpy2_changes(record, subdir, fn)
 
     ###########
@@ -1671,7 +1617,8 @@ def main():
     base_dir = join(dirname(__file__), CHANNEL_NAME)
     do_hotfixes(base_dir)
     if NUMPY_2_CHANGES != {}:
-        write_csv()
+        # write_csv()
+        pass
 
 
 if __name__ == "__main__":

@@ -1,24 +1,26 @@
 from os.path import dirname, isdir, isfile, join
 from conda.models.version import VersionOrder
-import csv
 from collections import defaultdict
 import requests
-from numpy2_config import numpy2_protect_dict
 import logging
 import json
 import os
 import re
 
-proposed_changes = defaultdict(lambda: defaultdict(list))
+numpy2_protect_dict = {
+    'add_bound_to_unspecified': True,
+    'pandas': '2.2.2',
+    'scikit-learn': '1.4.2',
+    'pyamg': '4.2.3',
+    'pyqtgraph': '0.13.1'
+}
 
-# Global dictionary to store data for CSV output
-csv_data = defaultdict(list)
+proposed_changes = []
 
 # Configure the logging
 logging.basicConfig(level=logging.DEBUG,
-                    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-                    handlers=[logging.FileHandler('hotfixes.log', mode='w'),
-                              logging.StreamHandler()])
+                    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+
 # Create a logger object
 logger = logging.getLogger(__name__)
 
@@ -47,12 +49,16 @@ def collect_proposed_change(subdirectory, filename, change_type, original_depend
     - updated_dependency: The updated dependency string.
     - reason: The reason for the change.
     """
-    proposed_changes[subdirectory][filename].append({
+    proposed_changes.append({
+        "subdirectory": subdirectory,   
+        "filename": filename,
         "type": change_type,
         "original": original_dependency,
         "updated": updated_dependency,
-        "reason": reason
     })
+
+    logger.info(f"numpy 2.0.0: {reason} for {filename}. "
+                f"Original: '{original_dependency}' -> New: '{updated_dependency}' ({reason})")
 
 
 def parse_version(version_str):
@@ -115,26 +121,6 @@ def write_csv():
             writer.writerow(['Package', 'Version', 'Build', 'Build Number',
                              'Original Dependency', 'Updated Dependency', 'Reason'])
             writer.writerows(data)
-
-
-def log_and_collect(issue_type, package_info, original_dependency, updated_dependency, reason):
-    """
-    Logs and collects data on dependency modifications for reporting.
-
-    Parameters:
-    - issue_type: Type of issue prompting modification.
-    - package_info: Package name, version, build, and build number.
-    - original_dependency: Original dependency specification.
-    - updated_dependency: Updated dependency specification.
-    - reason: Reason for modification.
-    """
-    logger.info(f"numpy 2.0.0: {issue_type} for {package_info}. "
-                f"Original: '{original_dependency}' -> New: '{updated_dependency}' ({reason})")
-
-    name, version = package_info.split(' v')[0], package_info.split(' v')[1].split(' (')[0]
-    build = package_info.split('build: ')[1].split(',')[0]
-    build_number = package_info.split('build_number: ')[1][:-1]
-    csv_data[issue_type].append([name, version, build, build_number, original_dependency, updated_dependency, reason])
 
 
 def update_numpy_dependencies(dependencies_list, package_record, dependency_type, package_subdir, filename):
