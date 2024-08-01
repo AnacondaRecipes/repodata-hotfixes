@@ -1,6 +1,5 @@
 from os.path import dirname, isdir, isfile, join
 from conda.models.version import VersionOrder
-from collections import defaultdict
 import requests
 import logging
 import json
@@ -50,7 +49,7 @@ def collect_proposed_change(subdirectory, filename, change_type, original_depend
     - reason: The reason for the change.
     """
     proposed_changes.append({
-        "subdirectory": subdirectory,   
+        "subdirectory": subdirectory,
         "filename": filename,
         "type": change_type,
         "original": original_dependency,
@@ -110,19 +109,6 @@ def patch_record_with_fixed_deps(dependency, parts):
     return dependency
 
 
-def write_csv():
-    """
-    Writes collected data to CSV files, one per issue type.
-    """
-    for issue_type, data in csv_data.items():
-        filename = f"{issue_type}_numpy2_updates.csv"
-        with open(filename, 'w', newline='') as csvfile:
-            writer = csv.writer(csvfile)
-            writer.writerow(['Package', 'Version', 'Build', 'Build Number',
-                             'Original Dependency', 'Updated Dependency', 'Reason'])
-            writer.writerows(data)
-
-
 def update_numpy_dependencies(dependencies_list, package_record, dependency_type, package_subdir, filename):
     """
     Adds upper bounds to numpy dependencies as needed.
@@ -135,7 +121,7 @@ def update_numpy_dependencies(dependencies_list, package_record, dependency_type
     - package_subdir: Package location subdirectory.
     - filename: Package filename.
     """
-    for i, dependency in enumerate(dependencies_list):
+    for _, dependency in enumerate(dependencies_list):
         parts = dependency.split()
         package_name = parts[0]
         if package_name in ["numpy", "numpy-base"]:
