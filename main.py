@@ -1400,6 +1400,10 @@ def patch_record_in_place(fn, record, subdir):
         replace_dep(depends, "pandas", "pandas >=1.3.0,<2")
         replace_dep(depends, "pandas >=1.3.0", "pandas >=1.3.0,<2")
         replace_dep(depends, "pandas >=1.3.0,!=1.5.0", "pandas >=1.3.0,!=1.5.0,<2")
+    
+    # ray-core needs async-timeout
+    if name == "ray-core" and VersionOrder(version) < VersionOrder("2.6.4"):
+        depends.append("async-timeout")
 
     ###########################
     # compilers and run times #
