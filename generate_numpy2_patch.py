@@ -128,53 +128,81 @@ def update_numpy_dependencies(dependencies_list, package_record, dependency_type
     - package_subdir: Package location subdirectory.
     - filename: Package filename.
     """
-    add_bound_to_unspecified = True
+    # Flag to determine if unspecified dependencies should get an upper bound
+    add_bound_to_unspecified = True  
+
+    # Iterate through each dependency in the list
     for _, dependency in enumerate(dependencies_list):
         parts = dependency.split()
         package_name = parts[0]
-        if package_name in ["numpy", "numpy-base"]:
-            if not has_upper_bound(dependency):
-                if package_name in numpy2_protect_dict:
-                    version_str = parts[1] if len(parts) > 1 else None
-                    version = parse_version(version_str) if version_str else None
-                    protected_version = parse_version(numpy2_protect_dict[package_name])
-                    if version and protected_version:
-                        try:
-                            if VersionOrder(version) <= VersionOrder(protected_version):
-                                new_dependency = f"{dependency},<2.0a0" if len(parts) > 1 else f"{dependency} <2.0a0"
-                                collect_proposed_change(package_subdir, filename, dependency_type, dependency,
-                                                        new_dependency, "Version <= protected_version")
-                        except ValueError:
-                            new_dependency = f"{dependency},<2.0a0" if len(parts) > 1 else f"{dependency} <2.0a0"
-                            collect_proposed_change(package_subdir, filename, dependency_type, dependency,
-                                                    new_dependency, "Version comparison failed")
-                elif add_bound_to_unspecified:
-                    if len(parts) > 1:
-                        new_dependency = patch_record_with_fixed_deps(dependency, parts)
-                        if new_dependency != dependency:
-                            collect_proposed_change(package_subdir, filename, dependency_type, dependency,
-                                                    new_dependency, "Upper bound added")
-                    else:
-                        new_dependency = f"{dependency} <2.0a0"
-                        collect_proposed_change(package_subdir, filename, dependency_type, dependency,
-                                                new_dependency, "Upper bound added")
+
+        # Check if the dependency is for numpy and does not have an upper bound
+        if "numpy" in package_name and not has_upper_bound(dependency):
+            if package_name in numpy2_protect_dict:
+                # Handle dependencies that are in the protection dictionary
+                _handle_protected_dependency(parts, dependency, package_subdir, filename, dependency_type)
+            elif add_bound_to_unspecified:
+                # Handle dependencies that are unspecified and need an upper bound
+                _handle_unspecified_dependency(parts, dependency, package_subdir, filename, dependency_type)
+
+
+def _handle_protected_dependency(parts, dependency, package_subdir, filename, dependency_type):
+    """
+    Handles dependencies that are in the protection dictionary.
+    """
+    version_str = parts[1] if len(parts) > 1 else None 
+    version = parse_version(version_str) if version_str else None 
+    protected_version = parse_version(numpy2_protect_dict[parts[0]])
+
+    if version and protected_version:
+        try:
+            # Compare the version with the protected version
+            if VersionOrder(version) <= VersionOrder(protected_version):
+                # Add an upper bound to the dependency if the version is less than or equal to the protected version
+                new_dependency = f"{dependency},<2.0a0" if len(parts) > 1 else f"{dependency} <2.0a0"
+                collect_proposed_change(package_subdir, filename, dependency_type, dependency, new_dependency, "Version <= protected_version")
+        except ValueError:
+            # Handle version comparison errors
+            new_dependency = f"{dependency},<2.0a0" if len(parts) > 1 else f"{dependency} <2.0a0"
+            collect_proposed_change(package_subdir, filename, dependency_type, dependency, new_dependency, "Version comparison failed")
+
+
+def _handle_unspecified_dependency(parts, dependency, package_subdir, filename, dependency_type):
+    """
+    Handles dependencies that are unspecified and need an upper bound.
+    """
+    if len(parts) > 1:
+        # Patch the record with fixed dependencies if there are multiple parts
+        new_dependency = patch_record_with_fixed_deps(dependency, parts)
+        if new_dependency != dependency:
+            collect_proposed_change(package_subdir, filename, dependency_type, dependency, new_dependency, "Upper bound added")
+    else:
+        # Add an upper bound to the dependency if there is only one part
+        new_dependency = f"{dependency} <2.0a0"
+        collect_proposed_change(package_subdir, filename, dependency_type, dependency, new_dependency, "Upper bound added")
 
 
 def main():
-    base_dir = Path(__file__).parent / CHANNEL_NAME
+    base_dir = Path(__file__).parent / CHANNEL_NAME  
     repodatas = {}
+
+    # Iterate over each subdir to load or fetch repodata
     for subdir in SUBDIRS:
         repodata_path = base_dir / subdir / "repodata_from_packages.json"
+        
+        # Check if the repodata file exists locally
         if repodata_path.is_file():
             with repodata_path.open() as fh:
-                repodatas[subdir] = json.load(fh)
+                repodatas[subdir] = json.load(fh)  # Load repodata from local file
         else:
+            # Fetch repodata from the remote URL if not available locally
             repodata_url = f"{CHANNEL_ALIAS}/{CHANNEL_NAME}/{subdir}/repodata_from_packages.json"
             response = requests.get(repodata_url)
             response.raise_for_status()
-            repodatas[subdir] = response.json()
-            repodata_path.parent.mkdir(parents=True, exist_ok=True)
+            repodatas[subdir] = response.json()  # Load repodata from the response
+            repodata_path.parent.mkdir(parents=True, exist_ok=True)  # Ensure the directory exists
             with repodata_path.open('w') as fh:
+                # Save the fetched repodata to a local file
                 json.dump(
                     repodatas[subdir],
                     fh,
@@ -182,6 +210,8 @@ def main():
                     sort_keys=True,
                     separators=(",", ": "),
                 )
+
+    # Process each subdir's repodata to update numpy dependencies
     for subdir in SUBDIRS:
         index = repodatas[subdir]["packages"]
         for fn, record in index.items():
@@ -189,22 +219,29 @@ def main():
             depends = record["depends"]
             constrains = record.get("constrains", [])
 
+            # Filter out None dependencies
             depends = [dep for dep in depends if dep is not None]
+            
+            # Check if the package is for specific Python versions
             if any(py_ver in fn for py_ver in ["py39", "py310", "py311", "py312"]):
+                # Exclude certain package names from processing
                 if name not in ["anaconda", "_anaconda_depends", "__anaconda_core_depends", "_anaconda_core"]:
                     try:
+                        # Update numpy dependencies in the 'depends' list
                         for dep in depends:
                             if dep.split()[0] in ["numpy", "numpy-base"]:
-                                update_numpy_dependencies(depends, record, "dep", subdir, fn)
+                                update_numpy_dependencies(depends, record, "depends", subdir, fn)
+                        # Update numpy dependencies in the 'constrains' list
                         for constrain in constrains:
                             if constrain.split()[0] in ["numpy", "numpy-base"]:
-                                update_numpy_dependencies(constrains, record, "constr", subdir, fn)
+                                update_numpy_dependencies(constrains, record, "constrains", subdir, fn)
                     except Exception as e:
+                        # Log any errors encountered during the update process
                         logger.error(f"numpy 2.0.0 error {fn}: {e}")
 
+    # Write the proposed changes to a JSON file
     json_filename = Path("numpy2_patch.json")
-    with json_filename.open('w') as f:
-        json.dump(dict(NUMPY_2_CHANGES), f, indent=2)
+    json_filename.write_text(json.dumps(dict(NUMPY_2_CHANGES), indent=2))
 
     logger.info(f"Proposed changes have been written to {json_filename}")
 

@@ -291,10 +291,8 @@ def apply_numpy2_changes(record, subdir, filename):
     if not change:
         return
     else:
-        try:
-            replace_dep(record[change["type"]], change["original"], change["updated"])
-        except KeyError:
-            pass
+        replace_dep(record[change["type"]], change["original"], change["updated"])
+
 
 
 def _replace_vc_features_with_vc_pkg_deps(name, record, depends):
@@ -1471,6 +1469,11 @@ def patch_record_in_place(fn, record, subdir):
     ###########
 
     # Numpy 2.0.0 Patch
+
+    # Numpy 2.0.0 hotfix will allow a bulk of packages to be locked to below 2.0.0 as the interoperability
+    # between numpy 1.x and 2.x is not guaranteed.
+
+    # This will ensure upper bounds on numpy for all packages that are not confirmed to be compatible with numpy 2.0.0
     if NUMPY_2_CHANGES:
         apply_numpy2_changes(record, subdir, fn)
 
