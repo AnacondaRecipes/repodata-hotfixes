@@ -294,7 +294,6 @@ def apply_numpy2_changes(record, subdir, filename):
         replace_dep(record[change["type"]], change["original"], change["updated"])
 
 
-
 def _replace_vc_features_with_vc_pkg_deps(name, record, depends):
     python_vc_deps = {
         "2.6": "vc 9.*",

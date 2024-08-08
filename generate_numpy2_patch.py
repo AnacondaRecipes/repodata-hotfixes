@@ -129,7 +129,7 @@ def update_numpy_dependencies(dependencies_list, package_record, dependency_type
     - filename: Package filename.
     """
     # Flag to determine if unspecified dependencies should get an upper bound
-    add_bound_to_unspecified = True  
+    add_bound_to_unspecified = True
 
     # Iterate through each dependency in the list
     for _, dependency in enumerate(dependencies_list):
@@ -150,8 +150,8 @@ def _handle_protected_dependency(parts, dependency, package_subdir, filename, de
     """
     Handles dependencies that are in the protection dictionary.
     """
-    version_str = parts[1] if len(parts) > 1 else None 
-    version = parse_version(version_str) if version_str else None 
+    version_str = parts[1] if len(parts) > 1 else None
+    version = parse_version(version_str) if version_str else None
     protected_version = parse_version(numpy2_protect_dict[parts[0]])
 
     if version and protected_version:
@@ -160,11 +160,13 @@ def _handle_protected_dependency(parts, dependency, package_subdir, filename, de
             if VersionOrder(version) <= VersionOrder(protected_version):
                 # Add an upper bound to the dependency if the version is less than or equal to the protected version
                 new_dependency = f"{dependency},<2.0a0" if len(parts) > 1 else f"{dependency} <2.0a0"
-                collect_proposed_change(package_subdir, filename, dependency_type, dependency, new_dependency, "Version <= protected_version")
+                collect_proposed_change(package_subdir, filename, dependency_type,
+                                        dependency, new_dependency, "Version <= protected_version")
         except ValueError:
             # Handle version comparison errors
             new_dependency = f"{dependency},<2.0a0" if len(parts) > 1 else f"{dependency} <2.0a0"
-            collect_proposed_change(package_subdir, filename, dependency_type, dependency, new_dependency, "Version comparison failed")
+            collect_proposed_change(package_subdir, filename, dependency_type,
+                                    dependency, new_dependency, "Version comparison failed")
 
 
 def _handle_unspecified_dependency(parts, dependency, package_subdir, filename, dependency_type):
@@ -175,21 +177,23 @@ def _handle_unspecified_dependency(parts, dependency, package_subdir, filename, 
         # Patch the record with fixed dependencies if there are multiple parts
         new_dependency = patch_record_with_fixed_deps(dependency, parts)
         if new_dependency != dependency:
-            collect_proposed_change(package_subdir, filename, dependency_type, dependency, new_dependency, "Upper bound added")
+            collect_proposed_change(package_subdir, filename, dependency_type,
+                                    dependency, new_dependency, "Upper bound added")
     else:
         # Add an upper bound to the dependency if there is only one part
         new_dependency = f"{dependency} <2.0a0"
-        collect_proposed_change(package_subdir, filename, dependency_type, dependency, new_dependency, "Upper bound added")
+        collect_proposed_change(package_subdir, filename, dependency_type,
+                                dependency, new_dependency, "Upper bound added")
 
 
 def main():
-    base_dir = Path(__file__).parent / CHANNEL_NAME  
+    base_dir = Path(__file__).parent / CHANNEL_NAME
     repodatas = {}
 
     # Iterate over each subdir to load or fetch repodata
     for subdir in SUBDIRS:
         repodata_path = base_dir / subdir / "repodata_from_packages.json"
-        
+
         # Check if the repodata file exists locally
         if repodata_path.is_file():
             with repodata_path.open() as fh:
@@ -221,7 +225,7 @@ def main():
 
             # Filter out None dependencies
             depends = [dep for dep in depends if dep is not None]
-            
+
             # Check if the package is for specific Python versions
             if any(py_ver in fn for py_ver in ["py39", "py310", "py311", "py312"]):
                 # Exclude certain package names from processing
