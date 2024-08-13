@@ -272,8 +272,14 @@ LIBFFI_HOTFIX_EXCLUDES = [
     "_anaconda_depends",
 ]
 
+# Get the directory where the current script is located
+script_directory = Path(__file__).parent
 
-NUMPY_2_CHANGES = json.loads(Path("numpy2_patch.json").read_text())
+# Construct the full path to the JSON file
+json_file_path = script_directory / "numpy2_patch.json"
+
+# Read and load the JSON file
+NUMPY_2_CHANGES = json.loads(json_file_path.read_text())
 
 
 def apply_numpy2_changes(record, subdir, filename):
