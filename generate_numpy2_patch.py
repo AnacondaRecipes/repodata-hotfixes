@@ -228,11 +228,11 @@ def main():
                         # Update numpy dependencies in the 'depends' list
                         for dep in depends:
                             if dep.split()[0] in ["numpy", "numpy-base"]:
-                                update_numpy_dependencies(depends, record, "depends", subdir, fn)
+                                update_numpy_dependencies(depends, record, "dep", subdir, fn)
                         # Update numpy dependencies in the 'constrains' list
                         for constrain in constrains:
                             if constrain.split()[0] in ["numpy", "numpy-base"]:
-                                update_numpy_dependencies(constrains, record, "constrains", subdir, fn)
+                                update_numpy_dependencies(constrains, record, "const", subdir, fn)
                     except Exception as e:
                         # Log any errors encountered during the update process
                         logger.error(f"numpy 2.0.0 error {fn}: {e}")
