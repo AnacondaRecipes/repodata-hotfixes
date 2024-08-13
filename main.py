@@ -3,13 +3,13 @@ import copy
 import fnmatch
 import json
 import os
+from os.path import dirname, isdir, isfile, join
 import re
 import sys
 from collections import defaultdict
-from os.path import dirname, isdir, isfile, join
+from pathlib import Path
 
 from conda.models.version import VersionOrder
-
 import requests
 
 CHANNEL_NAME = "main"
@@ -271,6 +271,25 @@ LINUX_RUNTIME_DEPS = ("libgcc-ng", "libstdcxx-ng", "libgfortran-ng")
 LIBFFI_HOTFIX_EXCLUDES = [
     "_anaconda_depends",
 ]
+
+
+NUMPY_2_CHANGES = json.loads(Path("numpy2_patch.json").read_text())
+
+
+def apply_numpy2_changes(record, subdir, filename):
+    """
+    Applies predefined numpy changes to a record based on its directory and filename.
+    Parameters:
+    - record: The record to update.
+    - subdir: The subdirectory of the record.
+    - filename: The filename of the record.
+    """
+    if subdir not in NUMPY_2_CHANGES:
+        return
+
+    change = NUMPY_2_CHANGES[subdir].get(filename)
+    if change:
+        replace_dep(record[change["type"]], change["original"], change["updated"])
 
 
 def _replace_vc_features_with_vc_pkg_deps(name, record, depends):
@@ -749,7 +768,6 @@ def patch_record_in_place(fn, record, subdir):
     ######################
     # scipy dependencies #
     ######################
-
     # scipy 1.8 and 1.9 introduce breaking API changes impacting these packages
     if name == "theano":
         if version in ["1.0.4", "1.0.5"]:
@@ -996,7 +1014,6 @@ def patch_record_in_place(fn, record, subdir):
 
     # kealib 1.4.8 changed sonames, add new upper bound to existing packages
     replace_dep(depends, "kealib >=1.4.7,<1.5.0a0", "kealib >=1.4.7,<1.4.8.0a0")
-
     # Other broad replacements
     for i, dep in enumerate(depends):
         # glib is compatible up to the major version
@@ -1443,6 +1460,19 @@ def patch_record_in_place(fn, record, subdir):
             depends[:] = ["cctools", "clang 4.0.1.*", "compiler-rt 4.0.1.*", "ld64"]
         if name == "clangxx_osx-64" and version == "4.0.1" and int(build_number) < 17:
             depends[:] = ["clang_osx-64 >=4.0.1,<4.0.2.0a0", "clangxx", "libcxx"]
+
+    ###########
+    # numpy 2 #
+    ###########
+
+    # Numpy 2.0.0 Patch
+
+    # Numpy 2.0.0 hotfix will allow a bulk of packages to be locked to below 2.0.0 as the interoperability
+    # between numpy 1.x and 2.x is not guaranteed.
+
+    # This will ensure upper bounds on numpy for all packages that are not confirmed to be compatible with numpy 2.0.0
+    if NUMPY_2_CHANGES:
+        apply_numpy2_changes(record, subdir, fn)
 
 
 def replace_dep(depends, old, new, *, append=False):
