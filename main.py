@@ -272,8 +272,7 @@ LIBFFI_HOTFIX_EXCLUDES = [
     "_anaconda_depends",
 ]
 
-
-NUMPY_2_CHANGES = json.loads(Path("numpy2_patch.json").read_text())
+NUMPY_2_CHANGES = json.loads(Path(__file__).parent / "numpy2_patch.json").read_text()
 
 
 def apply_numpy2_changes(record, subdir, filename):
