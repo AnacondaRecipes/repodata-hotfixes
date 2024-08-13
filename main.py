@@ -288,9 +288,7 @@ def apply_numpy2_changes(record, subdir, filename):
         return
 
     change = NUMPY_2_CHANGES[subdir].get(filename)
-    if not change:
-        return
-    else:
+    if change:
         replace_dep(record[change["type"]], change["original"], change["updated"])
 
 
