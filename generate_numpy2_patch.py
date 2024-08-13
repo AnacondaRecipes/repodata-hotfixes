@@ -7,10 +7,8 @@ from pathlib import Path
 from conda.models.version import VersionOrder
 
 numpy2_protect_dict = {
-    'pandas': '2.2.2',
-    'scikit-learn': '1.4.2',
-    'pyamg': '4.2.3',
-    'pyqtgraph': '0.13.1'
+    # add any numpy dependencies that needs to be protected here
+    # "package_name": "protected_version"
 }
 
 proposed_changes = []
