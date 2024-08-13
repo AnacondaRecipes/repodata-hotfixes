@@ -51,12 +51,6 @@ def collect_proposed_change(subdirectory, filename, change_type, original_depend
     - updated_dependency: The updated dependency string.
     - reason: The reason for the change.
     """
-    # change dep and constr to dependency and constraint
-    if change_type == "dep":
-        change_type = "depends"
-    elif change_type == "constr":
-        change_type = "constrains"
-
     NUMPY_2_CHANGES[subdirectory][filename] = {
         "type": change_type,
         "original": original_dependency,
