@@ -9,6 +9,7 @@ from conda.models.version import VersionOrder
 numpy2_protect_dict = {
     # add any numpy dependencies that needs to be protected here
     # "package_name": "protected_version"
+    "hypothesis": "6.100.1"
 }
 
 proposed_changes = []
@@ -130,35 +131,12 @@ def update_numpy_dependencies(dependencies_list, package_record, dependency_type
 
         # Check if the dependency is for numpy and does not have an upper bound
         if "numpy" in package_name and not has_upper_bound(dependency):
-            if package_name in numpy2_protect_dict:
+            if package_record["name"] in numpy2_protect_dict and package_record["version"] == numpy2_protect_dict.get(package_record["name"], None):
                 # Handle dependencies that are in the protection dictionary
-                _handle_protected_dependency(parts, dependency, package_subdir, filename, dependency_type)
+                logger.info(f"numpy 2.0.0: {package_record['name']} is protected at {package_record['version']}")
             elif add_bound_to_unspecified:
                 # Handle dependencies that are unspecified and need an upper bound
                 _handle_unspecified_dependency(parts, dependency, package_subdir, filename, dependency_type)
-
-
-def _handle_protected_dependency(parts, dependency, package_subdir, filename, dependency_type):
-    """
-    Handles dependencies that are in the protection dictionary.
-    """
-    version_str = parts[1] if len(parts) > 1 else None
-    version = parse_version(version_str) if version_str else None
-    protected_version = parse_version(numpy2_protect_dict[parts[0]])
-
-    if version and protected_version:
-        try:
-            # Compare the version with the protected version
-            if VersionOrder(version) <= VersionOrder(protected_version):
-                # Add an upper bound to the dependency if the version is less than or equal to the protected version
-                new_dependency = f"{dependency},<2.0a0" if len(parts) > 1 else f"{dependency} <2.0a0"
-                collect_proposed_change(package_subdir, filename, dependency_type,
-                                        dependency, new_dependency, "Version <= protected_version")
-        except ValueError:
-            # Handle version comparison errors
-            new_dependency = f"{dependency},<2.0a0" if len(parts) > 1 else f"{dependency} <2.0a0"
-            collect_proposed_change(package_subdir, filename, dependency_type,
-                                    dependency, new_dependency, "Version comparison failed")
 
 
 def _handle_unspecified_dependency(parts, dependency, package_subdir, filename, dependency_type):
