@@ -8,7 +8,7 @@ from pathlib import Path
 numpy2_protect_dict = {
     # add any numpy dependencies that needs to be protected here
     # "package_name": "protected_version"
-    "hypothesis": "6.100.1"
+    "hypothesis": "6.111.0"
 }
 
 proposed_changes = []
