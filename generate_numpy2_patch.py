@@ -4,7 +4,6 @@ import json
 import re
 from collections import defaultdict
 from pathlib import Path
-from conda.models.version import VersionOrder
 
 numpy2_protect_dict = {
     # add any numpy dependencies that needs to be protected here
@@ -131,7 +130,8 @@ def update_numpy_dependencies(dependencies_list, package_record, dependency_type
 
         # Check if the dependency is for numpy and does not have an upper bound
         if "numpy" in package_name and not has_upper_bound(dependency):
-            if package_record["name"] in numpy2_protect_dict and package_record["version"] == numpy2_protect_dict.get(package_record["name"], None):
+            if package_record["name"] in numpy2_protect_dict and \
+               package_record["version"] == numpy2_protect_dict.get(package_record["name"], None):
                 # Handle dependencies that are in the protection dictionary
                 logger.info(f"numpy 2.0.0: {package_record['name']} is protected at {package_record['version']}")
             elif add_bound_to_unspecified:
