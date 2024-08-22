@@ -847,7 +847,7 @@ def patch_record_in_place(fn, record, subdir):
 
     # basemap is incompatible with proj/proj4 >=6
     # https://github.com/ContinuumIO/anaconda-issues/issues/11590
-    if name == "basemap":
+    if name == "basemap" and VersionOrder(version) <= VersionOrder("1.2.0"):
         record["constrains"] = ["proj4 <6", "proj <6"]
 
     # 'cryptography' + pyopenssl incompatibility 28 Feb 2023 #
