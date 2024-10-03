@@ -1390,6 +1390,10 @@ def patch_record_in_place(fn, record, subdir):
         if VersionOrder(version) < VersionOrder("24.7.0a0"):
             # https://github.com/conda/conda-libmamba-solver/pull/492
             replace_dep(depends, "libmambapy >=1.5.6", "libmambapy >=1.5.6,<2.0.0a0")
+            replace_dep(depends, "libmambapy >=1.5.3", "libmambapy >=1.5.3,<2.0.0a0")
+            replace_dep(depends, "libmambapy >=1.5.1", "libmambapy >=1.5.1,<2.0.0a0")
+            replace_dep(depends, "libmambapy >=1.4.1", "libmambapy >=1.4.1,<2.0.0a0")
+            replace_dep(depends, "libmambapy >=1.0.0", "libmambapy >=1.0.0,<2.0.0a0")
             replace_dep(depends, "libmambapy >=0.23", "libmambapy >=0.23,<2.0.0a0")
             replace_dep(depends, "libmambapy >=0.22.1", "libmambapy >=0.22.1,<2.0.0a0")
 
