@@ -1437,16 +1437,16 @@ def patch_record_in_place(fn, record, subdir):
     # poppler 24.09.0 incompatibility
     if (name == "graphviz" and VersionOrder(version) < VersionOrder("2.50.0") or
             (version == "2.50.0" and build_number < 2)):
-        replace_dep(depends, "poppler", "poppler <24.09.0")
+        replace_dep(depends, "poppler", "poppler <=22.12.0")
     if (name in ["libgdal", "libgdal-arrow-parquet"] and VersionOrder(version) < VersionOrder("3.6.2") or
             (version == "3.6.2" and build_number < 7)):
-        replace_dep(depends, "poppler", "poppler <24.09.0")
+        replace_dep(depends, "poppler", "poppler <=22.12.0")
     if (name == "python-poppler" and VersionOrder(version) < VersionOrder("0.4.1") or
             (version == "0.4.1" and build_number < 1)):
-        replace_dep(depends, "poppler", "poppler <24.09.0")
+        replace_dep(depends, "poppler", "poppler <=22.12.0")
     if (name == "r-pdftools" and VersionOrder(version) < VersionOrder("3.4.0") or
             (version == "3.4.0" and build_number < 1)):
-        replace_dep(depends, "poppler", "poppler <24.09.0")
+        replace_dep(depends, "poppler", "poppler <=22.12.0")
 
     ###########################
     # compilers and run times #
