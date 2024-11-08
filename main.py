@@ -979,6 +979,18 @@ def patch_record_in_place(fn, record, subdir):
         if re.match(r'0\.1\.[2-3](?!\d)', version):  # = 0.1.2* or = 0.1.3*
             bisect.insort_left(depends, 'jaraco.classes =3')
 
+    # In anaconda-cli-base 0.3.0 the plugin structure changed and this package
+    # is no longer utilized. Updating pins here to avoid this package being installed
+    # alongside the new plugin implementation.
+    if name == 'anaconda-cloud-cli':
+        if re.match(r'0\.1\.0(?!\d)', version):  # = 0.1.0*
+            replace_dep(depends, 'anaconda-cli-base', 'anaconda-cli-base <0.3.0')
+            replace_dep(depends, 'anaconda-cloud-auth', 'anaconda-cloud-auth <0.6.0')
+        if re.match(r'0\.2\.0(?!\d)', version):  # = 0.2.0*
+            replace_dep(depends, 'anaconda-cli-base >=0.2', 'anaconda-cli-base >=0.2,<0.3')
+            replace_dep(depends, 'anaconda-cloud-auth >=0.3', 'anaconda-cloud-auth >=0.3,<0.6')
+            replace_dep(depends, 'anaconda-client >=1.12.2', 'anaconda-client >=1.12.2,<1.13')
+            
     if name == 'anaconda-client':
         if re.match(r'1\.(?:\d|1[01])\.', version):  # < 1.12.0
             if replace_dep(depends, 'urllib3 >=1.26.4', 'urllib3 >=1.26.4,<2.0.0a') == '=':  # if no changes
