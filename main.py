@@ -147,6 +147,8 @@ REVOKED = {
         "notebook-7.0.8-*_1.*",
         "spyder-5.5.1-*_1.*",
         "spyder-5.5.1-*_2.*",
+        # anaconda-cli-base-0.4.1 build number 0 has missing run_constrained requirements
+        "anaconda-cli-base-0.4.1-*_0.*",
     ],
 }
 
