@@ -1469,6 +1469,12 @@ def patch_record_in_place(fn, record, subdir):
             (version == "3.4.0" and build_number < 1)):
         replace_dep(depends, "poppler", "poppler <=22.12.0")
 
+    # libarchive 3.7.5 abi breaking change - https://github.com/libarchive/libarchive/pull/1976
+    if name == "libmamba" and VersionOrder(version) >= VersionOrder("1.5.8") and VersionOrder(version) >= VersionOrder("1.5.11"):
+        replace_dep(depends, "libarchive >=3.7.4,<3.8.0a0", "libarchive >=3.7.4,<3.7.5.0a0")
+    if name == "tesseract" and version == "5.2.0":
+        replace_dep(depends, "libarchive >=3.7.4,<3.8.0a0", "libarchive >=3.7.4,<3.7.5.0a0")
+
     ###########################
     # compilers and run times #
     ###########################
