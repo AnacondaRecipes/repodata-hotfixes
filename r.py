@@ -198,6 +198,13 @@ def _patch_repodata(repodata, subdir):
                     pass
                 record['depends'].append('r-base 3.1.2')
                 instructions["packages"][fn]["depends"] = record['depends']
+        elif record_name == "r-archive" and record['version'] == "1.1.9":
+            # libarchive 3.7.5 abi breaking change - https://github.com/libarchive/libarchive/pull/1976
+            try:
+                record['depends'].remove('libarchive >=3.7.4,<3.8.0a0')
+            except ValueError:
+                pass
+            record['depends'].append('libarchive >=3.7.4,<3.7.5.0a0')
 
         # Every artifact's metadata requires 'subdir'.
         if "subdir" not in record:
