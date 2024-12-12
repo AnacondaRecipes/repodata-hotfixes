@@ -1479,7 +1479,6 @@ def patch_record_in_place(fn, record, subdir):
         # also from incoming "new libarchive" as incompatible with "installed libmamba"
         record["constrains"] = ["libmamba <0"]
 
-
     if name == "tesseract" and version == "5.2.0":
         replace_dep(depends, "libarchive >=3.7.4,<3.8.0a0", "libarchive >=3.7.4,<3.7.5.0a0")
 
