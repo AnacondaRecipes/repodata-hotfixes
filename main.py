@@ -1390,7 +1390,7 @@ def patch_record_in_place(fn, record, subdir):
             if not dep.startswith("conda-build ")
         ] + ["conda-build >=3.27"]
 
-    if name == "conda" and version >= "24.11.0":
+    if name == "conda" and VersionOrder(version) >= VersionOrder("24.11.0"):
         constrains[:] = [
             dep
             for dep in constrains
