@@ -1390,6 +1390,16 @@ def patch_record_in_place(fn, record, subdir):
             if not dep.startswith("conda-build ")
         ] + ["conda-build >=3.27"]
 
+    # Add run constraint for conda to fix plugin here:
+    # https://github.com/anaconda/conda-anaconda-telemetry/issues/87
+    # https://github.com/anaconda/conda-anaconda-telemetry/pull/96
+    if name in ("conda", "conda-build") and VersionOrder(version) >= VersionOrder("24.11.0"):
+        constrains[:] = [
+            dep
+            for dep in constrains
+            if not dep.startswith("conda-anaconda-telemetry ")
+        ] + ["conda-anaconda-telemetry >=0.1.2"]
+
     if name == "conda-libmamba-solver":
         # libmambapy 0.23 introduced breaking changes
         replace_dep(depends, "libmambapy >=0.22.1", "libmambapy 0.22.*")
