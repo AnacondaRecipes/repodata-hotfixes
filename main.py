@@ -627,6 +627,25 @@ def patch_record_in_place(fn, record, subdir):
     if fn == "cupti-9.0.176-0.tar.bz2":
         replace_dep(depends, "cudatoolkit 9.*", "cudatoolkit 9.0.*")
 
+    # documentation on cudnn versions before 8.5.0 is now unavailable.
+    # cudnn 8.9.2 is max compatible with cudatoolkit 12.1; glibc 2.19 on x86_64; glibc 2.28 on aarch64
+    # https://docs.nvidia.com/deeplearning/cudnn/archives/cudnn-892/support-matrix/index.html
+    # cudnn 9.1.1 is max compatible with cudatoolkit 12.4; glibc 2.28 on x86_64; glibc 2.28 on aarch64
+    # https://docs.nvidia.com/deeplearning/cudnn/backend/v9.1.1/reference/support-matrix.html#linux
+    if name == "cudnn" and version == "8.9.2.26":
+        if build.startswith("cuda12"):
+            replace_dep(depends, "cuda-version 12.*", "cuda-version <=12.1")
+        if subdir == "linux-64":
+            depends.append("__glibc >=2.19")
+        if subdir == "linux-aarch64":
+            depends.append("__glibc >=2.28")
+    if name == "cudnn" and version == "9.1.1.17":
+        if build.startswith("cuda12"):
+            replace_dep(depends, "cuda-version 12.*", "cuda-version <=12.4")
+        if subdir == "linux-64" or subdir == "linux-aarch64":
+            depends.append("__glibc >=2.28")
+
+
     #######
     # MKL #
     #######
