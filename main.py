@@ -634,15 +634,14 @@ def patch_record_in_place(fn, record, subdir):
     # https://docs.nvidia.com/deeplearning/cudnn/backend/v9.1.1/reference/support-matrix.html#linux
     if name == "cudnn" and version == "8.9.2.26":
         if build.startswith("cuda12"):
-            replace_dep(depends, "cuda-version 12.*", "cuda-version <=12.1")
+            replace_dep(depends, "cuda-version 12.*", "cuda-version >=12,<=12.1")
         if subdir == "linux-aarch64":
             depends.append("__glibc >=2.28")
     if name == "cudnn" and version == "9.1.1.17":
         if build.startswith("cuda12"):
-            replace_dep(depends, "cuda-version 12.*", "cuda-version <=12.4")
+            replace_dep(depends, "cuda-version 12.*", "cuda-version >=12,<=12.4")
         if subdir == "linux-64" or subdir == "linux-aarch64":
             depends.append("__glibc >=2.28")
-
 
     #######
     # MKL #
