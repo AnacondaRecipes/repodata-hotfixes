@@ -874,6 +874,10 @@ def patch_record_in_place(fn, record, subdir):
         # or pyopenssl should have a max cryptography version set
         record["constrains"] = ["pyopenssl >=23.0.0"]
 
+    # intel-openmp requires newer glibc.
+    if name == "intel-openmp" and version == "2025.0.0":
+        replace_dep(constrains, "__glibc >=2.17", "__glibc >=2.26")
+
     ############
     # features #
     ############
