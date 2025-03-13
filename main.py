@@ -1015,10 +1015,12 @@ def patch_record_in_place(fn, record, subdir):
                 depends.append('urllib3 <2.0.0a')
 
     if name == 'anaconda-navigator':
-        if re.match(r'1\.|2\.[0-2]\.', version):  # < 2.3.0
+        version_order = VersionOrder(version)
+
+        if version_order < VersionOrder('2.3.0'):
             replace_dep(depends, ['pyqt >=5.6,<6.0a0', 'pyqt >=5.6', 'pyqt'], 'pyqt >=5.6,<5.15')
 
-        if re.match(r'1\.|2\.[0-3]\.', version):  # < 2.4.0
+        if version_order < VersionOrder('2.4.0'):
             replace_dep(depends, 'conda', 'conda <22.11.0', append=True)
 
         if version.startswith('2.4.0'):  # = 2.4.0*
@@ -1031,12 +1033,19 @@ def patch_record_in_place(fn, record, subdir):
                 'conda !=22.11.*,!=23.7.0,!=23.7.1,!=23.7.2,!=23.7.3',
             )
 
-    if ((name in ('aext-assistant-server', 'aext-shared', 'anaconda-toolbox') and
-            VersionOrder(version) <= VersionOrder("4.0.15")) or
-            (name == 'anaconda-navigator' and VersionOrder(version) <= VersionOrder("2.6.3"))):
-        replace_dep(depends, 'anaconda-cloud-auth', 'anaconda-cloud-auth <0.7.0')
-        replace_dep(depends, 'anaconda-cloud-auth >=0.1.3', 'anaconda-cloud-auth >=0.1.3,<0.7.0')
-        replace_dep(depends, 'anaconda-cloud-auth >=0.4.1', 'anaconda-cloud-auth >=0.4.1,<0.7.0')
+        if version_order <= VersionOrder('2.6.3'):
+            replace_dep(depends, 'anaconda-cloud-auth', 'anaconda-cloud-auth <0.7.0')
+            replace_dep(depends, 'anaconda-cloud-auth >=0.1.3', 'anaconda-cloud-auth >=0.1.3,<0.7.0')
+            replace_dep(depends, 'anaconda-cloud-auth >=0.4.1', 'anaconda-cloud-auth >=0.4.1,<0.7.0')
+        elif version_order < VersionOrder('2.6.5'):
+            replace_dep(depends, 'anaconda-cloud-auth >=0.7.1', 'anaconda-cloud-auth >=0.7.1,<0.8.0')
+
+    if name in ('aext-assistant-server', 'aext-shared', 'anaconda-toolbox'):
+        version_order = VersionOrder(version)
+        if version_order <= VersionOrder('4.0.15'):
+            replace_dep(depends, 'anaconda-cloud-auth', 'anaconda-cloud-auth <0.7.0')
+            replace_dep(depends, 'anaconda-cloud-auth >=0.1.3', 'anaconda-cloud-auth >=0.1.3,<0.7.0')
+            replace_dep(depends, 'anaconda-cloud-auth >=0.4.1', 'anaconda-cloud-auth >=0.4.1,<0.7.0')
 
     if name == "conda-content-trust" and VersionOrder(version) <= VersionOrder("0.1.3"):
         replace_dep(depends, "cryptography", "cryptography <41.0.0a0")
