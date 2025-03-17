@@ -1000,6 +1000,8 @@ def patch_record_in_place(fn, record, subdir):
     if name == 'anaconda-cloud-auth':
         if re.match(r'0\.1\.[2-3](?!\d)', version):  # = 0.1.2* or = 0.1.3*
             bisect.insort_left(depends, 'jaraco.classes =3')
+        if VersionOrder(version) < VersionOrder("0.5.1"):
+            record["constrains"] = ["conda >=23.9.0"]
 
     # In anaconda-cli-base 0.3.0 the plugin structure changed and this package
     # is no longer utilized. Updating pins here to avoid this package being installed
