@@ -1520,6 +1520,12 @@ def patch_record_in_place(fn, record, subdir):
     if (name == "libmamba" and VersionOrder(version) >= VersionOrder("1.5.8") and
             VersionOrder(version) <= VersionOrder("1.5.11")):
         replace_dep(depends, "libarchive >=3.7.4,<3.8.0a0", "libarchive >=3.7.4,<3.7.5.0a0")
+        # incompatible with libmamba, breaking conda-libmamba-solver
+
+    if (name == "libarchive" and version == "3.7.7" and build_number == "0"):
+        # also from incoming "new libarchive" as incompatible with "installed libmamba"
+        record["constrains"] = ["libmamba <0"]
+
     if name == "tesseract" and version == "5.2.0":
         replace_dep(depends, "libarchive >=3.7.4,<3.8.0a0", "libarchive >=3.7.4,<3.7.5.0a0")
 
