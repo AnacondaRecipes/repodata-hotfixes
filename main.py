@@ -1052,6 +1052,12 @@ def patch_record_in_place(fn, record, subdir):
             replace_dep(depends, 'anaconda-cloud-auth', 'anaconda-cloud-auth <0.7.0')
             replace_dep(depends, 'anaconda-cloud-auth >=0.1.3', 'anaconda-cloud-auth >=0.1.3,<0.7.0')
             replace_dep(depends, 'anaconda-cloud-auth >=0.4.1', 'anaconda-cloud-auth >=0.4.1,<0.7.0')
+    if name in ('aext-assistant-server', 'aext-shared', 'anaconda-toolbox',
+                'aext-share-notebook-server', 'aext-core', 'aext-panels',
+                'aext-panels-server', 'aext-project-filebrowser-server', 'aext-share-notebook'):
+        version_order = VersionOrder(version)
+        if version_order > VersionOrder('4.0.15') and version_order <= VersionOrder('4.1.0'):
+            replace_dep(depends, 'anaconda-cloud-auth >=0.7.1', 'anaconda-cloud-auth >=0.7.1,!=0.8.2')
 
     if name == "conda-content-trust" and VersionOrder(version) <= VersionOrder("0.1.3"):
         replace_dep(depends, "cryptography", "cryptography <41.0.0a0")
