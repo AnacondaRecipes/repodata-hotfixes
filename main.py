@@ -1117,11 +1117,12 @@ def patch_record_in_place(fn, record, subdir):
     # This change has major implications for Mach-O dynamic libraries on MacOS.
     # We applied set_configure_script_version.patch in v4.5.0 to fix the issue.
     # In v4.7.0 we removed that patch, so we have to constrain libtiff at runtime to <4.7.0.
-    replace_dep(depends, "libtiff >=4.1.10,<5.0a0", "libtiff >=4.1.10,<4.7.0")
-    replace_dep(depends, "libtiff >=4.1.0,<5.0a0", "libtiff >=4.1.0,<4.7.0")
-    replace_dep(depends, "libtiff >=4.2.0,<5.0a0", "libtiff >=4.2.0,<4.7.0")
-    replace_dep(depends, "libtiff >=4.5.0,<5.0a0", "libtiff >=4.5.0,<4.7.0")
-    replace_dep(depends, "libtiff >=4.5.1,<5.0a0", "libtiff >=4.5.1,<4.7.0")
+    if subdir.startswith("win-"):
+        replace_dep(depends, "libtiff >=4.1.10,<5.0a0", "libtiff >=4.1.10,<4.7.0")
+        replace_dep(depends, "libtiff >=4.1.0,<5.0a0", "libtiff >=4.1.0,<4.7.0")
+        replace_dep(depends, "libtiff >=4.2.0,<5.0a0", "libtiff >=4.2.0,<4.7.0")
+        replace_dep(depends, "libtiff >=4.5.0,<5.0a0", "libtiff >=4.5.0,<4.7.0")
+        replace_dep(depends, "libtiff >=4.5.1,<5.0a0", "libtiff >=4.5.1,<4.7.0")
 
     ##########################
     # single package depends #
