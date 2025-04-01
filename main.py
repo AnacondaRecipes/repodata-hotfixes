@@ -1112,6 +1112,19 @@ def patch_record_in_place(fn, record, subdir):
     if subdir.startswith("win-"):
         replace_dep(depends, "zeromq >=4.3.1,<4.4.0a0", "zeromq >=4.3.1,<4.3.2.0a0")
 
+    # A private symbol was removed in libtiff 4.4.0. This caused unforeseen
+    # problems for a few projects, and the result was that the SO version
+    # was incremented -- but not until 4.5.0.
+    # Many existing packages are linked to the .5 version, so we patched them in build.sh
+    # by creating a symlink to the version <4.7.0 on osx platforms.
+    # In v4.7.0 we remove that patch, so we need to constrain libtiff at runtime to <4.7.0
+    if subdir.startswith("osx-"):
+        replace_dep(depends, "libtiff >=4.1.10,<5.0a0", "libtiff >=4.1.10,<4.7.0")
+        replace_dep(depends, "libtiff >=4.1.0,<5.0a0", "libtiff >=4.1.0,<4.7.0")
+        replace_dep(depends, "libtiff >=4.2.0,<5.0a0", "libtiff >=4.2.0,<4.7.0")
+        replace_dep(depends, "libtiff >=4.5.0,<5.0a0", "libtiff >=4.5.0,<4.7.0")
+        replace_dep(depends, "libtiff >=4.5.1,<5.0a0", "libtiff >=4.5.1,<4.7.0")
+
     ##########################
     # single package depends #
     ##########################
