@@ -1536,6 +1536,10 @@ def patch_record_in_place(fn, record, subdir):
     if name == "tesseract" and version == "5.2.0":
         replace_dep(depends, "libarchive >=3.7.4,<3.8.0a0", "libarchive >=3.7.4,<3.7.5.0a0")
 
+    # https://github.com/conda-incubator/conda-project/issues/183
+    if name == "conda-project" and VersionOrder(version) <= VersionOrder("0.4.2"):
+        replace_dep(depends, "conda-lock >=2.5.6", "conda-lock >=2.5.6,<3.0.0.0a0")
+
     ###########################
     # compilers and run times #
     ###########################
