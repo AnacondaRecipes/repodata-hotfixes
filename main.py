@@ -1540,6 +1540,10 @@ def patch_record_in_place(fn, record, subdir):
     if name == "conda-project" and VersionOrder(version) <= VersionOrder("0.4.2"):
         replace_dep(depends, "conda-lock >=2.5.6", "conda-lock >=2.5.6,<3.0.0.0a0")
 
+    # fasttext is incompatible with numpy 2
+    if name == "fasttext" and VersionOrder(version) <= VersionOrder("0.9.3"):
+        replace_dep(depends, "numpy >=1.17", "numpy >=1.17,<2")
+
     ###########################
     # compilers and run times #
     ###########################
