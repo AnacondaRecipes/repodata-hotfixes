@@ -979,7 +979,7 @@ def patch_record_in_place(fn, record, subdir):
 
             # API changes in py-lief 0.15 affect conda-build <25.3.0
             # https://github.com/conda/conda-build/blob/main/CHANGELOG.md#2530-2025-03-17
-            if dep_name == "py-lief" and VersionOrder(version) > VersionOrder("25.3.0"):
+            if dep_name == "py-lief" and VersionOrder(version) < VersionOrder("25.3.0"):
                 depends[i] = "py-lief <0.15"
 
     if name == "constructor":
