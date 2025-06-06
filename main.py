@@ -1455,6 +1455,16 @@ def patch_record_in_place(fn, record, subdir):
             if not dep.startswith("conda-anaconda-telemetry ")
         ] + ["conda-anaconda-telemetry >=0.1.2"]
 
+    # Add run constraint for conda to require conda-anaconda-tos
+    # with the lowest possible version of conda that is compatible with the current version
+    # of conda-anaconda-tos
+    if name == "conda" and VersionOrder(version) >= VersionOrder("24.11.0"):
+        constrains[:] = [
+            dep
+            for dep in constrains
+            if not dep.startswith("conda-anaconda-tos ")
+        ] + ["conda-anaconda-tos >=0.2.0"]
+
     if name == "conda-libmamba-solver":
         # libmambapy 0.23 introduced breaking changes
         replace_dep(depends, "libmambapy >=0.22.1", "libmambapy 0.22.*")
