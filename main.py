@@ -1600,6 +1600,11 @@ def patch_record_in_place(fn, record, subdir):
         if name == "clangxx_osx-64" and version == "4.0.1" and int(build_number) < 17:
             depends[:] = ["clang_osx-64 >=4.0.1,<4.0.2.0a0", "clangxx", "libcxx"]
 
+    # Update older compiler packages to require an OSX sysroot that matches their platform.
+    if (subdir.startswith("osx") and name == "clang" and VersionOrder(version) <= VersionOrder("17.0.6")
+            and int(build_number) < 5):
+        depends.append("macosx_deployment_target_" + subdir)
+
     ###########
     # numpy 2 #
     ###########
