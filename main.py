@@ -50,11 +50,11 @@ REMOVALS = {
         "cffi-1.14.6-py37h9ed2024_0.tar.bz2",
         "cffi-1.14.6-py38h9ed2024_0.tar.bz2",
         "cffi-1.14.6-py39h9ed2024_0.tar.bz2",
-        # libcxx-17.0.6*1 is missing run_constrained which breaks clang 14. 
+        # libcxx-17.0.6*1 is missing run_constrained which breaks clang 14.
         "libcxx-17.0.6-hf547dac_1.tar.bz2",
     ],
     "osx-arm64": [
-         # libcxx-17.0.6*1 is missing run_constrained which breaks clang 14. 
+        # libcxx-17.0.6*1 is missing run_constrained which breaks clang 14.
         "libcxx-17.0.6-he5c5206_1.tar.bz2",
     ],
     "win-32": [
