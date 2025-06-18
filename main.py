@@ -895,6 +895,21 @@ def patch_record_in_place(fn, record, subdir):
     # track_features #
     ##################
 
+    # Replace versioned Linux sysroot features with non-versioned ones so they properly weight newer and older sysroot
+    # versions. Similarly, add features to sysroots that do not have at least one feature.
+    if subdir == "noarch" and name.startswith("sysroot_linux") and VersionOrder(version) < VersionOrder("2.28"):
+        new_features = set()  # Features should be unique.
+        if "track_features" in record:
+            for feature in record["track_features"].split():
+                if re.search(r'_[0-9]+(\.[0-9]+)+$', feature):
+                    new_features.add(feature.rsplit("_", 1)[0])  # Strip the version from the feature if it has one.
+                else:
+                    new_features.add(feature)  # Leave it as-is if not.
+        else:
+            # Make sure at least the sysroot package name is included as a feature. (sysroot_linux-aarch64)
+            new_features.add(name)
+        record["track_features"] = " ".join(new_features)  # Add the features back to the record.
+
     # reset dependencies for nomkl to the blas metapkg and remove any
     #      track_features (these are attached to the metapkg instead)
     if name == "nomkl" and not subdir.startswith("win-"):
