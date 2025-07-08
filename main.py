@@ -155,6 +155,8 @@ REVOKED = {
         "spyder-5.5.1-*_2.*",
         # anaconda-cli-base-0.4.1 build number 0 has missing run_constrained requirements
         "anaconda-cli-base-0.4.1-*_0.*",
+        # anaconda-toolbox 4.20.0 is not stable for Python 3.13
+        "anaconda-toolbox-4.20.0-py313*",
     ],
 }
 
