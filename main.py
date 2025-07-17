@@ -1470,7 +1470,7 @@ def patch_record_in_place(fn, record, subdir):
             dep
             for dep in constrains
             if not dep.startswith("conda-anaconda-tos ")
-        ] + ["conda-anaconda-tos >=0.2.0"]
+        ] + ["conda-anaconda-tos >=0.2.1"]
 
     if name == "conda-libmamba-solver":
         # libmambapy 0.23 introduced breaking changes
