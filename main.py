@@ -809,6 +809,14 @@ def patch_record_in_place(fn, record, subdir):
     if name == "pyamg" and version in ["3.3.2", "4.0.0", "4.1.0"]:
         replace_dep(depends, "scipy >=0.12.0", "scipy >=0.12.0,<1.8")
 
+    #############################
+    # scikit-learn dependencies #
+    #############################
+
+    # ModuleNotFoundError: No module named 'sklearn.utils._estimator_html_repr'
+    if name == "skrub" and version in ["0.5.1"]:
+        replace_dep(depends, "scikit-learn >=1.2.1", "scikit-learn >=1.2.1,<1.7.0")
+
     ##############
     # tensorflow #
     ##############
