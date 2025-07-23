@@ -739,7 +739,7 @@ def patch_record_in_place(fn, record, subdir):
     # numpy dependencies #
     ######################
 
-    # ValueError: numpy.dtype size changed, may indicate binary incompatibility. 
+    # ValueError: numpy.dtype size changed, may indicate binary incompatibility.
     # Expected 96 from C header, got 88 from PyObject
     if name == "quantile-forest" and version in ["1.1.2"]:
         replace_dep(depends, "numpy >=1.23", "numpy >=1.23,<2.0")
