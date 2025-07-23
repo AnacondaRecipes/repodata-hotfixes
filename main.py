@@ -809,6 +809,16 @@ def patch_record_in_place(fn, record, subdir):
     if name == "pyamg" and version in ["3.3.2", "4.0.0", "4.1.0"]:
         replace_dep(depends, "scipy >=0.12.0", "scipy >=0.12.0,<1.8")
 
+    #############################
+    # scikit-learn dependencies #
+    #############################
+
+    # E   ImportError: cannot import name 'if_delegate_has_method' from 'sklearn.utils.metaestimators'
+    # https://github.com/AnacondaRecipes/scikit-learn-extra-feedstock/blob/main/recipe/meta.yaml#L30
+    # https://github.com/scikit-learn/scikit-learn/blob/1.2.2/sklearn/utils/metaestimators.py -> latest version with this method 1.2.2
+    if name == "scikit-learn-extra" and version in ["0.3.0"]:
+        replace_dep(depends, "scikit-learn >=0.23.0", "scikit-learn >=0.23.0,<=1.2.2")
+
     ##############
     # tensorflow #
     ##############
