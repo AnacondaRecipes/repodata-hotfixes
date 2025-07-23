@@ -735,6 +735,14 @@ def patch_record_in_place(fn, record, subdir):
                 depends[i] = depends[i].replace(">=1.21.5,", ">=1.21.2,")
                 break
 
+    ######################
+    # numpy dependencies #
+    ######################
+
+    # AttributeError: `np.NINF` was removed in the NumPy 2.0 release. Use `-np.inf` instead.
+    if name == "chainladder" and version in ["0.8.23"]:
+        replace_dep(depends, "numpy >=1.12", "numpy >=1.12,<2.0")
+
     ###########
     # pytorch #
     ###########
