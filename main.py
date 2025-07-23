@@ -809,6 +809,16 @@ def patch_record_in_place(fn, record, subdir):
     if name == "pyamg" and version in ["3.3.2", "4.0.0", "4.1.0"]:
         replace_dep(depends, "scipy >=0.12.0", "scipy >=0.12.0,<1.8")
 
+    #############################
+    # scikit-learn dependencies #
+    #############################
+
+    # Need upperbound
+    # https://github.com/AnacondaRecipes/pycaret-feedstock/blob/main/recipe/meta.yaml#L79
+    # https://github.com/AnacondaRecipes/sktime-feedstock/blob/main/recipe/meta.yaml#L34
+    if name == "pycaret" and version in ["3.3.2"]:
+        replace_dep(depends, "scikit-learn >1.4.0", "scikit-learn >1.4.0,<1.5.0")
+
     ##############
     # tensorflow #
     ##############
