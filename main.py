@@ -808,6 +808,10 @@ def patch_record_in_place(fn, record, subdir):
         replace_dep(depends, "scipy >=0.14", "scipy >=0.14,<1.8")
     if name == "pyamg" and version in ["3.3.2", "4.0.0", "4.1.0"]:
         replace_dep(depends, "scipy >=0.12.0", "scipy >=0.12.0,<1.8")
+    # ImportError: cannot import name 'interp' from 'scipy'
+    # https://stackoverflow.com/questions/78008260/importerror-unable-to-import-interp-from-scipy-module/78009643#78009643
+    if name == "scikit-plot" and version in ["0.3.7"]:
+        replace_dep(depends, "scipy >=0.9", "scipy >=0.9,<1.12")
 
     ##############
     # tensorflow #
