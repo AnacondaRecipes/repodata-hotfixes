@@ -809,6 +809,15 @@ def patch_record_in_place(fn, record, subdir):
     if name == "pyamg" and version in ["3.3.2", "4.0.0", "4.1.0"]:
         replace_dep(depends, "scipy >=0.12.0", "scipy >=0.12.0,<1.8")
 
+    ####################
+    # ray dependencies #
+    ####################
+
+    # ModuleNotFoundError: No module named 'ray.tune.search.skopt'
+    # https://github.com/ray-project/ray/tree/ray-2.10.0/python/ray/tune/search/skopt <- latest version with skopt
+    if name == "tune-sklearn" and version in ["0.4.6"]:
+        replace_dep(depends, "ray-tune >=2.0.0", "ray-tune >=2.0.0,<2.11.0")
+
     ##############
     # tensorflow #
     ##############
