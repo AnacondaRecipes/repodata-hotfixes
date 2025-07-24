@@ -739,9 +739,9 @@ def patch_record_in_place(fn, record, subdir):
     # numpy dependencies #
     ######################
 
-    # https://github.com/lmcinnes/pynndescent/blob/0.5.10/requirements.txt#L2
-    # AttributeError: `np.infty` was removed in the NumPy 2.0 release. Use `np.inf` instead.
-    if name == "pynndescent" and version in ["0.5.4", "0.5.10"]:
+    # https://github.com/lmcinnes/pynndescent/releases/tag/release-0.5.13
+    # Numpy 2 support added in 0.5.13.
+    if name == "pynndescent" and VersionOrder(version) <  VersionOrder("0.5.13"):
         replace_dep(depends, "numpy >=1.17", "numpy >=1.17,<2")
 
     ###########
