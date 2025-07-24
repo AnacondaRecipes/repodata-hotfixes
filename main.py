@@ -817,6 +817,15 @@ def patch_record_in_place(fn, record, subdir):
         replace_dep(depends, "scipy >=0.14", "scipy >=0.14,<1.8")
     if name == "pyamg" and version in ["3.3.2", "4.0.0", "4.1.0"]:
         replace_dep(depends, "scipy >=0.12.0", "scipy >=0.12.0,<1.8")
+    # scipy 1.16 introduces breaking API changes impacting these packages
+    if name == "statsmodels" and version in ("0.14.2", "0.14.4"):
+        # addressed in https://github.com/statsmodels/statsmodels/releases/tag/v0.14.5
+        replace_dep(depends, "scipy >=1.8,!=1.9.2", "scipy >=1.8,!=1.9.2,<1.16")
+    if name == "quantecon" and version in ("0.7.0"):
+        replace_dep(depends, "scipy >=1.5.0", "scipy >=1.5.0,<1.16")
+    if name == "phik" and version in ("0.12.2", "0.12.3", "0.12.4"):
+        # addressed in https://github.com/KaveIO/PhiK/releases/tag/v0.12.5
+        replace_dep(depends, "scipy >=1.5.2", "scipy >=1.5.2,<1.16")
 
     ##############
     # tensorflow #
