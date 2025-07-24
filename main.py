@@ -741,7 +741,7 @@ def patch_record_in_place(fn, record, subdir):
 
     # https://github.com/lmcinnes/pynndescent/releases/tag/release-0.5.13
     # Numpy 2 support added in 0.5.13.
-    if name == "pynndescent" and VersionOrder(version) <  VersionOrder("0.5.13"):
+    if name == "pynndescent" and VersionOrder(version) < VersionOrder("0.5.13"):
         replace_dep(depends, "numpy >=1.17", "numpy >=1.17,<2")
 
     ###########
