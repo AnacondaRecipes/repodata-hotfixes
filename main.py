@@ -778,6 +778,11 @@ def patch_record_in_place(fn, record, subdir):
         else:
             depends.append("_pytorch_select 0.1")
 
+    if name == "pytorch" and version in ["2.5.1", "2.6.0"] and subdir in ["linux-64", "osx-arm64"]:
+        # pytorch 2.5.1 and 2.6.0 are missing a constraint to match libtorch dependency to the same
+        # type of build (cpu vs gpu)
+        replace_dep(depends, f"libtorch {version}.*", f"libtorch {version}.* *_{build_number}")
+
     #########
     # scipy #
     #########
