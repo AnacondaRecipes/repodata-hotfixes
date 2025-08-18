@@ -1544,10 +1544,17 @@ def patch_record_in_place(fn, record, subdir):
 
     # anaconda-ident<0.2 not compatible with anaconda-anon-usage
     # anaconda-anon-usage<0.4 not compatible with anaconda-ident
-    if name == "anaconda-ident" and VersionOrder(version) < VersionOrder("0.2"):
-        record["constrains"] = ["anaconda-anon-usage <0"]
-    if name == "anaconda-anon-usage" and VersionOrder(version) < VersionOrder("0.4"):
-        record["constrains"] = ["anaconda-ident <0"]
+    # anaconda-ident<0.6 not compatible with anaconda-ident >=0.7.2
+    if name == "anaconda-ident":
+        if VersionOrder(version) < VersionOrder("0.2"):
+            record["constrains"] = ["anaconda-anon-usage <0"]
+        replace_dep(depends, "anaconda-anon-usage >=0.4.1,<1", "anaconda-anon-usage >=0.4.1,<0.7.2")
+        replace_dep(depends, "anaconda-anon-usage >=0.6.1,<1", "anaconda-anon-usage >=0.6.1,<0.7.2")
+    if name == "anaconda-anon-usage":
+        if VersionOrder(version) < VersionOrder("0.4"):
+            record["constrains"] = ["anaconda-ident <0"]
+        if VersionOrder(version) < VersionOrder("0.7.2"):
+            record["constrains"] = ["anaconda-ident <0.6.0"]
 
     # orange3 pandas 2.1 error
     if name == "orange3" and VersionOrder(version) < VersionOrder("3.36.0"):
