@@ -1368,6 +1368,11 @@ def patch_record_in_place(fn, record, subdir):
     if name == "click-repl" and version.startswith("0.1."):
         replace_dep(depends, "click", "click <8.0")
 
+    # click-plugins <2.0.0 is incompatible with click >=8.2
+    # See: https://github.com/click-contrib/click-plugins/issues/38
+    if name == "click-plugins" and VersionOrder(version) < VersionOrder("2.0.0"):
+        replace_dep(depends, "click >=3.0", "click >=3.0,<8.2")
+
     # tifffile 2021.3.31 requires Python >=3.7, imagecodecs >=2021.3.31
     if name == "tifffile" and version == "2021.3.31":
         replace_dep(depends, "python >=3.6", "python >=3.7")
