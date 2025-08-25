@@ -1484,7 +1484,7 @@ def patch_record_in_place(fn, record, subdir):
             dep
             for dep in constrains
             if not dep.startswith("conda-anaconda-telemetry ")
-        ] + ["conda-anaconda-telemetry >=0.3.0-1"]
+        ] + ["conda-anaconda-telemetry >=0.3.0"]
 
     # Add run constraint for conda to require conda-anaconda-tos
     # with the lowest possible version of conda that is compatible with the current version
