@@ -1600,6 +1600,11 @@ def patch_record_in_place(fn, record, subdir):
         replace_dep(depends, "c-blosc2 >=2.10.5,<3.0a0", "c-blosc2 >=2.10.5,<2.14.4.0a0")
         replace_dep(depends, "c-blosc2 >=2.12.0,<3.0a0", "c-blosc2 >=2.12.0,<2.14.4.0a0")
 
+    # libtheora 1.2.0 abi breaking change
+    # https://github.com/xiph/theora/commit/8e4808736e9c181b971306cc3f05df9e61354004
+    if name in ("ffmpeg", "vtk", "vtk-base"):
+        replace_dep(depends, "libtheora >=1.1.1,<2.0a0", "libtheora >=1.1.1,<1.2.0a0")
+
     # https://github.com/conda-incubator/conda-project/issues/183
     if name == "conda-project" and VersionOrder(version) <= VersionOrder("0.4.2"):
         replace_dep(depends, "conda-lock >=2.5.6", "conda-lock >=2.5.6,<3.0.0.0a0")
