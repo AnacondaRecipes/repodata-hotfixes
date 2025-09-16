@@ -1053,6 +1053,9 @@ def patch_record_in_place(fn, record, subdir):
         if re.match(r'1\.(?:\d|1[01])\.', version):  # < 1.12.0
             if replace_dep(depends, 'urllib3 >=1.26.4', 'urllib3 >=1.26.4,<2.0.0a') == '=':  # if no changes
                 depends.append('urllib3 <2.0.0a')
+        if version == "1.13.0":
+            # anaconda-client 1.13.0 is not fully compatible with anaconda-auth. Fixed in 1.13.1
+            record["constrains"] = ["anaconda-auth <0"]
 
     if name == 'anaconda-navigator':
         version_order = VersionOrder(version)
