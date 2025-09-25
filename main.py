@@ -58,12 +58,10 @@ REMOVALS = {
         "libcxx-17.0.6-he5c5206_1.tar.bz2",
     ],
     "win-32": [
-        "nomkl-*",
         # This release/build breaks matplotlib and possibly other things well
         "freetype-2.11.0-h88da6cb_0.tar.bz2",
     ],
     "win-64": [
-        "nomkl-*",
         # numba 0.46 didn't actually support py38
         "numba-0.46.0-py38hf9181ef_0.tar.bz2",
         # This release/build breaks matplotlib and possibly other things well
