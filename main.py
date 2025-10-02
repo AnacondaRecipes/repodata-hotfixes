@@ -1562,6 +1562,10 @@ def patch_record_in_place(fn, record, subdir):
             record["constrains"] = ["anaconda-ident <0"]
         if VersionOrder(version) < VersionOrder("0.7.2"):
             record["constrains"] = ["anaconda-ident <0.6.0"]
+    # anaconda-auth needs to be paired with anaconda-anon-usage >=0.7.2
+    if name == "anaconda-auth":
+        if not any(d.startswith("anaconda-anon-usage") for d in depends):
+            depends.append("anaconda-anon-usage >=0.7.2")
 
     # orange3 pandas 2.1 error
     if name == "orange3" and VersionOrder(version) < VersionOrder("3.36.0"):
