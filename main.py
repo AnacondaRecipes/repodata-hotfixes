@@ -1530,8 +1530,11 @@ def patch_record_in_place(fn, record, subdir):
             replace_dep(depends, "libmambapy >=0.23", "libmambapy >=0.23,<2.0.0a0")
             replace_dep(depends, "libmambapy >=0.22.1", "libmambapy >=0.22.1,<2.0.0a0")
 
-    if name == "conda-token" and VersionOrder(version) < VersionOrder("0.5.0"):
-        replace_dep(depends, "conda >=4.3", "conda >=4.3,<23.9")
+    if name == "conda-token":
+        if VersionOrder(version) < VersionOrder("0.5.0"):
+            replace_dep(depends, "conda >=4.3", "conda >=4.3,<23.9")
+        elif VersionOrder(version) <= VersionOrder("0.6.0"):
+            replace_dep(depends, "conda >=4.6,!=23.10.0,!=23.11.0", "conda >=4.6,!=23.10.0,!=23.11.0,<25.9")
 
     # snowflake-snowpark-python cloudpickle pins
     if name == "snowflake-snowpark-python" and version == '0.6.0':
