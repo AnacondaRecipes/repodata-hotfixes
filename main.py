@@ -705,8 +705,8 @@ def patch_record_in_place(fn, record, subdir):
         replace_dep(depends, "cudatoolkit 9.*", "cudatoolkit 9.0.*")
 
     if name in HOTFIX_REGISTRY:
-        for name, version, hotfix_function in HOTFIX_REGISTRY[name]:
-            if version is None or version == record["version"]:
+        for hotfix_name, hotfix_version, hotfix_function in HOTFIX_REGISTRY[name]:
+            if hotfix_version is None or hotfix_version == version:
                 hotfix_function(
                     fn,
                     record,
