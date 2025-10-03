@@ -1,7 +1,13 @@
+"""
+Patch package metadata after packages are built, to prevent conda from creating
+broken environments.
+
+This script contains patches for the 'main' channel.
+"""
+
 import bisect
 import copy
 import fnmatch
-import functools
 import json
 import os
 import re
