@@ -1502,6 +1502,9 @@ def patch_record_in_place(fn, record, subdir):
             if not dep.startswith("conda-anaconda-tos ")
         ] + ["conda-anaconda-tos >=0.2.1"]
 
+    if name == "conda" and version == "25.9.0":
+        replace_dep(depends, "conda-libmamba-solver >=24.11.0", "conda-libmamba-solver >=25.4.0")
+
     if name == "conda-libmamba-solver":
         # libmambapy 0.23 introduced breaking changes
         replace_dep(depends, "libmambapy >=0.22.1", "libmambapy 0.22.*")
