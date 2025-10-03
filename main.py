@@ -3,14 +3,14 @@ import copy
 import fnmatch
 import json
 import os
-from os.path import dirname, isdir, isfile, join
 import re
 import sys
 from collections import defaultdict
+from os.path import dirname, isdir, isfile, join
 from pathlib import Path
 
-from conda.models.version import VersionOrder
 import requests
+from conda.models.version import VersionOrder
 
 CHANNEL_NAME = "main"
 CHANNEL_ALIAS = "https://repo.anaconda.com/pkgs"
@@ -106,7 +106,7 @@ REMOVALS = {
         # anaconda-client<1.10.0 is incompatible with python 3.10
         "anaconda-client-1.9.0-py310*",
         # navigator-updater=0.5.0 is incompatible with anaconda-navigator
-        "navigator-updater-0.5.0-*"
+        "navigator-updater-0.5.0-*",
     },
 }
 
@@ -755,7 +755,9 @@ def patch_record_in_place(fn, record, subdir):
         # implementations in an environment isn't a problem; in practice,
         # however, this can lead to all sorts of problems due to other
         # dependencies (like OpenMP implementations) being dragged in.
-        if subdir.endswith("-64") and not any(dep.startswith("blas ") for dep in depends):
+        if subdir.endswith("-64") and not any(
+            dep.startswith("blas ") for dep in depends
+        ):
             if any(dep.startswith("libopenblas") for dep in depends):
                 depends.append("blas * openblas")
             if any(dep.startswith("mkl ") for dep in depends):
@@ -776,10 +778,16 @@ def patch_record_in_place(fn, record, subdir):
         else:
             depends.append("_pytorch_select 0.1")
 
-    if name == "pytorch" and version in ["2.5.1", "2.6.0"] and subdir in ["linux-64", "osx-arm64"]:
+    if (
+        name == "pytorch"
+        and version in ["2.5.1", "2.6.0"]
+        and subdir in ["linux-64", "osx-arm64"]
+    ):
         # pytorch 2.5.1 and 2.6.0 are missing a constraint to match libtorch dependency to the same
         # type of build (cpu vs gpu)
-        replace_dep(depends, f"libtorch {version}.*", f"libtorch {version}.* *_{build_number}")
+        replace_dep(
+            depends, f"libtorch {version}.*", f"libtorch {version}.* *_{build_number}"
+        )
 
     #########
     # scipy #
@@ -790,9 +798,9 @@ def patch_record_in_place(fn, record, subdir):
         # upstream's min and max numpy pinnings.
         # See: https://github.com/scipy/scipy/blob/v1.7.3/setup.py#L551-L552
         if version == "1.7.3" and build_number == 0:
-            if subdir != 'osx-arm64' and not build.startswith("py310"):
+            if subdir != "osx-arm64" and not build.startswith("py310"):
                 replace_dep(depends, "numpy >=1.16.6,<2.0a0", "numpy >=1.16.6,<1.23.0")
-            if subdir == 'osx-arm64' and not build.startswith("py310"):
+            if subdir == "osx-arm64" and not build.startswith("py310"):
                 replace_dep(depends, "numpy >=1.19.5,<2.0a0", "numpy >=1.19.5,<1.23.0")
             if build.startswith("py310"):
                 replace_dep(depends, "numpy >=1.21.2,<2.0a0", "numpy >=1.21.2,<1.23.0")
@@ -861,7 +869,11 @@ def patch_record_in_place(fn, record, subdir):
 
     # Relax the scipy pin slightly on linux-64 for tensorflow-base 2.8.2
     # to match linux-aarch64, to facilitate intel/arm version alignment.
-    if name.startswith("tensorflow-base") and version == "2.8.2" and subdir == 'linux-64':
+    if (
+        name.startswith("tensorflow-base")
+        and version == "2.8.2"
+        and subdir == "linux-64"
+    ):
         for i, dep in enumerate(depends):
             if dep == "scipy >=1.7.3":
                 depends[i] = "scipy >=1.7.1"
@@ -991,9 +1003,9 @@ def patch_record_in_place(fn, record, subdir):
             # Deprecations removed in conda 24.3.0 break conda-build <24.3.0.
             # Note that we don't want to affect conda-build <=3.21.8
             if (
-                dep_name == "conda" and
-                VersionOrder(version) > VersionOrder("3.21.8") and
-                VersionOrder(version) < VersionOrder("24.3.0")
+                dep_name == "conda"
+                and VersionOrder(version) > VersionOrder("3.21.8")
+                and VersionOrder(version) < VersionOrder("24.3.0")
             ):
                 depends[i] = "{} {}<24.3.0".format(
                     dep_name, other[0] + "," if other else ""
@@ -1001,7 +1013,9 @@ def patch_record_in_place(fn, record, subdir):
 
             # Avoid issue on Windows where an old menuinst 1.x is allowed in the environment
             # and breaks the JSON validation with a failed import
-            if dep_name == "menuinst" and VersionOrder(version) <= VersionOrder("3.28.1"):
+            if dep_name == "menuinst" and VersionOrder(version) <= VersionOrder(
+                "3.28.1"
+            ):
                 depends[i] = "menuinst >=2.0.1"
 
             # API changes in py-lief 0.15 affect conda-build <25.3.0
@@ -1029,70 +1043,117 @@ def patch_record_in_place(fn, record, subdir):
     ):
         depends.append("_low_priority")
 
-    if name == 'anaconda-cloud-auth':
-        if re.match(r'0\.1\.[2-3](?!\d)', version):  # = 0.1.2* or = 0.1.3*
-            bisect.insort_left(depends, 'jaraco.classes =3')
+    if name == "anaconda-cloud-auth":
+        if re.match(r"0\.1\.[2-3](?!\d)", version):  # = 0.1.2* or = 0.1.3*
+            bisect.insort_left(depends, "jaraco.classes =3")
         if VersionOrder(version) < VersionOrder("0.5.1"):
             record["constrains"] = ["conda >=23.9.0"]
 
     # In anaconda-cli-base 0.3.0 the plugin structure changed and this package
     # is no longer utilized. Updating pins here to avoid this package being installed
     # alongside the new plugin implementation.
-    if name == 'anaconda-cloud-cli':
-        if re.match(r'0\.1\.0(?!\d)', version):  # = 0.1.0*
-            replace_dep(depends, 'anaconda-cli-base', 'anaconda-cli-base <0.3.0')
-            replace_dep(depends, 'anaconda-cloud-auth', 'anaconda-cloud-auth <0.6.0')
-        if re.match(r'0\.2\.0(?!\d)', version):  # = 0.2.0*
-            replace_dep(depends, 'anaconda-cli-base >=0.2', 'anaconda-cli-base >=0.2,<0.3')
-            replace_dep(depends, 'anaconda-cloud-auth >=0.3', 'anaconda-cloud-auth >=0.3,<0.6')
-            replace_dep(depends, 'anaconda-client >=1.12.2', 'anaconda-client >=1.12.2,<1.13')
+    if name == "anaconda-cloud-cli":
+        if re.match(r"0\.1\.0(?!\d)", version):  # = 0.1.0*
+            replace_dep(depends, "anaconda-cli-base", "anaconda-cli-base <0.3.0")
+            replace_dep(depends, "anaconda-cloud-auth", "anaconda-cloud-auth <0.6.0")
+        if re.match(r"0\.2\.0(?!\d)", version):  # = 0.2.0*
+            replace_dep(
+                depends, "anaconda-cli-base >=0.2", "anaconda-cli-base >=0.2,<0.3"
+            )
+            replace_dep(
+                depends, "anaconda-cloud-auth >=0.3", "anaconda-cloud-auth >=0.3,<0.6"
+            )
+            replace_dep(
+                depends, "anaconda-client >=1.12.2", "anaconda-client >=1.12.2,<1.13"
+            )
 
-    if name == 'anaconda-client':
-        if re.match(r'1\.(?:\d|1[01])\.', version):  # < 1.12.0
-            if replace_dep(depends, 'urllib3 >=1.26.4', 'urllib3 >=1.26.4,<2.0.0a') == '=':  # if no changes
-                depends.append('urllib3 <2.0.0a')
+    if name == "anaconda-client":
+        if re.match(r"1\.(?:\d|1[01])\.", version):  # < 1.12.0
+            if (
+                replace_dep(depends, "urllib3 >=1.26.4", "urllib3 >=1.26.4,<2.0.0a")
+                == "="
+            ):  # if no changes
+                depends.append("urllib3 <2.0.0a")
         if version == "1.13.0":
             # anaconda-client 1.13.0 is not fully compatible with anaconda-auth. Fixed in 1.13.1
             record["constrains"] = ["anaconda-auth <0"]
 
-    if name == 'anaconda-navigator':
+    if name == "anaconda-navigator":
         version_order = VersionOrder(version)
 
-        if version_order < VersionOrder('2.3.0'):
-            replace_dep(depends, ['pyqt >=5.6,<6.0a0', 'pyqt >=5.6', 'pyqt'], 'pyqt >=5.6,<5.15')
-
-        if version_order < VersionOrder('2.4.0'):
-            replace_dep(depends, 'conda', 'conda <22.11.0', append=True)
-
-        if version.startswith('2.4.0'):  # = 2.4.0*
-            replace_dep(depends, ['conda', 'conda !=22.11.*'], 'conda <23.5.0,!=22.11.*')
-
-        if re.match(r'2\.4\.[1-3](?!\d)', version):  # = 2.4.1* or = 2.4.2* or = 2.4.3*
+        if version_order < VersionOrder("2.3.0"):
             replace_dep(
-                depends,
-                ['conda', 'conda !=22.11.*', 'conda !=22.11.*,!=23.7.0,!=23.7.1'],
-                'conda !=22.11.*,!=23.7.0,!=23.7.1,!=23.7.2,!=23.7.3',
+                depends, ["pyqt >=5.6,<6.0a0", "pyqt >=5.6", "pyqt"], "pyqt >=5.6,<5.15"
             )
 
-        if version_order <= VersionOrder('2.6.3'):
-            replace_dep(depends, 'anaconda-cloud-auth', 'anaconda-cloud-auth <0.7.0')
-            replace_dep(depends, 'anaconda-cloud-auth >=0.1.3', 'anaconda-cloud-auth >=0.1.3,<0.7.0')
-            replace_dep(depends, 'anaconda-cloud-auth >=0.4.1', 'anaconda-cloud-auth >=0.4.1,<0.7.0')
-        elif version_order < VersionOrder('2.6.5'):
-            replace_dep(depends, 'anaconda-cloud-auth >=0.7.1', 'anaconda-cloud-auth >=0.7.1,<0.8.0')
+        if version_order < VersionOrder("2.4.0"):
+            replace_dep(depends, "conda", "conda <22.11.0", append=True)
 
-    if name in ('aext-assistant-server', 'aext-shared', 'anaconda-toolbox'):
+        if version.startswith("2.4.0"):  # = 2.4.0*
+            replace_dep(
+                depends, ["conda", "conda !=22.11.*"], "conda <23.5.0,!=22.11.*"
+            )
+
+        if re.match(r"2\.4\.[1-3](?!\d)", version):  # = 2.4.1* or = 2.4.2* or = 2.4.3*
+            replace_dep(
+                depends,
+                ["conda", "conda !=22.11.*", "conda !=22.11.*,!=23.7.0,!=23.7.1"],
+                "conda !=22.11.*,!=23.7.0,!=23.7.1,!=23.7.2,!=23.7.3",
+            )
+
+        if version_order <= VersionOrder("2.6.3"):
+            replace_dep(depends, "anaconda-cloud-auth", "anaconda-cloud-auth <0.7.0")
+            replace_dep(
+                depends,
+                "anaconda-cloud-auth >=0.1.3",
+                "anaconda-cloud-auth >=0.1.3,<0.7.0",
+            )
+            replace_dep(
+                depends,
+                "anaconda-cloud-auth >=0.4.1",
+                "anaconda-cloud-auth >=0.4.1,<0.7.0",
+            )
+        elif version_order < VersionOrder("2.6.5"):
+            replace_dep(
+                depends,
+                "anaconda-cloud-auth >=0.7.1",
+                "anaconda-cloud-auth >=0.7.1,<0.8.0",
+            )
+
+    if name in ("aext-assistant-server", "aext-shared", "anaconda-toolbox"):
         version_order = VersionOrder(version)
-        if version_order <= VersionOrder('4.0.15'):
-            replace_dep(depends, 'anaconda-cloud-auth', 'anaconda-cloud-auth <0.7.0')
-            replace_dep(depends, 'anaconda-cloud-auth >=0.1.3', 'anaconda-cloud-auth >=0.1.3,<0.7.0')
-            replace_dep(depends, 'anaconda-cloud-auth >=0.4.1', 'anaconda-cloud-auth >=0.4.1,<0.7.0')
-    if name in ('aext-assistant-server', 'aext-shared', 'anaconda-toolbox',
-                'aext-share-notebook-server', 'aext-core', 'aext-panels',
-                'aext-panels-server', 'aext-project-filebrowser-server', 'aext-share-notebook'):
+        if version_order <= VersionOrder("4.0.15"):
+            replace_dep(depends, "anaconda-cloud-auth", "anaconda-cloud-auth <0.7.0")
+            replace_dep(
+                depends,
+                "anaconda-cloud-auth >=0.1.3",
+                "anaconda-cloud-auth >=0.1.3,<0.7.0",
+            )
+            replace_dep(
+                depends,
+                "anaconda-cloud-auth >=0.4.1",
+                "anaconda-cloud-auth >=0.4.1,<0.7.0",
+            )
+    if name in (
+        "aext-assistant-server",
+        "aext-shared",
+        "anaconda-toolbox",
+        "aext-share-notebook-server",
+        "aext-core",
+        "aext-panels",
+        "aext-panels-server",
+        "aext-project-filebrowser-server",
+        "aext-share-notebook",
+    ):
         version_order = VersionOrder(version)
-        if version_order > VersionOrder('4.0.15') and version_order <= VersionOrder('4.1.0'):
-            replace_dep(depends, 'anaconda-cloud-auth >=0.7.1', 'anaconda-cloud-auth >=0.7.1,!=0.8.2')
+        if version_order > VersionOrder("4.0.15") and version_order <= VersionOrder(
+            "4.1.0"
+        ):
+            replace_dep(
+                depends,
+                "anaconda-cloud-auth >=0.7.1",
+                "anaconda-cloud-auth >=0.7.1,!=0.8.2",
+            )
 
     if name == "conda-content-trust" and VersionOrder(version) <= VersionOrder("0.1.3"):
         replace_dep(depends, "cryptography", "cryptography <41.0.0a0")
@@ -1220,7 +1281,7 @@ def patch_record_in_place(fn, record, subdir):
     # https://github.com/jupyter/notebook/pull/6749
     if name == "notebook":
         replace_dep(depends, "tornado >=4", "tornado >=4,<6")
-        if int(version.split('.', 1)[0]) < 7:
+        if int(version.split(".", 1)[0]) < 7:
             replace_dep(depends, "pyzmq >=17", "pyzmq >=17,<25")
             replace_dep(depends, "jupyter_client >=5.3.4", "jupyter_client >=5.3.4,<8")
             replace_dep(depends, "jupyter_client >=5.2.0", "jupyter_client >=5.2.0,<8")
@@ -1234,8 +1295,8 @@ def patch_record_in_place(fn, record, subdir):
 
     # requests-toolbelt<1.0.0 does not support urllib3>=2.0.0 (which is an indirect dependency)
     # issue: https://github.com/Anaconda-Platform/anaconda-client/issues/654#issuecomment-1655089483
-    if (name == 'requests-toolbelt') and version.startswith('0.'):
-        depends.append('urllib3 <2.0.0a')
+    if (name == "requests-toolbelt") and version.startswith("0."):
+        depends.append("urllib3 <2.0.0a")
 
     # spyder 4.0.0 and 4.0.1 should include a lower bound on psutil of 5.2
     # and should pin parso to 0.5.2.
@@ -1395,11 +1456,11 @@ def patch_record_in_place(fn, record, subdir):
     # Package name to the last version not pinning Param (either >2 or <2)
     # correctly.
     _holoviz_version_mapping = dict(
-        panel='1.2.3',
-        holoviews='1.17.1',
-        hvplot='0.8.4',
-        datashader='0.15.2',
-        geoviews='1.10.1',
+        panel="1.2.3",
+        holoviews="1.17.1",
+        hvplot="0.8.4",
+        datashader="0.15.2",
+        geoviews="1.10.1",
     )
     if name in _holoviz_version_mapping:
         for _holoviz_pkg, _holoviz_version in _holoviz_version_mapping.items():
@@ -1465,9 +1526,7 @@ def patch_record_in_place(fn, record, subdir):
     if name == "conda" and version in ("22.11.0", "22.11.1"):
         # exclude all pre-plugin-system libmambapy/conda-libmamba-solver
         constrains[:] = [
-            dep
-            for dep in constrains
-            if not dep.startswith("conda-libmamba-solver")
+            dep for dep in constrains if not dep.startswith("conda-libmamba-solver")
         ] + ["conda-libmamba-solver >=22.12.0"]
         replace_dep(
             depends, "ruamel.yaml >=0.11.14,<0.17", "ruamel.yaml >=0.11.14,<0.18"
@@ -1475,9 +1534,7 @@ def patch_record_in_place(fn, record, subdir):
 
     if name == "conda" and version == "23.9.0":
         constrains[:] = [
-            dep
-            for dep in constrains
-            if not dep.startswith("conda-build ")
+            dep for dep in constrains if not dep.startswith("conda-build ")
         ] + ["conda-build >=3.27"]
 
     # Add run constraint for conda to fix plugin here:
@@ -1485,11 +1542,11 @@ def patch_record_in_place(fn, record, subdir):
     # https://github.com/anaconda/conda-anaconda-telemetry/pull/96
     # https://github.com/anaconda/conda-anaconda-telemetry/issues/127
     # https://github.com/anaconda/conda-anaconda-telemetry/issues/130
-    if name in ("conda", "conda-build") and VersionOrder(version) >= VersionOrder("24.11.0"):
+    if name in ("conda", "conda-build") and VersionOrder(version) >= VersionOrder(
+        "24.11.0"
+    ):
         constrains[:] = [
-            dep
-            for dep in constrains
-            if not dep.startswith("conda-anaconda-telemetry ")
+            dep for dep in constrains if not dep.startswith("conda-anaconda-telemetry ")
         ] + ["conda-anaconda-telemetry >=0.3.0"]
 
     # Add run constraint for conda to require conda-anaconda-tos
@@ -1497,9 +1554,7 @@ def patch_record_in_place(fn, record, subdir):
     # of conda-anaconda-tos
     if name == "conda" and VersionOrder(version) >= VersionOrder("24.11.0"):
         constrains[:] = [
-            dep
-            for dep in constrains
-            if not dep.startswith("conda-anaconda-tos ")
+            dep for dep in constrains if not dep.startswith("conda-anaconda-tos ")
         ] + ["conda-anaconda-tos >=0.2.1"]
 
     if name == "conda-libmamba-solver":
@@ -1534,8 +1589,8 @@ def patch_record_in_place(fn, record, subdir):
         replace_dep(depends, "conda >=4.3", "conda >=4.3,<23.9")
 
     # snowflake-snowpark-python cloudpickle pins
-    if name == "snowflake-snowpark-python" and version == '0.6.0':
-        replace_dep(depends, 'cloudpickle >=1.6.0', 'cloudpickle >=1.6.0,<=2.0.0')
+    if name == "snowflake-snowpark-python" and version == "0.6.0":
+        replace_dep(depends, "cloudpickle >=1.6.0", "cloudpickle >=1.6.0,<=2.0.0")
 
     # s3fs downgraded to the last version not requiring botocore.
     # ref dask/dask#10397
@@ -1555,8 +1610,16 @@ def patch_record_in_place(fn, record, subdir):
     if name == "anaconda-ident":
         if VersionOrder(version) < VersionOrder("0.2"):
             record["constrains"] = ["anaconda-anon-usage <0"]
-        replace_dep(depends, "anaconda-anon-usage >=0.4.1,<1", "anaconda-anon-usage >=0.4.1,<0.7.2")
-        replace_dep(depends, "anaconda-anon-usage >=0.6.1,<1", "anaconda-anon-usage >=0.6.1,<0.7.2")
+        replace_dep(
+            depends,
+            "anaconda-anon-usage >=0.4.1,<1",
+            "anaconda-anon-usage >=0.4.1,<0.7.2",
+        )
+        replace_dep(
+            depends,
+            "anaconda-anon-usage >=0.6.1,<1",
+            "anaconda-anon-usage >=0.6.1,<0.7.2",
+        )
     if name == "anaconda-anon-usage":
         if VersionOrder(version) < VersionOrder("0.4"):
             record["constrains"] = ["anaconda-ident <0"]
@@ -1579,31 +1642,54 @@ def patch_record_in_place(fn, record, subdir):
             depends.append("async-timeout")
 
     # poppler 24.09.0 incompatibility
-    if (name == "graphviz" and VersionOrder(version) < VersionOrder("2.50.0") or
-            (version == "2.50.0" and build_number < 2)):
+    if (
+        name == "graphviz"
+        and VersionOrder(version) < VersionOrder("2.50.0")
+        or (version == "2.50.0" and build_number < 2)
+    ):
         replace_dep(depends, "poppler", "poppler <=22.12.0")
-    if (name in ["libgdal", "libgdal-arrow-parquet"] and VersionOrder(version) < VersionOrder("3.6.2") or
-            (version == "3.6.2" and build_number < 7)):
+    if (
+        name in ["libgdal", "libgdal-arrow-parquet"]
+        and VersionOrder(version) < VersionOrder("3.6.2")
+        or (version == "3.6.2" and build_number < 7)
+    ):
         replace_dep(depends, "poppler", "poppler <=22.12.0")
-    if (name == "python-poppler" and VersionOrder(version) < VersionOrder("0.4.1") or
-            (version == "0.4.1" and build_number < 1)):
+    if (
+        name == "python-poppler"
+        and VersionOrder(version) < VersionOrder("0.4.1")
+        or (version == "0.4.1" and build_number < 1)
+    ):
         replace_dep(depends, "poppler", "poppler <=22.12.0")
-    if (name == "r-pdftools" and VersionOrder(version) < VersionOrder("3.4.0") or
-            (version == "3.4.0" and build_number < 1)):
+    if (
+        name == "r-pdftools"
+        and VersionOrder(version) < VersionOrder("3.4.0")
+        or (version == "3.4.0" and build_number < 1)
+    ):
         replace_dep(depends, "poppler", "poppler <=22.12.0")
 
     # libarchive 3.7.5 abi breaking change - https://github.com/libarchive/libarchive/pull/1976
-    if (name == "libmamba" and VersionOrder(version) >= VersionOrder("1.5.8") and
-            VersionOrder(version) <= VersionOrder("1.5.11")):
-        replace_dep(depends, "libarchive >=3.7.4,<3.8.0a0", "libarchive >=3.7.4,<3.7.5.0a0")
+    if (
+        name == "libmamba"
+        and VersionOrder(version) >= VersionOrder("1.5.8")
+        and VersionOrder(version) <= VersionOrder("1.5.11")
+    ):
+        replace_dep(
+            depends, "libarchive >=3.7.4,<3.8.0a0", "libarchive >=3.7.4,<3.7.5.0a0"
+        )
     if name == "tesseract" and version == "5.2.0":
-        replace_dep(depends, "libarchive >=3.7.4,<3.8.0a0", "libarchive >=3.7.4,<3.7.5.0a0")
+        replace_dep(
+            depends, "libarchive >=3.7.4,<3.8.0a0", "libarchive >=3.7.4,<3.7.5.0a0"
+        )
 
     # c-blosc2 2.14.4 abi breaking change - https://github.com/Blosc/c-blosc2/issues/581
     if name in ("pytables", "tables"):
         replace_dep(depends, "c-blosc2 >=2.8.0,<3.0a0", "c-blosc2 >=2.8.0,<2.14.4.0a0")
-        replace_dep(depends, "c-blosc2 >=2.10.5,<3.0a0", "c-blosc2 >=2.10.5,<2.14.4.0a0")
-        replace_dep(depends, "c-blosc2 >=2.12.0,<3.0a0", "c-blosc2 >=2.12.0,<2.14.4.0a0")
+        replace_dep(
+            depends, "c-blosc2 >=2.10.5,<3.0a0", "c-blosc2 >=2.10.5,<2.14.4.0a0"
+        )
+        replace_dep(
+            depends, "c-blosc2 >=2.12.0,<3.0a0", "c-blosc2 >=2.12.0,<2.14.4.0a0"
+        )
 
     # libtheora 1.2.0 abi breaking change
     # https://github.com/xiph/theora/commit/8e4808736e9c181b971306cc3f05df9e61354004
@@ -1721,7 +1807,7 @@ def replace_dep(depends, old, new, *, append=False):
     if isinstance(old, str):
         old = [old]
     if append and (new is None):
-        raise TypeError('Forbidden to append None to dependencies')
+        raise TypeError("Forbidden to append None to dependencies")
 
     removed = False
     for item in old:
@@ -1732,11 +1818,11 @@ def replace_dep(depends, old, new, *, append=False):
     if (removed or append) and (new is not None) and (new not in depends):
         bisect.insort_left(depends, new)
         if removed:
-            return '~'
-        return '+'
+            return "~"
+        return "+"
     if removed:
-        return '-'
-    return '='
+        return "-"
+    return "="
 
 
 def _extract_and_remove_vc_feature(record):
