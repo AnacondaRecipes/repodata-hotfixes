@@ -1480,6 +1480,9 @@ def patch_record_in_place(fn, record, subdir):
             if not dep.startswith("conda-build ")
         ] + ["conda-build >=3.27"]
 
+    if name == "conda" and version == "25.9.0":
+        replace_dep(depends, "conda-libmamba-solver >=24.11.0", "conda-libmamba-solver >=25.4.0")
+
     # Add run constraint for conda to fix plugin here:
     # https://github.com/anaconda/conda-anaconda-telemetry/issues/87
     # https://github.com/anaconda/conda-anaconda-telemetry/pull/96
