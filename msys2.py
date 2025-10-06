@@ -22,28 +22,15 @@ SUBDIRS = (
 )
 
 REMOVALS = {
-    "linux-64": (
-
-    ),
-    "osx-64": (
-
-    ),
-    "win-32": (
-
-
-    ),
-    "win-64": (
-
-    ),
+    "linux-64": (),
+    "osx-64": (),
+    "win-32": (),
+    "win-64": (),
 }
 
-EXTERNAL_DEPENDENCIES = {
+EXTERNAL_DEPENDENCIES = {}
 
-}
-
-NAMESPACE_IN_NAME_SET = {
-
-}
+NAMESPACE_IN_NAME_SET = {}
 
 
 NAMESPACE_OVERRIDES = {
@@ -68,67 +55,75 @@ def _patch_repodata(repodata, subdir):
     def rename_dependency(fn, record, old_name, new_name):
         depends = record["depends"]
         dep_idx = next(
-            (q for q, dep in enumerate(depends) if dep.split(' ')[0] == old_name),
-            None
+            (q for q, dep in enumerate(depends) if dep.split(" ")[0] == old_name), None
         )
         if dep_idx:
             parts = depends[dep_idx].split(" ")
             remainder = (" " + " ".join(parts[1:])) if len(parts) > 1 else ""
             depends[dep_idx] = new_name + remainder
-            instructions["packages"][fn]['depends'] = depends
+            instructions["packages"][fn]["depends"] = depends
 
     for fn, record in index.items():
         record_name = record["name"]
-        if record_name in NAMESPACE_IN_NAME_SET and not record.get('namespace_in_name'):
+        if record_name in NAMESPACE_IN_NAME_SET and not record.get("namespace_in_name"):
             # set the namespace_in_name field
-            instructions["packages"][fn]['namespace_in_name'] = True
+            instructions["packages"][fn]["namespace_in_name"] = True
         if NAMESPACE_OVERRIDES.get(record_name):
             # explicitly set namespace
-            instructions["packages"][fn]['namespace'] = NAMESPACE_OVERRIDES[record_name]
+            instructions["packages"][fn]["namespace"] = NAMESPACE_OVERRIDES[record_name]
 
     return instructions
 
 
 def _extract_and_remove_vc_feature(record):
-    features = record.get('features', '').split()
-    vc_features = tuple(f for f in features if f.startswith('vc'))
+    features = record.get("features", "").split()
+    vc_features = tuple(f for f in features if f.startswith("vc"))
     if not vc_features:
         return None
     non_vc_features = tuple(f for f in features if f not in vc_features)
     vc_version = int(vc_features[0][2:])  # throw away all but the first
     if non_vc_features:
-        record['features'] = ' '.join(non_vc_features)
+        record["features"] = " ".join(non_vc_features)
     else:
-        del record['features']
+        del record["features"]
     return vc_version
 
 
 def do_hotfixes(base_dir):
-
     # Step 1. Collect initial repodata for all subdirs.
     repodatas = {}
     for subdir in SUBDIRS:
-        repodata_path = join(base_dir, subdir, 'repodata-clone.json')
+        repodata_path = join(base_dir, subdir, "repodata-clone.json")
         if isfile(repodata_path):
             with open(repodata_path) as fh:
                 repodatas[subdir] = json.load(fh)
         else:
-            repodata_url = "/".join((CHANNEL_ALIAS, CHANNEL_NAME, subdir, "repodata.json"))
+            repodata_url = "/".join(
+                (CHANNEL_ALIAS, CHANNEL_NAME, subdir, "repodata.json")
+            )
             response = requests.get(repodata_url)
             response.raise_for_status()
             repodatas[subdir] = response.json()
             if not isdir(dirname(repodata_path)):
                 os.makedirs(dirname(repodata_path))
-            with open(repodata_path, 'w') as fh:
-                json.dump(repodatas[subdir], fh, indent=2, sort_keys=True, separators=(',', ': '))
+            with open(repodata_path, "w") as fh:
+                json.dump(
+                    repodatas[subdir],
+                    fh,
+                    indent=2,
+                    sort_keys=True,
+                    separators=(",", ": "),
+                )
 
     # Step 2. Create all patch instructions.
     patch_instructions = {}
     for subdir in SUBDIRS:
         instructions = _patch_repodata(repodatas[subdir], subdir)
         patch_instructions_path = join(base_dir, subdir, "patch_instructions.json")
-        with open(patch_instructions_path, 'w') as fh:
-            json.dump(instructions, fh, indent=2, sort_keys=True, separators=(',', ': '))
+        with open(patch_instructions_path, "w") as fh:
+            json.dump(
+                instructions, fh, indent=2, sort_keys=True, separators=(",", ": ")
+            )
         patch_instructions[subdir] = instructions
 
 
