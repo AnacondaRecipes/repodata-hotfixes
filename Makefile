@@ -25,6 +25,9 @@ lint: lint-flake8
 lint-flake8:
 	@${PREFIX} flake8 --count .
 
+format:
+	ruff format .
+
 test: test-pytest test-hotfix
 
 test-hotfix:

@@ -19,7 +19,6 @@ There are a few important files that are used to find this information:
     - This file isn't found in a regular conda index channel (the 3 above should be)
 """
 
-
 import copy
 import json
 import sys
@@ -322,7 +321,9 @@ if __name__ == "__main__":
         write_readable_json_file(patched_repodata, patched_repodata_filepath)
 
         simplified_diff_filepath = base_path / subdir / "repodata-diff.json"
-        subdir_simple_diff = find_diffs(patch_instructions, repodata_clean, patched_repodata)
+        subdir_simple_diff = find_diffs(
+            patch_instructions, repodata_clean, patched_repodata
+        )
         simplified_diffs[subdir] = subdir_simple_diff
         print(
             f"Writing out simple diff as {simplified_diff_filepath} for '{subdir}' platform."
