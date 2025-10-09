@@ -1058,6 +1058,9 @@ def patch_record_in_place(fn, record, subdir):
     if name == 'anaconda-navigator':
         version_order = VersionOrder(version)
 
+        if version_order < VersionOrder('2.7.0'):
+            replace_dep(depends, 'conda-token', 'conda-token <0.7.0')
+
         if version_order < VersionOrder('2.3.0'):
             replace_dep(depends, ['pyqt >=5.6,<6.0a0', 'pyqt >=5.6', 'pyqt'], 'pyqt >=5.6,<5.15')
 
