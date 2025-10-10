@@ -1692,6 +1692,18 @@ def patch_record_in_place(fn, record, subdir):
         replace_dep(depends, "zlib >=1.2.12,<1.3.0a0", "zlib >=1.2.12,<2.0.0a0")
         replace_dep(depends, "zlib >=1.2.13,<1.3.0a0", "zlib >=1.2.13,<2.0.0a0")
 
+    #########################
+    # rhash soname change in 1.4.4 #
+    #########################
+
+    if name == "cmake" and VersionOrder(version) <= VersionOrder("3.31.2"):
+        replace_dep(depends, "rhash", "rhash <1.4.4a0")
+        replace_dep(depends, "rhash >=1.3.6,<2.0a0", "rhash >=1.3.6,<1.4.4a0")
+        replace_dep(depends, "rhash >=1.3.8,<2.0a0", "rhash >=1.3.8,<1.4.4a0")
+        replace_dep(depends, "rhash >=1.4.0,<2.0a0", "rhash >=1.4.0,<1.4.4a0")
+        replace_dep(depends, "rhash >=1.4.1,<2.0a0", "rhash >=1.4.1,<1.4.4a0")
+        replace_dep(depends, "rhash >=1.4.3,<2.0a0", "rhash >=1.4.3,<1.4.4a0")
+
 
 def replace_dep(depends, old, new, *, append=False):
     """
