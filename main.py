@@ -1699,6 +1699,7 @@ def patch_record_in_place(fn, record, subdir):
     if name == "cmake" and VersionOrder(version) < VersionOrder("3.31.9"):
         replace_dep(depends, "rhash", "rhash <1.4.4")
 
+
 def replace_dep(depends, old, new, *, append=False):
     """
     Replace an old dependency with a new one.
