@@ -1696,8 +1696,14 @@ def patch_record_in_place(fn, record, subdir):
     # cmake - rhash compatibility #
     ###########
 
-    if name == "cmake" and VersionOrder(version) < VersionOrder("3.31.9"):
-        replace_dep(depends, "rhash", "rhash <1.4.4")
+    if name == "cmake" and version == "3.19.6":
+        replace_dep(depends, "rhash >=1.4.1,<2.0a0", "rhash >=1.4.1,<1.4.4")
+    if name == "cmake" and version == "3.22.1":
+        replace_dep(depends, "rhash >=1.4.1,<2.0a0", "rhash >=1.4.1,<1.4.4")
+    if name == "cmake" and version == "3.26.4":
+        replace_dep(depends, "rhash >=1.4.3,<2.0a0", "rhash >=1.4.3,<1.4.4")
+    if name == "cmake" and version == "3.31.2":
+        replace_dep(depends, "rhash >=1.4.3,<2.0a0", "rhash >=1.4.3,<1.4.4")
 
 
 def replace_dep(depends, old, new, *, append=False):
