@@ -1698,7 +1698,7 @@ def patch_record_in_place(fn, record, subdir):
 
     if name == "cmake" and subdir in ["osx-arm64", "linux-64", "linux-aarch64"]:
         if VersionOrder(version) <= VersionOrder("3.11.1"):
-            replace_dep(depends, "rhash", "rhash <1.4.4a0")
+            replace_dep(depends, "rhash", "rhash >=1.3.5,<1.4.4a0")
         elif VersionOrder(version) <= VersionOrder("3.12.2"):
             replace_dep(depends, "rhash >=1.3.6,<2.0a0", "rhash >=1.3.6,<1.4.4a0")
         elif VersionOrder(version) <= VersionOrder("3.14.0"):
