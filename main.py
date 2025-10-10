@@ -1696,15 +1696,21 @@ def patch_record_in_place(fn, record, subdir):
     # cmake - rhash compatibility #
     ###########
 
-    if name == "cmake" and subdir in ["osx-arm64", "linux-64", "linux-aarch64"]:
+    if name == "cmake" and subdir in ["osx-arm64", "osx-64", "linux-64", "linux-aarch64"]:
         if VersionOrder(version) <= VersionOrder("3.11.1"):
             replace_dep(depends, "rhash", "rhash >=1.3.5,<1.4.4a0")
+        elif VersionOrder(version) <= VersionOrder("3.12.0"):
+            replace_dep(depends, "rhash >=1.3.6,<2.0a0", "rhash >=1.3.6,<1.4.4a0")
         elif VersionOrder(version) <= VersionOrder("3.12.2"):
             replace_dep(depends, "rhash >=1.3.6,<2.0a0", "rhash >=1.3.6,<1.4.4a0")
         elif VersionOrder(version) <= VersionOrder("3.14.0"):
             replace_dep(depends, "rhash >=1.3.8,<2.0a0", "rhash >=1.3.8,<1.4.4a0")
         elif VersionOrder(version) <= VersionOrder("3.18.2"):
             replace_dep(depends, "rhash >=1.4.0,<2.0a0", "rhash >=1.4.0,<1.4.4a0")
+        elif VersionOrder(version) <= VersionOrder("3.19.3"):
+            replace_dep(depends, "rhash >=1.4.1,<2.0a0", "rhash >=1.4.1,<1.4.4a0")
+        elif VersionOrder(version) <= VersionOrder("3.19.6"):
+            replace_dep(depends, "rhash >=1.4.1,<2.0a0", "rhash >=1.4.1,<1.4.4a0")
         elif VersionOrder(version) <= VersionOrder("3.21.1"):
             replace_dep(depends, "rhash >=1.4.1,<2.0a0", "rhash >=1.4.1,<1.4.4a0")
         elif VersionOrder(version) <= VersionOrder("3.31.2"):
