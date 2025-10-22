@@ -106,7 +106,10 @@ REMOVALS = {
         # anaconda-client<1.10.0 is incompatible with python 3.10
         "anaconda-client-1.9.0-py310*",
         # navigator-updater=0.5.0 is incompatible with anaconda-navigator
-        "navigator-updater-0.5.0-*"
+        "navigator-updater-0.5.0-*",
+        # clangxx builds that allow pulling in incorrect libcxx versions. 
+        "clangxx-17.0.6-default_*_4*",
+        "clangxx-17.0.6-default_*_5*"
     },
 }
 
