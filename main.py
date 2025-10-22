@@ -52,10 +52,16 @@ REMOVALS = {
         "cffi-1.14.6-py39h9ed2024_0.tar.bz2",
         # libcxx-17.0.6*1 is missing run_constrained which breaks clang 14.
         "libcxx-17.0.6-hf547dac_1.tar.bz2",
+        # clangxx builds that allow pulling in incorrect libcxx versions. 
+        "clangxx-17.0.6-default_*_4*",
+        "clangxx-17.0.6-default_*_5*"
     ],
     "osx-arm64": [
         # libcxx-17.0.6*1 is missing run_constrained which breaks clang 14.
         "libcxx-17.0.6-he5c5206_1.tar.bz2",
+         # clangxx builds that allow pulling in incorrect libcxx versions. 
+        "clangxx-17.0.6-default_*_4*",
+        "clangxx-17.0.6-default_*_5*"
     ],
     "win-32": [
         # This release/build breaks matplotlib and possibly other things well
@@ -76,6 +82,9 @@ REMOVALS = {
         "cffi-1.14.6-py37h7f8727e_0.tar.bz2",
         "cffi-1.14.6-py38h7f8727e_0.tar.bz2",
         "cffi-1.14.6-py39h7f8727e_0.tar.bz2",
+        # clangxx builds that allow pulling in incorrect libcxx versions. 
+        "clangxx-17.0.6-default_*_4*",
+        "clangxx-17.0.6-default_*_5*"
     ],
     "any": {
         # early efforts on splitting numpy recipe did not pin numpy-base exactly.
@@ -106,10 +115,7 @@ REMOVALS = {
         # anaconda-client<1.10.0 is incompatible with python 3.10
         "anaconda-client-1.9.0-py310*",
         # navigator-updater=0.5.0 is incompatible with anaconda-navigator
-        "navigator-updater-0.5.0-*",
-        # clangxx builds that allow pulling in incorrect libcxx versions. 
-        "clangxx-17.0.6-default_*_4*",
-        "clangxx-17.0.6-default_*_5*"
+        "navigator-updater-0.5.0-*"
     },
 }
 
