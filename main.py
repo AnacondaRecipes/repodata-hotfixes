@@ -86,6 +86,11 @@ REMOVALS = {
         "clangxx-17.0.6-default_*_4*",
         "clangxx-17.0.6-default_*_5*"
     ],
+    "linux-aarch64": [
+        # clangxx builds that allow pulling in incorrect libcxx versions. 
+        "clangxx-17.0.6-default_*_4*",
+        "clangxx-17.0.6-default_*_5*"
+    ],
     "any": {
         # early efforts on splitting numpy recipe did not pin numpy-base exactly.
         #     These led to bad builds (built against newest numpy)
