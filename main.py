@@ -1080,15 +1080,18 @@ def patch_record_in_place(fn, record, subdir):
 
         if version_order < VersionOrder('2.4.0'):
             replace_dep(depends, 'conda', 'conda <22.11.0', append=True)
-
-        if version.startswith('2.4.0'):  # = 2.4.0*
+        elif version_order < VersionOrder('2.4.1'):
             replace_dep(depends, ['conda', 'conda !=22.11.*'], 'conda <23.5.0,!=22.11.*')
-
-        if re.match(r'2\.4\.[1-3](?!\d)', version):  # = 2.4.1* or = 2.4.2* or = 2.4.3*
+        elif version_order < VersionOrder('2.7.0'):
             replace_dep(
                 depends,
-                ['conda', 'conda !=22.11.*', 'conda !=22.11.*,!=23.7.0,!=23.7.1'],
-                'conda !=22.11.*,!=23.7.0,!=23.7.1,!=23.7.2,!=23.7.3',
+                [
+                    'conda',
+                    'conda !=22.11.*',
+                    'conda !=22.11.*,!=23.7.0,!=23.7.1',
+                    'conda !=22.11.*,!=23.7.0,!=23.7.1,!=23.7.2,!=23.7.3',
+                ],
+                'conda !=22.11.*,!=23.7.0,!=23.7.1,!=23.7.2,!=23.7.3,<25.7',
             )
 
         if version_order <= VersionOrder('2.6.3'):
