@@ -1642,7 +1642,7 @@ def patch_record_in_place(fn, record, subdir):
     if name == "conda-project" and VersionOrder(version) <= VersionOrder("0.4.2"):
         replace_dep(depends, "conda-lock >=2.5.6", "conda-lock >=2.5.6,<3.0.0.0a0")
 
-   ##########################################################
+    ##########################################################
     # bcrypt 5.0.0 compatibility - breaking API changes #
     ##########################################################
     # bcrypt 5.0.0 introduces breaking changes that affect several non-maintained packages:
@@ -1655,7 +1655,7 @@ def patch_record_in_place(fn, record, subdir):
     # See: https://github.com/AnacondaRecipes/flask-bcrypt-feedstock/pull/3
     if name == "flask-bcrypt" and version == "1.0.1" and build_number == 0:
         replace_dep(depends, "bcrypt >=3.1.1", "bcrypt >=3.1.1,<5.0.0")
-    if name == "flask-bcrypt"  and VersionOrder(version) < VersionOrder("1.0.1"):
+    if name == "flask-bcrypt" and VersionOrder(version) < VersionOrder("1.0.1"):
         replace_dep(depends, "bcrypt", "bcrypt <5.0.0")
 
     # passlib versions <1.7.4 build 1 are not compatible with bcrypt >=5.0.0
