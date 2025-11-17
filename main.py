@@ -1642,6 +1642,37 @@ def patch_record_in_place(fn, record, subdir):
     if name == "conda-project" and VersionOrder(version) <= VersionOrder("0.4.2"):
         replace_dep(depends, "conda-lock >=2.5.6", "conda-lock >=2.5.6,<3.0.0.0a0")
 
+    ##########################################################
+    # bcrypt 5.0.0 compatibility - breaking API changes #
+    ##########################################################
+    # bcrypt 5.0.0 introduces breaking changes that affect several non-maintained packages:
+    # See: https://github.com/pyca/bcrypt/tree/5.0.0?tab=readme-ov-file#500
+
+    # flask-bcrypt is not compatible with bcrypt >=5.0.0
+    # ValueError: password cannot be longer than 72 bytes, truncate manually if necessary
+    # See: https://github.com/maxcountryman/flask-bcrypt/issues/95
+    # Only apply to build 0; build 1+ has the constraint in the recipe
+    # See: https://github.com/AnacondaRecipes/flask-bcrypt-feedstock/pull/3
+    if name == "flask-bcrypt" and version == "1.0.1" and build_number == 0:
+        replace_dep(depends, "bcrypt >=3.1.1", "bcrypt >=3.1.1,<5.0.0")
+    if name == "flask-bcrypt"  and VersionOrder(version) < VersionOrder("1.0.1"):
+        replace_dep(depends, "bcrypt", "bcrypt <5.0.0")
+
+    # passlib versions <1.7.4 build 1 are not compatible with bcrypt >=5.0.0
+    # passlib 1.7.4 build 1+ includes patches for bcrypt 5 compatibility
+    # See: https://github.com/AnacondaRecipes/passlib-feedstock/pull/1
+    # Only apply to build 0; build 1+ has bcrypt 5 support
+    if name == "passlib" and version == "1.7.4" and build_number == 0:
+        replace_dep(depends, "bcrypt >=3.1.0", "bcrypt >=3.1.0,<5.0.0")
+    if name == "passlib" and VersionOrder(version) < VersionOrder("1.7.4"):
+        replace_dep(depends, "bcrypt >=3.1.0", "bcrypt >=3.1.0,<5.0.0")
+
+    # NOTE: paramiko 3.5.0, twisted 25.5.0, and spyder 6.1.0 have been retested
+    # and confirmed compatible with bcrypt 5.0.0. No hotfix needed.
+    # - paramiko 3.5.0 build 1: All tests passed
+    # - twisted 25.5.0 build 0: All tests passed
+    # - spyder 6.1.0 build 1: All tests passed
+
     ###########################
     # compilers and run times #
     ###########################
