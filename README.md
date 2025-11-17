@@ -98,7 +98,7 @@ It can be quite difficult to grok what the hotfix scripts are doing. The script,
 The script downloads the current repodata. It then shows you a diff. Example usage of this script:
 
 ```sh
-python gen-current-hotfix-report.py main --subdir linux-64 osx-64 win-64 osx-arm64 linux-aarch64 noarch
+python gen-current-hotfix-report.py main --subdir linux-64 win-64 osx-arm64 linux-aarch64 noarch
 ```
 
 For repeated runs add `--use-cache` to avoid downloading the repodata files.
@@ -112,7 +112,7 @@ and the ones you are working on.
 Example usage of this script:
 
 ```sh
-python test-hotfix.py main --subdir linux-64 osx-64 win-64 osx-arm64 linux-aarch64 noarch
+python test-hotfix.py main --subdir linux-64 win-64 osx-arm64 linux-aarch64 noarch
 ```
 
 Use the `--color` or `--show-pkgs` options for different outputs.
