@@ -1683,6 +1683,13 @@ def patch_record_in_place(fn, record, subdir):
     if subdir == "osx-64":
         replace_dep(depends, "libgfortran >=3.0.1", "libgfortran >=3.0.1,<4.0.0.a0")
 
+    if subdir == "osx-arm64":
+        # naming scheme change for libgfortran, now "gfortran_version"
+        # rather than "major/soversion.*".  In practice, we can use
+        # libgfortran5 which covers the half-a-dozen cases where the
+        # package isn't already dependent on libgfortran5.
+        replace_dep(depends, "libgfortran 5.*", "libgfortran5")
+
     # loosen binutils_impl dependency on gcc_impl_ packages
     if name.startswith("gcc_impl_"):
         for i, dep in enumerate(depends):
