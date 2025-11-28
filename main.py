@@ -629,7 +629,7 @@ def patch_record_in_place(fn, record, subdir):
     # removing regex from constraint, which solvers have trouble to parse
     # see https://github.com/AnacondaRecipes/python_abi-feedstock/pull/5
     if name == "python_abi" and version in ["3.10", "3.11", "3.12"] and build_number == 2:
-        replace_dep(constrains, f"python {version}.* ^(?!.*_graalpy$)(?!.*_pypy$).*$", f"python {version}.* ")
+        replace_dep(constrains, f"python {version}.* ^(?!.*_graalpy$)(?!.*_pypy$).*$", f"python {version}.*")
 
     ################
     # CUDA related #
