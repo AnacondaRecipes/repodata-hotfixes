@@ -1570,6 +1570,12 @@ def patch_record_in_place(fn, record, subdir):
             if d.startswith("conda "):
                 depends[i] += bound
 
+    # skl2onnx scikit-learn pin
+    if name == "skl2onnx" and version == '1.16.0':
+        replace_dep(depends, 'scikit-learn >=0.19', 'scikit-learn >=0.19,<1.8')
+    if name == "skl2onnx" and version == '1.19.1':
+        replace_dep(depends, 'scikit-learn >=1.1', 'scikit-learn >=1.1,<1.8')
+
     # snowflake-snowpark-python cloudpickle pins
     if name == "snowflake-snowpark-python" and version == '0.6.0':
         replace_dep(depends, 'cloudpickle >=1.6.0', 'cloudpickle >=1.6.0,<=2.0.0')
