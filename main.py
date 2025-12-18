@@ -1586,6 +1586,10 @@ def patch_record_in_place(fn, record, subdir):
     if name == "ffmpeg" and version == "4.2.2":
         depends[:] = [d for d in depends if not d.startswith("openssl")]
 
+    # imbalanced-learn scikit-learn pin
+    if name == "imbalanced-learn" and version == '0.14.0':
+        replace_dep(depends, 'scikit-learn >=1.4.2,<2', 'scikit-learn >=1.4.2,<1.8')
+
     # anaconda-ident<0.2 not compatible with anaconda-anon-usage
     # anaconda-anon-usage<0.4 not compatible with anaconda-ident
     # anaconda-ident<0.6 not compatible with anaconda-ident >=0.7.2
