@@ -1587,6 +1587,8 @@ def patch_record_in_place(fn, record, subdir):
         depends[:] = [d for d in depends if not d.startswith("openssl")]
 
     # imbalanced-learn scikit-learn pin
+    if name == "imbalanced-learn" and version == '0.12.3':
+        replace_dep(depends, 'scikit-learn  >=1.0.2', 'scikit-learn  >=1.0.2,<=1.4.2')
     if name == "imbalanced-learn" and version == '0.14.0':
         replace_dep(depends, 'scikit-learn >=1.4.2,<2', 'scikit-learn >=1.4.2,<1.8')
 
