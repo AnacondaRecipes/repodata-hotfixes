@@ -167,6 +167,11 @@ REVOKED = {
         "spyder-5.5.1-*_2.*",
         # anaconda-cli-base-0.4.1 build number 0 has missing run_constrained requirements
         "anaconda-cli-base-0.4.1-*_0.*",
+        # cryptography 46.0.2 missing openssl dependency due to recipe error.
+        # Without this revocation, solver may install it with incompatible openssl 1.1.1 packages
+        # (e.g., tensorflow-text -> tensorflow 2.12 -> openssl 1.1.1).
+        # Use 46.0.3 which restores the openssl dependency.
+        "cryptography-46.0.2-*.*",
     ],
 }
 
