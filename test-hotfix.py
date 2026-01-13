@@ -45,7 +45,21 @@ def show_pkgs(subdir, ref_repodata_file, patched_repodata_file):
         reference_repodata = json.load(f)
     with open(patched_repodata_file) as f:
         patched_repodata = json.load(f)
-    for name, ref_pkg in reference_repodata["packages"].items():
+    
+    ref_pkgs = set(reference_repodata["packages"].keys())
+    patched_pkgs = set(patched_repodata["packages"].keys())
+    
+    # Removed packages
+    for name in sorted(ref_pkgs - patched_pkgs):
+        print(f"{subdir}::{name} [REMOVED]")
+    
+    # Added packages
+    for name in sorted(patched_pkgs - ref_pkgs):
+        print(f"{subdir}::{name} [ADDED]")
+    
+    # Modified packages
+    for name in sorted(ref_pkgs & patched_pkgs):
+        ref_pkg = reference_repodata["packages"][name]
         new_pkg = patched_repodata["packages"][name]
         if ref_pkg == new_pkg:
             continue
@@ -104,22 +118,31 @@ if __name__ == "__main__":
             instructions = json.load(f)
         patched_repodata = _apply_instructions(subdir, repodata, instructions)
         patched_repodata_file = os.path.join(args.channel, subdir, 'repodata-patched.json')
-        print(f"Writing out new repodata as {patched_repodata_file} for '{subdir}' platform.")
+        print(f"Writing out new repodata as {patched_repodata_file} for '{subdir}' platform...", flush=True)
         with open(patched_repodata_file, 'w') as f:
             json.dump(patched_repodata, f, indent=2, sort_keys=True, separators=(',', ': '))
             f.write('\n')
+        print(f"Finished writing {patched_repodata_file}.", flush=True)
 
         ref_repodata_file = os.path.join(args.channel, subdir, 'repodata-reference.json')
+        print(f"Comparing reference vs patched repodata for '{subdir}'...", flush=True)
         if args.show_pkgs:
             print("New Hot Fixes:")
             show_pkgs(subdir, ref_repodata_file, patched_repodata_file)
         else:
             if args.color:
-                diff_exe = 'colordiff'
+                diff_exe = 'diff'
+                color_flag = '--color=always'
             else:
                 diff_exe = 'diff'
+                color_flag = ''
             fmt_flag = '{} {}'.format(
                 '-U' if args.diff_format == 'unified' else '-C',
                 args.context_numlines,
                 )
-            subprocess.call([diff_exe, fmt_flag, ref_repodata_file, patched_repodata_file])
+            cmd = [diff_exe, fmt_flag, ref_repodata_file, patched_repodata_file]
+            if color_flag:
+                cmd.insert(1, color_flag)
+            print(f"Running: {' '.join(cmd)}", flush=True)
+            subprocess.call(cmd)
+        print(f"Done with '{subdir}'.", flush=True)
