@@ -120,7 +120,7 @@ REMOVALS = {
         # anaconda-client<1.10.0 is incompatible with python 3.10
         "anaconda-client-1.9.0-py310*",
         # navigator-updater=0.5.0 is incompatible with anaconda-navigator
-        "navigator-updater-0.5.0-*"
+        "navigator-updater-0.5.0-*",
     },
 }
 
@@ -923,6 +923,14 @@ def patch_record_in_place(fn, record, subdir):
     if name == "cryptography" and VersionOrder(version) >= VersionOrder("39.0.1"):
         # or pyopenssl should have a max cryptography version set
         record["constrains"] = ["pyopenssl >=23.0.0"]
+
+    # cryptography 46.0.2 missing openssl dependency due to recipe error.
+    # It was built against openssl 3.0.18 (pulled in through another dependency).
+    # Without this fix, solver may install it with incompatible openssl 1.1.1 packages
+    # (e.g., tensorflow-text -> tensorflow 2.12 -> openssl 1.1.1).
+    if name == "cryptography" and version == "46.0.2":
+        if not any(d.startswith("openssl") for d in depends):
+            depends.append("openssl >=3.0.18,<4.0a0")
 
     # intel-openmp requires newer glibc.
     if name == "intel-openmp" and version == "2025.0.0":
