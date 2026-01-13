@@ -45,18 +45,18 @@ def show_pkgs(subdir, ref_repodata_file, patched_repodata_file):
         reference_repodata = json.load(f)
     with open(patched_repodata_file) as f:
         patched_repodata = json.load(f)
-    
+
     ref_pkgs = set(reference_repodata["packages"].keys())
     patched_pkgs = set(patched_repodata["packages"].keys())
-    
+
     # Removed packages
     for name in sorted(ref_pkgs - patched_pkgs):
         print(f"{subdir}::{name} [REMOVED]")
-    
+
     # Added packages
     for name in sorted(patched_pkgs - ref_pkgs):
         print(f"{subdir}::{name} [ADDED]")
-    
+
     # Modified packages
     for name in sorted(ref_pkgs & patched_pkgs):
         ref_pkg = reference_repodata["packages"][name]
