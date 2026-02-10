@@ -1691,6 +1691,71 @@ def patch_record_in_place(fn, record, subdir):
     if name == "flask-bcrypt" and VersionOrder(version) < VersionOrder("1.0.1"):
         replace_dep(depends, "bcrypt", "bcrypt <5.0.0")
 
+    # filename: gen_patch_json.py (add after line ~940)
+
+    ############################
+    # pandas 3.0 compatibility #
+    ############################
+
+    # Only cap deps for package "pandas" (not pandas-datareader etc.); preserve existing
+    # constraints. Plain "pandas" -> "pandas <3.0.0" (space); else append ",<3.0.0".
+
+    _pandas_3_max_incompatible = {
+        "arviz": "0.22.0",
+        "biom-format": "2.1.17",
+        "catboost": "1.2.8",
+        "cmdstanpy": "1.1.0",
+        "composeml": "0.10.1",
+        "datasets": "4.4.1",
+        "datashader": "0.18.2",
+        "empyrical": "0.5.5",
+        "featuretools": "1.31.0",
+        "formulaic": "1.2.1",
+        "geoviews": "1.15.1",
+        "inequality": "1.1.2",
+        "pandarallel": "1.6.5",
+        "panel": "1.8.5",
+        "pointpats": "2.5.2",
+        "prophet": "1.2.1",
+        "pygwalker": "0.4.9.15",
+        "pyspark": "4.0.1",
+        "scikit-bio": "0.7.0",
+        "segregation": "2.5.2",
+        "triad": "1.0.0",
+        "tsfresh": "0.21.1",
+        "visions": "0.8.1",
+        "woodwork": "0.31.0",
+    }
+
+    # Apply when: package in list with version <= max incompatible.
+    if (
+        build[:5] in ["py311", "py312", "py313", "py314"]
+        or subdir == "noarch"
+        or name in _pandas_3_max_incompatible
+        and VersionOrder(version) <= VersionOrder(_pandas_3_max_incompatible[name])
+    ):
+        for i, dep in enumerate(depends):
+            if (
+                not dep.strip()
+                or dep.split()[0] != "pandas"
+                or "<" in dep
+            ):
+                continue
+
+            parts = dep.split()
+
+            if len(parts) > 1:
+                list_of_versions = parts[-1].split(',')
+                if "<" in list_of_versions[-1]:
+                    break
+                list_of_versions.append("<3.0.0")
+                parts[-1] = ",".join(list_of_versions)
+            else:
+                parts.append("<3.0.0")
+
+            depends[i] = " ".join(parts)
+            break
+
     # passlib versions <1.7.4 build 1 are not compatible with bcrypt >=5.0.0
     # passlib 1.7.4 build 1+ includes patches for bcrypt 5 compatibility
     # See: https://github.com/AnacondaRecipes/passlib-feedstock/pull/1
