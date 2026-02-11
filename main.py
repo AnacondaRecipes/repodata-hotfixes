@@ -1418,7 +1418,7 @@ def patch_record_in_place(fn, record, subdir):
 
     # transformers 4.14.1, missing upperbound for the huggingface_hub
     if name == "transformers" and version == "4.14.1":
-        replace_dep(depends, "huggingface_hub", "huggingface-hub>=0.1.0,<1.0")
+        replace_dep(depends, "huggingface_hub", "huggingface_hub >=0.1.0,<1.0")
 
     # Panel<0.11.0 requires Bokeh<2.3
     if name == "panel":
