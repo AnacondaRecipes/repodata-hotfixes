@@ -1691,7 +1691,6 @@ def patch_record_in_place(fn, record, subdir):
     if name == "flask-bcrypt" and VersionOrder(version) < VersionOrder("1.0.1"):
         replace_dep(depends, "bcrypt", "bcrypt <5.0.0")
 
-    # filename: gen_patch_json.py (add after line ~940)
 
     ############################
     # pandas 3.0 compatibility #
