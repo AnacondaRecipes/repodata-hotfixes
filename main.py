@@ -1691,7 +1691,6 @@ def patch_record_in_place(fn, record, subdir):
     if name == "flask-bcrypt" and VersionOrder(version) < VersionOrder("1.0.1"):
         replace_dep(depends, "bcrypt", "bcrypt <5.0.0")
 
-
     ############################
     # pandas 3.0 compatibility #
     ############################
@@ -1728,9 +1727,8 @@ def patch_record_in_place(fn, record, subdir):
 
     # Apply when: package in list with version <= max incompatible.
     if (
-        build[:5] in ["py311", "py312", "py313", "py314"]
-        or subdir == "noarch"
-        or name in _pandas_3_max_incompatible
+        (build[:5] in ["py311", "py312", "py313", "py314"] or subdir == "noarch")
+        and name in _pandas_3_max_incompatible
         and VersionOrder(version) <= VersionOrder(_pandas_3_max_incompatible[name])
     ):
         for i, dep in enumerate(depends):
