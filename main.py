@@ -1078,6 +1078,11 @@ def patch_record_in_place(fn, record, subdir):
             replace_dep(depends, 'anaconda-cloud-auth >=0.3', 'anaconda-cloud-auth >=0.3,<0.6')
             replace_dep(depends, 'anaconda-client >=1.12.2', 'anaconda-client >=1.12.2,<1.13')
 
+    # anaconda-cli-base 0.8.0 and 0.8.1 use a dump flag from pydantic that was introduced in version 2.12
+    # https://github.com/anaconda/anaconda-cli-base/pull/133
+    if name == 'anaconda-cli-base' and version in ['0.8.0', '0.8.1']:
+        depends.append("pydantic >=2.12")
+
     if name == 'anaconda-client':
         if re.match(r'1\.(?:\d|1[01])\.', version):  # < 1.12.0
             if replace_dep(depends, 'urllib3 >=1.26.4', 'urllib3 >=1.26.4,<2.0.0a') == '=':  # if no changes
