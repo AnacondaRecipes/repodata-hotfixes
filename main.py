@@ -804,6 +804,16 @@ def patch_record_in_place(fn, record, subdir):
         # type of build (cpu vs gpu)
         replace_dep(depends, f"libtorch {version}.*", f"libtorch {version}.* *_{build_number}")
 
+    if name == "pytorch" and version in ["2.7.1", "2.8.0"]:
+        # pytorch 2.7.1 and 2.8.0 used libtorch {{ version }} instead of
+        # {{ pin_subpackage('libtorch', exact=True) }}, allowing the solver
+        # to mix CPU/GPU or MKL/OpenBLAS variants of libtorch and pytorch
+        replace_dep(
+            depends,
+            [f"libtorch {version}", f"libtorch {version}.*"],
+            f"libtorch {version}.* *_{build_number}",
+        )
+
     #########
     # scipy #
     #########
