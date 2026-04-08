@@ -282,6 +282,22 @@ CUDATK_SUBS = {
     "cudatoolkit >=9.2,<10.0a0": "cudatoolkit >=9.2,<9.3.0a0",
     "cudatoolkit >=10.0.130,<11.0a0": "cudatoolkit >=10.0.130,<10.1.0a0",
 }
+
+# setuptools >=82 no longer provides pkg_resources; these builds still import it at runtime.
+SETUPTOOLS_PKG_RESOURCES_VERSIONS = frozenset(
+    {
+        ("csvkit", "1.0.5"),
+        ("fs", "2.4.16"),
+        ("passlib", "1.7.4"),
+        ("pbr", "6.1.1"),
+        ("picklable-itertools", "0.1.1"),
+        ("pyinstaller", "6.12.0"),
+        ("pyinstaller-hooks-contrib", "2025.1"),
+        ("pyscaffold", "3.3.1"),
+        ("pystan", "3.10.0"),
+        ("tensorboard", "2.20.0"),
+    }
+)
 MKL_VERSION_2018_RE = re.compile(r">=2018(.\d){0,2}$")
 MKL_VERSION_2018_EXTENDED_RC = re.compile(r">=2018(.\d){0,2}")
 LINUX_RUNTIME_RE = re.compile(r"lib(\w+)-ng\s(?:>=)?([\d\.]+\d)(?:$|\.\*)")
@@ -922,6 +938,11 @@ def patch_record_in_place(fn, record, subdir):
     # https://github.com/conda/conda/issues/9337
     if name == "conda" and "setuptools >=31.0.1" in constrains:
         constrains[:] = [req for req in constrains if not req.startswith("setuptools")]
+
+    if (name, version) in SETUPTOOLS_PKG_RESOURCES_VERSIONS:
+        constrains[:] = [c for c in constrains if not c.startswith("setuptools ")]
+        constrains.append("setuptools <82")
+        record["constrains"] = constrains
 
     # basemap is incompatible with proj/proj4 >=6
     # https://github.com/ContinuumIO/anaconda-issues/issues/11590
