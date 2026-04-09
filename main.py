@@ -931,28 +931,20 @@ def patch_record_in_place(fn, record, subdir):
     # In setuptools 82.0.0, the pkg_resources module was removed.
     # https://github.com/pypa/setuptools/blob/v82.0.0/NEWS.rst#deprecations-and-removals
     # Below is a list of packages that are affected by this change.
-    _pkg_resources_max_versions = getattr(
-        patch_record_in_place, "_pkg_resources_max_versions", None
-    )
-    if _pkg_resources_max_versions is None:
-        SETUPTOOLS_PKG_RESOURCES_VERSIONS = frozenset(
-            {
-                ("csvkit", "1.0.5"),
-                ("fs", "2.4.16"),
-                ("passlib", "1.7.4"),
-                ("pbr", "6.1.1"),
-                ("picklable-itertools", "0.1.1"),
-                ("pyinstaller", "6.12.0"),
-                ("pyinstaller-hooks-contrib", "2025.1"),
-                ("pyscaffold", "3.3.1"),
-                ("pystan", "3.10.0"),
-                ("tensorboard", "2.20.0"),
-            }
-        )
-        _pkg_resources_max_versions = dict(SETUPTOOLS_PKG_RESOURCES_VERSIONS)
-        patch_record_in_place._pkg_resources_max_versions = _pkg_resources_max_versions
-    if name in _pkg_resources_max_versions:
-        if VersionOrder(version) <= VersionOrder(_pkg_resources_max_versions[name]):
+    SETUPTOOLS_PKG_RESOURCES_VERSIONS = {
+        "csvkit": "1.0.5",
+        "fs": "2.4.16",
+        "passlib": "1.7.4",
+        "pbr": "6.1.1",
+        "picklable-itertools": "0.1.1",
+        "pyinstaller": "6.12.0",
+        "pyinstaller-hooks-contrib": "2025.1",
+        "pyscaffold": "3.3.1",
+        "pystan": "3.10.0",
+        "tensorboard": "2.20.0",
+    }
+    if name in SETUPTOOLS_PKG_RESOURCES_VERSIONS:
+        if VersionOrder(version) <= VersionOrder(SETUPTOOLS_PKG_RESOURCES_VERSIONS[name]):
             for i, dep in enumerate(depends):
                 if not dep.startswith("setuptools"):
                     continue
