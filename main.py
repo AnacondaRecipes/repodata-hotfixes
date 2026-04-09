@@ -944,7 +944,10 @@ def patch_record_in_place(fn, record, subdir):
         "tensorboard": "2.20.0",
     }
     if name in SETUPTOOLS_PKG_RESOURCES_VERSIONS:
-        if VersionOrder(version) <= VersionOrder(SETUPTOOLS_PKG_RESOURCES_VERSIONS[name]):
+        if (
+            VersionOrder(version) <= VersionOrder(SETUPTOOLS_PKG_RESOURCES_VERSIONS[name])
+            and (build[:5] in ["py310", "py311", "py312", "py313", "py314"] or subdir == "noarch")
+        ):
             for i, dep in enumerate(depends):
                 if not dep.startswith("setuptools"):
                     continue
