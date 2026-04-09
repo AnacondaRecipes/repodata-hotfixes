@@ -940,32 +940,24 @@ def patch_record_in_place(fn, record, subdir):
     if name == "conda" and "setuptools >=31.0.1" in constrains:
         constrains[:] = [req for req in constrains if not req.startswith("setuptools")]
 
-    _pkg_resources_max_versions = dict(SETUPTOOLS_PKG_RESOURCES_VERSIONS)
-    if name in _pkg_resources_max_versions:
-        max_ver = _pkg_resources_max_versions[name]
-        is_affected_by_setuptools_82_version = VersionOrder(version) <= VersionOrder(max_ver)
-        if is_affected_by_setuptools_82_version:
+    if name in _PKG_RESOURCES_MAX_VERSIONS:
+        if VersionOrder(version) <= VersionOrder(_PKG_RESOURCES_MAX_VERSIONS[name]):
             new_constrains = []
-            capped = False
             for c in constrains:
-                # No setuptools - without changes
                 if not c.startswith("setuptools"):
+                    # Keep as-is
                     new_constrains.append(c)
-                    continue
-                if "<" in c:
-                    # Already has upper bound — without changes
+                elif "<" in c:
+                    # Already has upper bound — keep unchanged
                     new_constrains.append(c)
-                    capped = True
-                elif c.strip() == "setuptools":
-                    # setuptools - add upper-bound
-                    new_constrains.append("setuptools <82")
-                    capped = True
                 else:
-                    # setuptools with lower-bound - append upper-bound
-                    new_constrains.append(c + ",<82")
-                    capped = True
-            if capped:
-                # Add new constrains only if changes were made
+                    # "setuptools"       → "setuptools <82"
+                    # "setuptools >=1"  → "setuptools >=1,<82"
+                    # "setuptools >1"    → "setuptools >1,<82"
+                    # no setuptools in constrains at all → keep unchanged
+                    sep = " " if c.strip() == "setuptools" else ","
+                    new_constrains.append(c + sep + "<82")
+            if new_constrains != constrains:
                 record["constrains"] = new_constrains
 
     # basemap is incompatible with proj/proj4 >=6
