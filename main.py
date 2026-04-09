@@ -943,9 +943,7 @@ def patch_record_in_place(fn, record, subdir):
     _pkg_resources_max_versions = dict(SETUPTOOLS_PKG_RESOURCES_VERSIONS)
     if name in _pkg_resources_max_versions:
         max_ver = _pkg_resources_max_versions[name]
-    
         is_affected_by_setuptools_82_version = VersionOrder(version) <= VersionOrder(max_ver)
-    
         if is_affected_by_setuptools_82_version:
             new_constrains = []
             capped = False
