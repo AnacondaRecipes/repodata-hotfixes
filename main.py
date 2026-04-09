@@ -298,6 +298,7 @@ SETUPTOOLS_PKG_RESOURCES_VERSIONS = frozenset(
         ("tensorboard", "2.20.0"),
     }
 )
+_PKG_RESOURCES_MAX_VERSIONS = dict(SETUPTOOLS_PKG_RESOURCES_VERSIONS)
 
 MKL_VERSION_2018_RE = re.compile(r">=2018(.\d){0,2}$")
 MKL_VERSION_2018_EXTENDED_RC = re.compile(r">=2018(.\d){0,2}")
