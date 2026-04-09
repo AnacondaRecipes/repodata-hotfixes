@@ -283,23 +283,6 @@ CUDATK_SUBS = {
     "cudatoolkit >=10.0.130,<11.0a0": "cudatoolkit >=10.0.130,<10.1.0a0",
 }
 
-
-SETUPTOOLS_PKG_RESOURCES_VERSIONS = frozenset(
-    {
-        ("csvkit", "1.0.5"),
-        ("fs", "2.4.16"),
-        ("passlib", "1.7.4"),
-        ("pbr", "6.1.1"),
-        ("picklable-itertools", "0.1.1"),
-        ("pyinstaller", "6.12.0"),
-        ("pyinstaller-hooks-contrib", "2025.1"),
-        ("pyscaffold", "3.3.1"),
-        ("pystan", "3.10.0"),
-        ("tensorboard", "2.20.0"),
-    }
-)
-_PKG_RESOURCES_MAX_VERSIONS = dict(SETUPTOOLS_PKG_RESOURCES_VERSIONS)
-
 MKL_VERSION_2018_RE = re.compile(r">=2018(.\d){0,2}$")
 MKL_VERSION_2018_EXTENDED_RC = re.compile(r">=2018(.\d){0,2}")
 LINUX_RUNTIME_RE = re.compile(r"lib(\w+)-ng\s(?:>=)?([\d\.]+\d)(?:$|\.\*)")
@@ -941,25 +924,46 @@ def patch_record_in_place(fn, record, subdir):
     if name == "conda" and "setuptools >=31.0.1" in constrains:
         constrains[:] = [req for req in constrains if not req.startswith("setuptools")]
 
-    if name in _PKG_RESOURCES_MAX_VERSIONS:
-        if VersionOrder(version) <= VersionOrder(_PKG_RESOURCES_MAX_VERSIONS[name]):
-            new_constrains = []
-            for c in constrains:
-                if not c.startswith("setuptools"):
-                    # Keep as-is
-                    new_constrains.append(c)
-                elif "<" in c:
+    ###############################
+    # setuptools 82 compatibility #
+    ###############################
+
+    # In setuptools 82.0.0, the pkg_resources module was removed.
+    # https://github.com/pypa/setuptools/blob/v82.0.0/NEWS.rst#deprecations-and-removals
+    # Below is a list of packages that are affected by this change.
+    _pkg_resources_max_versions = getattr(
+        patch_record_in_place, "_pkg_resources_max_versions", None
+    )
+    if _pkg_resources_max_versions is None:
+        SETUPTOOLS_PKG_RESOURCES_VERSIONS = frozenset(
+            {
+                ("csvkit", "1.0.5"),
+                ("fs", "2.4.16"),
+                ("passlib", "1.7.4"),
+                ("pbr", "6.1.1"),
+                ("picklable-itertools", "0.1.1"),
+                ("pyinstaller", "6.12.0"),
+                ("pyinstaller-hooks-contrib", "2025.1"),
+                ("pyscaffold", "3.3.1"),
+                ("pystan", "3.10.0"),
+                ("tensorboard", "2.20.0"),
+            }
+        )
+        _pkg_resources_max_versions = dict(SETUPTOOLS_PKG_RESOURCES_VERSIONS)
+        patch_record_in_place._pkg_resources_max_versions = _pkg_resources_max_versions
+    if name in _pkg_resources_max_versions:
+        if VersionOrder(version) <= VersionOrder(_pkg_resources_max_versions[name]):
+            for i, dep in enumerate(depends):
+                if not dep.startswith("setuptools"):
+                    continue
+                if "<" in dep:
                     # Already has upper bound — keep unchanged
-                    new_constrains.append(c)
-                else:
-                    # "setuptools"       → "setuptools <82"
-                    # "setuptools >=1"  → "setuptools >=1,<82"
-                    # "setuptools >1"    → "setuptools >1,<82"
-                    # no setuptools in constrains at all → keep unchanged
-                    sep = " " if c.strip() == "setuptools" else ","
-                    new_constrains.append(c + sep + "<82")
-            if new_constrains != constrains:
-                record["constrains"] = new_constrains
+                    continue
+                # "setuptools"       -> "setuptools <82"
+                # "setuptools >=1"   -> "setuptools >=1,<82"
+                # "setuptools >1"    -> "setuptools >1,<82"
+                sep = " " if dep.strip() == "setuptools" else ","
+                depends[i] = dep + sep + "<82"
 
     # basemap is incompatible with proj/proj4 >=6
     # https://github.com/ContinuumIO/anaconda-issues/issues/11590
