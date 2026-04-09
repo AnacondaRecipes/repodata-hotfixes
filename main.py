@@ -299,36 +299,6 @@ SETUPTOOLS_PKG_RESOURCES_VERSIONS = frozenset(
     }
 )
 
-_pkg_resources_max_versions = dict(SETUPTOOLS_PKG_RESOURCES_VERSIONS)
-if name in _pkg_resources_max_versions:
-    max_ver = _pkg_resources_max_versions[name]
-
-    is_affected_by_setuptools_82_version = VersionOrder(version) <= VersionOrder(max_ver)
-
-    if is_affected_by_setuptools_82_version:
-        new_constrains = []
-        capped = False
-        for c in constrains:
-            # No setuptools - without changes
-            if not c.startswith("setuptools"):
-                new_constrains.append(c)
-                continue
-            if "<" in c:
-                # Already has upper bound — without changes
-                new_constrains.append(c)
-                capped = True
-            elif c.strip() == "setuptools":
-                # setuptools - add upper-bound
-                new_constrains.append("setuptools <82")
-                capped = True
-            else:
-                # setuptools with lower-bound - append upper-bound
-                new_constrains.append(c + ",<82")
-                capped = True
-        if capped:
-            # Add new constrains only if changes were made
-            record["constrains"] = new_constrains
-
 MKL_VERSION_2018_RE = re.compile(r">=2018(.\d){0,2}$")
 MKL_VERSION_2018_EXTENDED_RC = re.compile(r">=2018(.\d){0,2}")
 LINUX_RUNTIME_RE = re.compile(r"lib(\w+)-ng\s(?:>=)?([\d\.]+\d)(?:$|\.\*)")
@@ -969,6 +939,36 @@ def patch_record_in_place(fn, record, subdir):
     # https://github.com/conda/conda/issues/9337
     if name == "conda" and "setuptools >=31.0.1" in constrains:
         constrains[:] = [req for req in constrains if not req.startswith("setuptools")]
+
+    _pkg_resources_max_versions = dict(SETUPTOOLS_PKG_RESOURCES_VERSIONS)
+    if name in _pkg_resources_max_versions:
+        max_ver = _pkg_resources_max_versions[name]
+    
+        is_affected_by_setuptools_82_version = VersionOrder(version) <= VersionOrder(max_ver)
+    
+        if is_affected_by_setuptools_82_version:
+            new_constrains = []
+            capped = False
+            for c in constrains:
+                # No setuptools - without changes
+                if not c.startswith("setuptools"):
+                    new_constrains.append(c)
+                    continue
+                if "<" in c:
+                    # Already has upper bound — without changes
+                    new_constrains.append(c)
+                    capped = True
+                elif c.strip() == "setuptools":
+                    # setuptools - add upper-bound
+                    new_constrains.append("setuptools <82")
+                    capped = True
+                else:
+                    # setuptools with lower-bound - append upper-bound
+                    new_constrains.append(c + ",<82")
+                    capped = True
+            if capped:
+                # Add new constrains only if changes were made
+                record["constrains"] = new_constrains
 
     # basemap is incompatible with proj/proj4 >=6
     # https://github.com/ContinuumIO/anaconda-issues/issues/11590
