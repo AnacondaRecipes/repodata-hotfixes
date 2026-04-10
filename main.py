@@ -282,6 +282,7 @@ CUDATK_SUBS = {
     "cudatoolkit >=9.2,<10.0a0": "cudatoolkit >=9.2,<9.3.0a0",
     "cudatoolkit >=10.0.130,<11.0a0": "cudatoolkit >=10.0.130,<10.1.0a0",
 }
+
 MKL_VERSION_2018_RE = re.compile(r">=2018(.\d){0,2}$")
 MKL_VERSION_2018_EXTENDED_RC = re.compile(r">=2018(.\d){0,2}")
 LINUX_RUNTIME_RE = re.compile(r"lib(\w+)-ng\s(?:>=)?([\d\.]+\d)(?:$|\.\*)")
@@ -922,6 +923,42 @@ def patch_record_in_place(fn, record, subdir):
     # https://github.com/conda/conda/issues/9337
     if name == "conda" and "setuptools >=31.0.1" in constrains:
         constrains[:] = [req for req in constrains if not req.startswith("setuptools")]
+
+    ###############################
+    # setuptools 82 compatibility #
+    ###############################
+
+    # In setuptools 82.0.0, the pkg_resources module was removed.
+    # https://github.com/pypa/setuptools/blob/v82.0.0/NEWS.rst#deprecations-and-removals
+    # Below is a list of packages that are affected by this change.
+    SETUPTOOLS_PKG_RESOURCES_VERSIONS = {
+        "csvkit": "1.0.5",
+        "fs": "2.4.16",
+        "passlib": "1.7.4",
+        "pbr": "6.1.1",
+        "picklable-itertools": "0.1.1",
+        "pyinstaller": "6.12.0",
+        "pyinstaller-hooks-contrib": "2025.1",
+        "pyscaffold": "3.3.1",
+        "pystan": "3.10.0",
+        "tensorboard": "2.20.0",
+    }
+    if name in SETUPTOOLS_PKG_RESOURCES_VERSIONS:
+        if (
+            VersionOrder(version) <= VersionOrder(SETUPTOOLS_PKG_RESOURCES_VERSIONS[name])
+            and (build[:5] in ["py310", "py311", "py312", "py313", "py314"] or subdir == "noarch")
+        ):
+            for i, dep in enumerate(depends):
+                if not dep.startswith("setuptools"):
+                    continue
+                if "<" in dep:
+                    # Already has upper bound — keep unchanged
+                    continue
+                # "setuptools"       -> "setuptools <82"
+                # "setuptools >=1"   -> "setuptools >=1,<82"
+                # "setuptools >1"    -> "setuptools >1,<82"
+                sep = " " if dep.strip() == "setuptools" else ","
+                depends[i] = dep + sep + "<82"
 
     # basemap is incompatible with proj/proj4 >=6
     # https://github.com/ContinuumIO/anaconda-issues/issues/11590
