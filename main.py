@@ -1098,6 +1098,8 @@ def patch_record_in_place(fn, record, subdir):
         # https://github.com/conda/constructor/pull/627
         if record.get("timestamp", 0) <= 1674637311000:
             replace_dep(depends, "conda >=4.6", "conda >=4.6,<23.1.0a0")
+        if VersionOrder(version) < VersionOrder("3.15.2"):
+            replace_dep(depends, "conda >=4.6", "conda >=4.6,<26.3.0")
 
     # libarchive 3.3.2 and 3.3.3 build 0 are missing zstd support.
     # De-prioritize these packages with a track_feature (via _low_priority)
