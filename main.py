@@ -671,12 +671,17 @@ def patch_record_in_place(fn, record, subdir):
         if subdir == "linux-64" or subdir == "linux-aarch64":
             depends.append("__glibc >=2.28")
 
-    # PKG-14034: faiss CUDA variants (build ends with _cuda) lack a __cuda
-    # run dep, so the solver picks them on CPU-only systems even when the
-    # CPU variant is available. cuda-version only sets a run_constrained on
-    # __cuda which does not trigger when the virtual package is absent.
+    # PKG-14034 / PKG-14051: faiss and onnxruntime CUDA variants (build
+    # ends with _cuda) lack a __cuda run dep, so the solver picks them on
+    # CPU-only systems even when the CPU variant is available. cuda-version
+    # only sets a run_constrained on __cuda which does not trigger when the
+    # virtual package is absent.
     if (
-        name in ("faiss", "libfaiss", "libfaiss-avx2")
+        name in (
+            "faiss", "libfaiss", "libfaiss-avx2",
+            "onnxruntime", "onnxruntime-cpp",
+            "onnxruntime-novec", "onnxruntime-novec-cpp",
+        )
         and build.endswith("_cuda")
         and not any(dep.split(" ")[0] == "__cuda" for dep in depends)
     ):
