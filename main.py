@@ -685,11 +685,7 @@ def patch_record_in_place(fn, record, subdir):
         and build.endswith("_cuda")
         and not any(dep.split(" ")[0] == "__cuda" for dep in depends)
     ):
-        for dep in depends:
-            m = re.match(r"cuda-version >=(\d+\.\d+)", dep)
-            if m:
-                depends.append(f"__cuda >={m.group(1)}")
-                break
+        depends.append("__cuda")
 
     #######
     # MKL #
