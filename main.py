@@ -302,6 +302,30 @@ json_file_path = script_directory / "numpy2_patch.json"
 # Read and load the JSON file
 NUMPY_2_CHANGES = json.loads(json_file_path.read_text())
 
+# https://anaconda.atlassian.net/browse/PKG-14051
+# add __cuda virtual package to packages that have a dependency on cuda-version only
+# and do expect to be running on a CUDA-enabled system
+MISSING_CUDA_VIRTUAL_PACKAGE_VERSION_RANGES = {
+    "arrow-cpp": ("23.0.1", "23.0.1"),
+    "bitsandbytes": ("0.49.1", "0.49.1"),
+    "cupy": ("13.6.0", "14.0.1"),
+    "faiss": ("1.12.0", "1.14.1"),
+    "flash-attn": ("2.8.3", "2.8.3"),
+    "flash-attn-fused-dense": ("2.8.3", "2.8.3"),
+    "flash-attn-layer-norm": ("2.8.3", "2.8.3"),
+    "libfaiss": ("1.12.0", "1.14.1"),
+    "libfaiss-avx2": ("1.12.0", "1.14.1"),
+    "libllama": ("0.0.6082", "0.0.6082"),
+    "libtorch": ("2.5.1", "2.9.1"),
+    "onnxruntime": ("1.20.1", "1.24.4"),
+    "onnxruntime-cpp": ("1.24.4", "1.24.4"),
+    "onnxruntime-novec": ("1.20.1", "1.24.4"),
+    "onnxruntime-novec-cpp": ("1.24.4", "1.24.4"),
+    "pyarrow": ("23.0.1", "23.0.1"),
+    "torchvision": ("0.22.1", "0.23.0"),
+    "xformers": ("0.0.30", "0.0.30"),
+}
+
 
 def apply_numpy2_changes(record, subdir, filename):
     """
@@ -670,6 +694,19 @@ def patch_record_in_place(fn, record, subdir):
             replace_dep(depends, "cuda-version 12.*", "cuda-version >=12,<=12.4")
         if subdir == "linux-64" or subdir == "linux-aarch64":
             depends.append("__glibc >=2.28")
+
+    # https://anaconda.atlassian.net/browse/PKG-14051
+    # add __cuda virtual package to packages that have a dependency on cuda-version only
+    # and do expect to be running on a CUDA-enabled system
+    version_range = MISSING_CUDA_VIRTUAL_PACKAGE_VERSION_RANGES.get(name)
+    if (
+        version_range is not None
+        and subdir in ("linux-64", "linux-aarch64", "win-64")
+        and VersionOrder(version_range[0]) <= VersionOrder(version) <= VersionOrder(version_range[1])
+        and any(dep.split()[0] == "cuda-version" for dep in depends if dep)
+        and not any(dep.split()[0] == "__cuda" for dep in depends if dep)
+    ):
+        depends.append("__cuda")
 
     #######
     # MKL #
