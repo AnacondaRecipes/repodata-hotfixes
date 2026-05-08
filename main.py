@@ -322,6 +322,7 @@ MISSING_CUDA_VIRTUAL_PACKAGE_VERSION_RANGES = {
     "onnxruntime-novec": ("1.20.1", "1.24.4"),
     "onnxruntime-novec-cpp": ("1.24.4", "1.24.4"),
     "pyarrow": ("23.0.1", "23.0.1"),
+    "pytorch": ("2.7.0", "2.10.0"),
     "torchvision": ("0.22.1", "0.23.0"),
     "xformers": ("0.0.30", "0.0.30"),
 }
