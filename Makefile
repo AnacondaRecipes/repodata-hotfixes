@@ -28,7 +28,7 @@ lint-flake8:
 test: test-pytest test-hotfix
 
 test-hotfix:
-	@${PREFIX} python test-hotfix.py main --subdir noarch linux-32 linux-64 linux-aarch64 linux-ppc64le linux-s390x osx-64 osx-arm64 win-32 win-64
+	@${PREFIX} python test-hotfix.py main --diff-format=unified --subdir noarch linux-32 linux-64 linux-aarch64 linux-ppc64le linux-s390x osx-64 osx-arm64 win-32 win-64
 
 test-pytest:
 	@${PREFIX} pytest -v tests/
