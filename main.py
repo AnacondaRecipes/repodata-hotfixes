@@ -327,6 +327,73 @@ MISSING_CUDA_VIRTUAL_PACKAGE_VERSION_RANGES = {
     "xformers": ("0.0.30", "0.0.30"),
 }
 
+# https://anaconda.atlassian.net/browse/PKG-13552
+# Add pybind11-abi run dependency to packages built with pybind11 that don't
+# already declare it. The ABI version (4 or 5) is determined by:
+#   - Windows (MSVC) builds            -> 5
+#   - Python >= 3.12 (CPython 3.12+)   -> 5
+#   - Otherwise (Linux/macOS, py<3.12) -> 4
+# Source: pybind11/detail/internals.h PYBIND11_INTERNALS_VERSION macro,
+# mirrored in pybind11-feedstock recipe.
+# Pure C++ outputs (no python dep, e.g. libtorch) cannot have ABI inferred
+# from the build string alone; they are excluded here and left to recipe
+# fixes plus rebuild.
+MISSING_PYBIND11_ABI_VERSION_RANGES = {
+    "contourpy": ("1.0.5", "1.3.3"),
+    "ctranslate2": ("4.7.1", "4.7.1"),
+    "cvxpy": ("1.7.2", "1.8.2"),
+    "cvxpy-base": ("1.7.2", "1.8.2"),
+    "dm-tree": ("0.1.5", "0.1.10"),
+    "duckdb": ("1.2.1", "1.4.3"),
+    "google-re2": ("1.1.20251105", "1.1.20251105"),
+    "highspy": ("1.13.1", "1.13.1"),
+    "iminuit": ("1.2", "2.31.3"),
+    "matplotlib": ("2.0.2", "3.10.9"),
+    "matplotlib-base": ("3.1.2", "3.10.9"),
+    "nmslib": ("2.1.1", "2.1.1"),
+    "onnx": ("1.10.2", "1.20.1"),
+    "onnxruntime": ("1.12.1", "1.24.4"),
+    "onnxruntime-novec": ("1.12.1", "1.24.4"),
+    "optree": ("0.12.1", "0.18.0"),
+    "osqp": ("0.6.3", "1.1.1"),
+    "phik": ("0.10.0", "0.12.5"),
+    "pillow": ("4.2.1", "12.2.0"),
+    "pyamg": ("3.3.2", "5.3.0"),
+    "python-duckdb": ("1.2.1", "1.4.3"),
+    "pytorch": ("0.2.0", "2.11.0"),
+    "qdldl-python": ("0.1.7", "0.1.7.post5"),
+    "scikit-build-core": ("0.6.1", "0.12.2"),
+    "scipy": ("0.19.1", "1.17.1"),
+    "tensorflow": ("1.4.1", "2.21.0"),
+    "tensorflow-base": ("1.4.1", "2.21.0"),
+    "torchaudio": ("2.5.1", "2.10.0"),
+    "torchvision": ("0.2.0", "0.26.0"),
+    "triton": ("3.1.0", "3.6.0"),
+    "whylogs-sketching": ("3.4.1.dev3", "3.4.1.dev3"),
+}
+
+
+def _infer_pybind11_abi(record, subdir):
+    """Return "4", "5", or None if undetermined.
+
+    Determination order:
+      1. Windows always uses ABI 5 (MSVC branch in pybind11).
+      2. Build string contains py3XX -> use that Python minor version.
+      3. depends contains a `python 3.X.*` constraint -> use that.
+      4. Otherwise undetermined (pure C++ output, e.g. libtorch).
+    """
+    if subdir.startswith("win-"):
+        return "5"
+    build = record.get("build", "") or ""
+    m = re.search(r"py3(\d+)", build)
+    if m:
+        return "5" if int(m.group(1)) >= 12 else "4"
+    for dep in record.get("depends", []) or []:
+        dm = re.match(r"^python\s+3\.(\d+)", str(dep))
+        if dm:
+            return "5" if int(dm.group(1)) >= 12 else "4"
+    return None
+
 
 def apply_numpy2_changes(record, subdir, filename):
     """
@@ -708,6 +775,19 @@ def patch_record_in_place(fn, record, subdir):
         and not any(dep.split()[0] == "__cuda" for dep in depends if dep)
     ):
         depends.append("__cuda")
+
+    # https://anaconda.atlassian.net/browse/PKG-13552
+    # add pybind11-abi to packages built with pybind11 that don't declare it,
+    # so they will not be silently mixed with pybind11 v3 (ABI 6).
+    version_range = MISSING_PYBIND11_ABI_VERSION_RANGES.get(name)
+    if (
+        version_range is not None
+        and VersionOrder(version_range[0]) <= VersionOrder(version) <= VersionOrder(version_range[1])
+        and not any(dep.split()[0] == "pybind11-abi" for dep in depends if dep)
+    ):
+        abi = _infer_pybind11_abi(record, subdir)
+        if abi is not None:
+            depends.append(f"pybind11-abi =={abi}")
 
     #######
     # MKL #
