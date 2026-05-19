@@ -368,7 +368,7 @@ MISSING_PYBIND11_ABI_VERSION_RANGES = {
     "tensorflow-base": ("1.4.1", "2.21.0"),
     "torchaudio": ("2.5.1", "2.10.0"),
     "torchvision": ("0.2.0", "0.26.0"),
-    "triton": ("3.1.0", "3.6.0"),
+    "triton": ("3.1.0", "3.7.0"),
     "whylogs-sketching": ("3.4.1.dev3", "3.4.1.dev3"),
 }
 
@@ -778,7 +778,7 @@ def patch_record_in_place(fn, record, subdir):
 
     # https://anaconda.atlassian.net/browse/PKG-13552
     # add pybind11-abi to packages built with pybind11 that don't declare it,
-    # so they will not be silently mixed with pybind11 v3 (ABI 6).
+    # so they will not be silently mixed with pybind11 v3 (ABI 11).
     version_range = MISSING_PYBIND11_ABI_VERSION_RANGES.get(name)
     if (
         version_range is not None
