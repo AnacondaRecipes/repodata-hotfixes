@@ -7,10 +7,6 @@ across package formats.
 
 from __future__ import annotations
 
-from collections import defaultdict
-
-import pytest
-
 from main import (
     _matches_pkg_pattern,
     _patch_repodata,

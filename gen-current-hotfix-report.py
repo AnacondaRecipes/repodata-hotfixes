@@ -305,7 +305,10 @@ if __name__ == "__main__":
             patch_instructions = json.load(f)
 
         summary_stats[subdir] = {
-            "package_changes": len(patch_instructions.get("packages", {})) + len(patch_instructions.get("packages.conda", {})),
+            "package_changes": (
+                len(patch_instructions.get("packages", {}))
+                + len(patch_instructions.get("packages.conda", {}))
+            ),
             "package_removals": len(patch_instructions["remove"]),
             "package_revokes": len(patch_instructions["revoke"]),
         }
