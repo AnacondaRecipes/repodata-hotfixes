@@ -95,62 +95,58 @@ def find_diffs(patch_instructions: dict, ref_data: dict, patched_data: dict) -> 
     Returns:
         dict: Dictionary contain only the differences between two libraries
     """
-    pi_packages = patch_instructions["packages"]
-    pi_remove_packages = patch_instructions["remove"]
-    rd_packages = ref_data["packages"]
-    patched_packages = patched_data["packages"]
-
     sd = {
         "packages": {},
+        "packages.conda": {},
         "patched_but_on_remove_list": [],
         "patch_instruction_on_nonexistent_package": [],
     }
 
-    sd["removed"] = [
-        prp for prp in pi_remove_packages if prp not in patched_packages.keys()
-    ]
-    sd["not_removed"] = [
-        prp for prp in pi_remove_packages if prp in patched_packages.keys()
-    ]
-    for package_name, pck in pi_packages.items():
-        try:
-            if package_name in pi_remove_packages:
-                sd["patched_but_on_remove_list"].append(package_name)
-            ref_pck = rd_packages[package_name]
-            pck_keys = set(pck.keys())
-            ref_pck_keys = set(ref_pck.keys())
-            common_keys = pck_keys & ref_pck_keys
-            new_keys = pck_keys - ref_pck_keys
-            changes = {}
-            # # This is new to original repo, so I can add the information straight across
-            new_and_common_keys = new_keys | common_keys
-            # There seems to be a few different mappings
-            # str->str, int->int, list->list and str->None
-            # We will map all single changes as a formatted strings <Ref Value> -> <New Value>
-            # For list to list we will only keep the differences
-            for k in sorted(new_and_common_keys):
-                ref_val = ref_pck[k] if k in ref_pck else ""
-                patch_val = pck[k]
-                if isinstance(patch_val, list):
-                    item_changes = {}
-                    if k in new_keys:
-                        # It's new so nothing exists here
-                        ref_items = set()
-                    else:
-                        ref_items = set(ref_val)
-                    patch_items = set(patch_val)
-                    new_or_modded_items = patch_items - ref_items
-                    removed_or_modded_items = ref_items - patch_items
-                    item_changes["src"] = list(removed_or_modded_items)
-                    item_changes["patch"] = list(new_or_modded_items)
-                    changes[k] = item_changes
-                else:
-                    changes[k] = f"{ref_val}->{patch_val}"
-            sd["packages"][package_name] = changes
+    pi_remove_packages = patch_instructions["remove"]
 
-        except KeyError:
-            # This should never occur but his here to assure that things are accounted for
-            sd["patch_instruction_on_nonexistent_package"].append(package_name)
+    for section in ("packages", "packages.conda"):
+        pi_packages = patch_instructions.get(section, {})
+        rd_packages = ref_data.get(section, {})
+        patched_packages = patched_data.get(section, {})
+
+        sd["removed"] = [
+            prp for prp in pi_remove_packages if prp not in patched_packages.keys()
+        ]
+        sd["not_removed"] = [
+            prp for prp in pi_remove_packages if prp in patched_packages.keys()
+        ]
+        for package_name, pck in pi_packages.items():
+            try:
+                if package_name in pi_remove_packages:
+                    sd["patched_but_on_remove_list"].append(package_name)
+                ref_pck = rd_packages[package_name]
+                pck_keys = set(pck.keys())
+                ref_pck_keys = set(ref_pck.keys())
+                common_keys = pck_keys & ref_pck_keys
+                new_keys = pck_keys - ref_pck_keys
+                changes = {}
+                new_and_common_keys = new_keys | common_keys
+                for k in sorted(new_and_common_keys):
+                    ref_val = ref_pck[k] if k in ref_pck else ""
+                    patch_val = pck[k]
+                    if isinstance(patch_val, list):
+                        item_changes = {}
+                        if k in new_keys:
+                            ref_items = set()
+                        else:
+                            ref_items = set(ref_val)
+                        patch_items = set(patch_val)
+                        new_or_modded_items = patch_items - ref_items
+                        removed_or_modded_items = ref_items - patch_items
+                        item_changes["src"] = list(removed_or_modded_items)
+                        item_changes["patch"] = list(new_or_modded_items)
+                        changes[k] = item_changes
+                    else:
+                        changes[k] = f"{ref_val}->{patch_val}"
+                sd[section][package_name] = changes
+
+            except KeyError:
+                sd["patch_instruction_on_nonexistent_package"].append(package_name)
     return sd
 
 
@@ -212,11 +208,13 @@ def generate_summary(summary_stats: dict, simplified_diffs: dict):
     )
     print("----------------")
     for subdir in subdirs:
-        subdir_unnecessary_patches = [
-            pkg
-            for pkg, pkg_info in simplified_diffs[subdir]["packages"].items()
-            if not _has_change(pkg_info)
-        ]
+        subdir_unnecessary_patches = []
+        for section in ("packages", "packages.conda"):
+            subdir_unnecessary_patches.extend(
+                pkg
+                for pkg, pkg_info in simplified_diffs[subdir].get(section, {}).items()
+                if not _has_change(pkg_info)
+            )
         if subdir_unnecessary_patches:
             print(f"For {subdir}:")
             for pkg in subdir_unnecessary_patches:
@@ -307,7 +305,7 @@ if __name__ == "__main__":
             patch_instructions = json.load(f)
 
         summary_stats[subdir] = {
-            "package_changes": len(patch_instructions["packages"]),
+            "package_changes": len(patch_instructions.get("packages", {})) + len(patch_instructions.get("packages.conda", {})),
             "package_removals": len(patch_instructions["remove"]),
             "package_revokes": len(patch_instructions["revoke"]),
         }
@@ -339,13 +337,14 @@ if __name__ == "__main__":
 
     changes_dict = defaultdict(set)
     for subdir in subdirs:
-        for pkg, chg_dict in simplified_diffs[subdir]["packages"].items():
-            for change_key, changes in chg_dict.items():
-                if isinstance(changes, dict):
-                    for change_item in changes["patch"]:
-                        changes_dict[(change_key, f"->{change_item}")].add(pkg)
-                else:
-                    changes_dict[(change_key, changes)].add(pkg)
+        for section in ("packages", "packages.conda"):
+            for pkg, chg_dict in simplified_diffs[subdir].get(section, {}).items():
+                for change_key, changes in chg_dict.items():
+                    if isinstance(changes, dict):
+                        for change_item in changes["patch"]:
+                            changes_dict[(change_key, f"->{change_item}")].add(pkg)
+                    else:
+                        changes_dict[(change_key, changes)].add(pkg)
 
     with open(f"{channel}_changes.tsv", "w") as f:
         f.write("change_key\tchange\tpackage\n")

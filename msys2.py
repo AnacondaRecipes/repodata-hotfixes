@@ -1,3 +1,4 @@
+import fnmatch
 import json
 import os
 import sys
@@ -8,6 +9,7 @@ import requests
 
 CHANNEL_NAME = "pro"
 CHANNEL_ALIAS = "https://repo.anaconda.com/pkgs"
+PACKAGE_FORMAT_KEYS = ("packages", "packages.conda")
 SUBDIRS = (
     "noarch",
     "linux-32",
@@ -52,10 +54,10 @@ NAMESPACE_OVERRIDES = {
 
 
 def _patch_repodata(repodata, subdir):
-    index = repodata["packages"]
     instructions = {
         "patch_instructions_version": 1,
         "packages": defaultdict(dict),
+        "packages.conda": defaultdict(dict),
         "revoke": [],
         "remove": [],
     }
@@ -65,26 +67,28 @@ def _patch_repodata(repodata, subdir):
     if subdir == "noarch":
         instructions["external_dependencies"] = EXTERNAL_DEPENDENCIES
 
-    def rename_dependency(fn, record, old_name, new_name):
-        depends = record["depends"]
-        dep_idx = next(
-            (q for q, dep in enumerate(depends) if dep.split(' ')[0] == old_name),
-            None
-        )
-        if dep_idx:
-            parts = depends[dep_idx].split(" ")
-            remainder = (" " + " ".join(parts[1:])) if len(parts) > 1 else ""
-            depends[dep_idx] = new_name + remainder
-            instructions["packages"][fn]['depends'] = depends
+    for repo_key in PACKAGE_FORMAT_KEYS:
+        index = repodata.get(repo_key, {})
+        pkg_instructions = instructions[repo_key]
 
-    for fn, record in index.items():
-        record_name = record["name"]
-        if record_name in NAMESPACE_IN_NAME_SET and not record.get('namespace_in_name'):
-            # set the namespace_in_name field
-            instructions["packages"][fn]['namespace_in_name'] = True
-        if NAMESPACE_OVERRIDES.get(record_name):
-            # explicitly set namespace
-            instructions["packages"][fn]['namespace'] = NAMESPACE_OVERRIDES[record_name]
+        def rename_dependency(fn, record, old_name, new_name):
+            depends = record["depends"]
+            dep_idx = next(
+                (q for q, dep in enumerate(depends) if dep.split(' ')[0] == old_name),
+                None
+            )
+            if dep_idx:
+                parts = depends[dep_idx].split(" ")
+                remainder = (" " + " ".join(parts[1:])) if len(parts) > 1 else ""
+                depends[dep_idx] = new_name + remainder
+                pkg_instructions[fn]['depends'] = depends
+
+        for fn, record in index.items():
+            record_name = record["name"]
+            if record_name in NAMESPACE_IN_NAME_SET and not record.get('namespace_in_name'):
+                pkg_instructions[fn]['namespace_in_name'] = True
+            if NAMESPACE_OVERRIDES.get(record_name):
+                pkg_instructions[fn]['namespace'] = NAMESPACE_OVERRIDES[record_name]
 
     return instructions
 

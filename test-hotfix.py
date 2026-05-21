@@ -46,30 +46,31 @@ def show_pkgs(subdir, ref_repodata_file, patched_repodata_file):
     with open(patched_repodata_file) as f:
         patched_repodata = json.load(f)
 
-    ref_pkgs = set(reference_repodata["packages"].keys())
-    patched_pkgs = set(patched_repodata["packages"].keys())
+    for section in ("packages", "packages.conda"):
+        ref_pkgs = set(reference_repodata.get(section, {}).keys())
+        patched_pkgs = set(patched_repodata.get(section, {}).keys())
 
-    # Removed packages
-    for name in sorted(ref_pkgs - patched_pkgs):
-        print(f"{subdir}::{name} [REMOVED]")
+        # Removed packages
+        for name in sorted(ref_pkgs - patched_pkgs):
+            print(f"{subdir}::{name} [REMOVED]")
 
-    # Added packages
-    for name in sorted(patched_pkgs - ref_pkgs):
-        print(f"{subdir}::{name} [ADDED]")
+        # Added packages
+        for name in sorted(patched_pkgs - ref_pkgs):
+            print(f"{subdir}::{name} [ADDED]")
 
-    # Modified packages
-    for name in sorted(ref_pkgs & patched_pkgs):
-        ref_pkg = reference_repodata["packages"][name]
-        new_pkg = patched_repodata["packages"][name]
-        if ref_pkg == new_pkg:
-            continue
-        print(f"{subdir}::{name}")
-        ref_lines = json.dumps(ref_pkg, indent=2).splitlines()
-        new_lines = json.dumps(new_pkg, indent=2).splitlines()
-        for line in difflib.unified_diff(ref_lines, new_lines, n=0, lineterm=''):
-            if line.startswith('+++') or line.startswith('---') or line.startswith('@@'):
+        # Modified packages
+        for name in sorted(ref_pkgs & patched_pkgs):
+            ref_pkg = reference_repodata[section][name]
+            new_pkg = patched_repodata[section][name]
+            if ref_pkg == new_pkg:
                 continue
-            print(line)
+            print(f"{subdir}::{name}")
+            ref_lines = json.dumps(ref_pkg, indent=2).splitlines()
+            new_lines = json.dumps(new_pkg, indent=2).splitlines()
+            for line in difflib.unified_diff(ref_lines, new_lines, n=0, lineterm=''):
+                if line.startswith('+++') or line.startswith('---') or line.startswith('@@'):
+                    continue
+                print(line)
 
 
 if __name__ == "__main__":
