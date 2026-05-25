@@ -408,6 +408,11 @@ def apply_numpy2_changes(record, subdir, filename):
         return
 
     change = NUMPY_2_CHANGES[subdir].get(filename)
+    # numpy2_patch.json is keyed by .tar.bz2 filenames; look up by equivalent
+    # .tar.bz2 name when processing a .conda entry.
+    if change is None and filename.endswith('.conda'):
+        tar_filename = filename[:-6] + '.tar.bz2'
+        change = NUMPY_2_CHANGES[subdir].get(tar_filename)
     if change:
         replace_dep(record[change["type"]], change["original"], change["updated"])
 
@@ -717,7 +722,7 @@ def patch_record(fn, record, subdir, pkg_instructions, index):
     # set the build_number of the blas-1.0-openblas.tar.bz2 package
     # to 7 to match the package in free
     # https://github.com/conda/conda/issues/8302
-    if subdir == "linux-ppc64le" and fn == "blas-1.0-openblas.tar.bz2":
+    if subdir == "linux-ppc64le" and _strip_pkg_ext(fn)[0] == "blas-1.0-openblas":
         pkg_instructions[fn]["build_number"] = 7
 
 
@@ -773,7 +778,7 @@ def patch_record_in_place(fn, record, subdir):
             depends[i] = CUDATK_SUBS[dep] if dep in CUDATK_SUBS else dep
 
     # depends in package is set as cudatoolkit 9.*, should be 9.0.*
-    if fn == "cupti-9.0.176-0.tar.bz2":
+    if _strip_pkg_ext(fn)[0] == "cupti-9.0.176-0":
         replace_dep(depends, "cudatoolkit 9.*", "cudatoolkit 9.0.*")
 
     # documentation on cudnn versions before 8.5.0 is now unavailable.
@@ -1413,16 +1418,17 @@ def patch_record_in_place(fn, record, subdir):
 
     # three pyqt packages were built against sip 4.19.13
     # first filename is linux-64, second is win-64 and win-32
-    if fn in ["pyqt-5.9.2-py38h05f1152_4.tar.bz2", "pyqt-5.9.2-py38ha925a31_4.tar.bz2"]:
+    fn_stem, _ = _strip_pkg_ext(fn)
+    if fn_stem in ["pyqt-5.9.2-py38h05f1152_4", "pyqt-5.9.2-py38ha925a31_4"]:
         sip_index = [dep.startswith("sip") for dep in depends].index(True)
         depends[sip_index] = "sip >=4.19.13,<=4.19.14"
 
-    if fn == "dask-2.7.0-py_0.tar.bz2":
+    if _strip_pkg_ext(fn)[0] == "dask-2.7.0-py_0":
         for i, dep in enumerate(depends):
             if dep.startswith("python "):
                 depends[i] = "python >=3.6"
 
-    if fn == "dask-core-2.7.0-py_0.tar.bz2":
+    if _strip_pkg_ext(fn)[0] == "dask-core-2.7.0-py_0":
         depends[:] = ["python >=3.6"]
 
     if name == "dask-core" and version == "2021.3.1" and build_number == 0:
@@ -1574,7 +1580,7 @@ def patch_record_in_place(fn, record, subdir):
 
     # package found the freetype library in the build enviroment rather than
     # host but used the host run_export: freetype >=2.9.1,<3.0a0
-    if subdir == "osx-64" and fn == "harfbuzz-2.4.0-h831d699_0.tar.bz2":
+    if subdir == "osx-64" and _strip_pkg_ext(fn)[0] == "harfbuzz-2.4.0-h831d699_0":
         replace_dep(depends, "freetype >=2.9.1,<3.0a0", "freetype >=2.10.2,<3.0a0")
 
     # sympy 1.6 and 1.6.1 are missing fastcache and gmpy2 depends
