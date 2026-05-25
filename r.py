@@ -10,7 +10,7 @@ import requests
 
 CHANNEL_NAME = "r"
 CHANNEL_ALIAS = "https://repo.anaconda.com/pkgs"
-PACKAGE_FORMAT_KEYS = ("packages", "packages.conda")
+
 SUBDIRS = (
     "noarch",
     "linux-32",
@@ -168,9 +168,19 @@ def _patch_repodata(repodata, subdir):
     if subdir == "noarch":
         instructions["external_dependencies"] = EXTERNAL_DEPENDENCIES
 
-    for repo_key in PACKAGE_FORMAT_KEYS:
-        index = repodata.get(repo_key, {})
-        pkg_instructions = instructions[repo_key]
+    tar_index = repodata.get("packages", {})
+    conda_index = repodata.get("packages.conda", {})
+    tar_stems = {fn[:-8] for fn in tar_index}
+
+    # Patch .tar.bz2 entries — conda-index auto-translates these to .conda.
+    # Then patch .conda-only entries (no .tar.bz2 counterpart) directly.
+    entries_to_patch = [
+        (tar_index, instructions["packages"]),
+        ({fn: r for fn, r in conda_index.items() if fn[:-6] not in tar_stems},
+         instructions["packages.conda"]),
+    ]
+
+    for index, pkg_instructions in entries_to_patch:
 
         def rename_dependency(fn, record, old_name, new_name):
             depends = record["depends"]
@@ -290,6 +300,15 @@ def _patch_repodata(repodata, subdir):
                 depends = [fix_glib_dep(dep) for dep in record_depends]
                 if depends != record_depends:
                     pkg_instructions[fn]["depends"] = depends
+
+    instructions["revoke"] = [
+        fn for fn in instructions["revoke"]
+        if not (fn.endswith('.conda') and fn[:-6] in tar_stems)
+    ]
+    instructions["remove"] = [
+        fn for fn in instructions["remove"]
+        if not (fn.endswith('.conda') and fn[:-6] in tar_stems)
+    ]
 
     return instructions
 

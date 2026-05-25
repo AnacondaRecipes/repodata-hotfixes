@@ -14,7 +14,7 @@ import requests
 
 CHANNEL_NAME = "main"
 CHANNEL_ALIAS = "https://repo.anaconda.com/pkgs"
-PACKAGE_FORMAT_KEYS = ("packages", "packages.conda")
+
 SUBDIRS = (
     "noarch",
     "linux-32",
@@ -628,17 +628,29 @@ def _patch_repodata(repodata, subdir):
             "msys2-conda-epoch": "global:msys2-conda-epoch",  # anaconda
         }
 
-    for repo_key in PACKAGE_FORMAT_KEYS:
-        index = repodata.get(repo_key, {})
-        pkg_instructions = instructions[repo_key]
+    tar_index = repodata.get("packages", {})
+    conda_index = repodata.get("packages.conda", {})
+    tar_stems = {fn[:-8] for fn in tar_index}
 
-        for fn, record in index.items():
-            if is_revoked(fn, subdir):
-                instructions["revoke"].append(fn)
-            if is_removed(fn, subdir):
-                instructions["remove"].append(fn)
-            _apply_namespace_overrides(fn, record, pkg_instructions)
-            patch_record(fn, record, subdir, pkg_instructions, index)
+    # Patch .tar.bz2 entries — conda-index auto-translates these to .conda
+    for fn, record in tar_index.items():
+        if is_revoked(fn, subdir):
+            instructions["revoke"].append(fn)
+        if is_removed(fn, subdir):
+            instructions["remove"].append(fn)
+        _apply_namespace_overrides(fn, record, instructions["packages"])
+        patch_record(fn, record, subdir, instructions["packages"], tar_index)
+
+    # Patch .conda-only entries (no .tar.bz2 counterpart) directly
+    for fn, record in conda_index.items():
+        if fn[:-6] in tar_stems:
+            continue
+        if is_revoked(fn, subdir):
+            instructions["revoke"].append(fn)
+        if is_removed(fn, subdir):
+            instructions["remove"].append(fn)
+        _apply_namespace_overrides(fn, record, instructions["packages.conda"])
+        patch_record(fn, record, subdir, instructions["packages.conda"], conda_index)
 
     instructions["remove"].sort()
     instructions["revoke"].sort()
