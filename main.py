@@ -338,38 +338,25 @@ MISSING_CUDA_VIRTUAL_PACKAGE_VERSION_RANGES = {
 # Pure C++ outputs (no python dep, e.g. libtorch) cannot have ABI inferred
 # from the build string alone; they are excluded here and left to recipe
 # fixes plus rebuild.
+# Only outputs that exchange pybind11-wrapped C++ types across module boundaries
+# need the abi pin — different-ABI extensions otherwise coexist safely via
+# separate per-DSO internals capsules (see PKG-13552 hotfix-scope analysis).
+# Ecosystems retained here:
+#   - pytorch family: pytorch, torchvision, torchaudio, triton
+#   - onnx family:    onnx, onnxruntime (+novec variant)
+#   - cvxpy family:   cvxpy(-base), osqp, qdldl-python
 MISSING_PYBIND11_ABI_VERSION_RANGES = {
-    "contourpy": ("1.0.5", "1.3.3"),
-    "ctranslate2": ("4.7.1", "4.7.1"),
     "cvxpy": ("1.7.2", "1.8.2"),
     "cvxpy-base": ("1.7.2", "1.8.2"),
-    "dm-tree": ("0.1.5", "0.1.10"),
-    "duckdb": ("1.2.1", "1.4.3"),
-    "google-re2": ("1.1.20251105", "1.1.20251105"),
-    "highspy": ("1.13.1", "1.13.1"),
-    "iminuit": ("1.2", "2.31.3"),
-    "matplotlib": ("2.0.2", "3.10.9"),
-    "matplotlib-base": ("3.1.2", "3.10.9"),
-    "nmslib": ("2.1.1", "2.1.1"),
     "onnx": ("1.10.2", "1.20.1"),
     "onnxruntime": ("1.12.1", "1.24.4"),
     "onnxruntime-novec": ("1.12.1", "1.24.4"),
-    "optree": ("0.12.1", "0.18.0"),
     "osqp": ("0.6.3", "1.1.1"),
-    "phik": ("0.10.0", "0.12.5"),
-    "pillow": ("4.2.1", "12.2.0"),
-    "pyamg": ("3.3.2", "5.3.0"),
-    "python-duckdb": ("1.2.1", "1.4.3"),
     "pytorch": ("0.2.0", "2.11.0"),
     "qdldl-python": ("0.1.7", "0.1.7.post5"),
-    "scikit-build-core": ("0.6.1", "0.12.2"),
-    "scipy": ("0.19.1", "1.17.1"),
-    "tensorflow": ("1.4.1", "2.21.0"),
-    "tensorflow-base": ("1.4.1", "2.21.0"),
     "torchaudio": ("2.5.1", "2.10.0"),
     "torchvision": ("0.2.0", "0.26.0"),
     "triton": ("3.1.0", "3.7.0"),
-    "whylogs-sketching": ("3.4.1.dev3", "3.4.1.dev3"),
 }
 
 
