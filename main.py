@@ -341,22 +341,22 @@ MISSING_CUDA_VIRTUAL_PACKAGE_VERSION_RANGES = {
 # Only outputs that exchange pybind11-wrapped C++ types across module boundaries
 # need the abi pin — different-ABI extensions otherwise coexist safely via
 # separate per-DSO internals capsules (see PKG-13552 hotfix-scope analysis).
-# Ecosystems retained here:
+# Sole retained ecosystem:
 #   - pytorch family: pytorch, torchvision, torchaudio, triton
-#   - cvxpy family:   cvxpy(-base), osqp, qdldl-python
 #
-# onnx + onnxruntime were dropped (2026-05-27): onnx 1.20.x migrated to
-# nanobind (not pybind11) and onnxruntime vendors pybind11 v3.0.2 (ABI 11)
-# regardless of the system dep. Their cross-module interop goes via protobuf
-# serialization, not via pybind11 type-casters, so the abi pin is unnecessary
-# and was actively wrong (injected ==4/5 onto packages that have ABI 11 or no
-# pybind11 footprint at all).
+# Dropped on 2026-05-27 after upstream code-level verification:
+#   - onnx 1.20.x — migrated to nanobind 2.8.0; no pybind11 footprint at all.
+#   - onnxruntime / onnxruntime-novec — vendors pybind11 v3.0.2 (ABI 11)
+#     regardless of system dep; interop with onnx goes via protobuf, not
+#     pybind11 type-casters.
+#   - cvxpy / cvxpy-base — only pybind11 use is sparsecholesky, which exposes
+#     a free function (m.def) returning std::vector — no py::class_ types.
+#   - osqp — every pybind11 class is declared py::module_local() (explicit
+#     "do not share across modules"). cvxpy↔osqp interop is via scipy.sparse.
+#   - qdldl-python — exports a single PySolver class whose C++ definition is
+#     not shared (no public headers); other modules can't legitimately bind it.
 MISSING_PYBIND11_ABI_VERSION_RANGES = {
-    "cvxpy": ("1.7.2", "1.8.2"),
-    "cvxpy-base": ("1.7.2", "1.8.2"),
-    "osqp": ("0.6.3", "1.1.1"),
     "pytorch": ("0.2.0", "2.11.0"),
-    "qdldl-python": ("0.1.7", "0.1.7.post5"),
     "torchaudio": ("2.5.1", "2.10.0"),
     "torchvision": ("0.2.0", "0.26.0"),
     "triton": ("3.1.0", "3.7.0"),
