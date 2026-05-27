@@ -1331,6 +1331,15 @@ def patch_record_in_place(fn, record, subdir):
         if dep.startswith("libcurl >=7.") or dep.startswith("curl >=7."):
             depends[i] = dep.split(",")[0] + ",<9.0a0"
 
+    # https://anaconda.atlassian.net/browse/PKG-13856
+    # utf8proc 2.9.0 ABI break (soname changed from libutf8proc.so.2 to libutf8proc.so.3).
+    # Packages built before the 2.11.3 release on defaults must not pull utf8proc >=2.9.0.
+    if record.get("timestamp", 0) < 1779840000000:  # 2026-05-27T00:00:00Z
+        replace_dep(depends, "utf8proc", "utf8proc <2.9.0")
+        replace_dep(depends, "utf8proc >=2.6.1,<3.0a0", "utf8proc >=2.6.1,<2.9.0")
+        replace_dep(depends, "libutf8proc", "libutf8proc <2.9.0")
+        replace_dep(depends, "libutf8proc >=2.6.1,<3.0a0", "libutf8proc >=2.6.1,<2.9.0")
+
     # libffi broke ABI compatibility in 3.3
     if name not in LIBFFI_HOTFIX_EXCLUDES and (
         "libffi >=3.2.1,<4.0a0" in depends or "libffi" in depends
