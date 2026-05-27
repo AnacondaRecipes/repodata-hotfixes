@@ -1334,6 +1334,8 @@ def patch_record_in_place(fn, record, subdir):
     if record.get("timestamp", 0) < 1779840000000:  # 2026-05-27T00:00:00Z
         replace_dep(depends, "utf8proc", "utf8proc <2.9.0")
         replace_dep(depends, "utf8proc >=2.6.1,<3.0a0", "utf8proc >=2.6.1,<2.9.0")
+        replace_dep(depends, "libutf8proc", "libutf8proc <2.9.0")
+        replace_dep(depends, "libutf8proc >=2.6.1,<3.0a0", "libutf8proc >=2.6.1,<2.9.0")
 
     # libffi broke ABI compatibility in 3.3
     if name not in LIBFFI_HOTFIX_EXCLUDES and (
