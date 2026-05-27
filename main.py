@@ -1329,7 +1329,7 @@ def patch_record_in_place(fn, record, subdir):
             depends[i] = dep.split(",")[0] + ",<9.0a0"
 
     # https://anaconda.atlassian.net/browse/PKG-13856
-    # utf8proc 2.9.0 ABI break (soname changed from libutf8proc.so.2 to libutf8proc.so.3). 
+    # utf8proc 2.9.0 ABI break (soname changed from libutf8proc.so.2 to libutf8proc.so.3).
     # Packages built before the 2.11.3 release on defaults must not pull utf8proc >=2.9.0.
     if record.get("timestamp", 0) < 1779840000000:  # 2026-05-27T00:00:00Z
         replace_dep(depends, "utf8proc", "utf8proc <2.9.0")
