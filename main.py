@@ -343,14 +343,17 @@ MISSING_CUDA_VIRTUAL_PACKAGE_VERSION_RANGES = {
 # separate per-DSO internals capsules (see PKG-13552 hotfix-scope analysis).
 # Ecosystems retained here:
 #   - pytorch family: pytorch, torchvision, torchaudio, triton
-#   - onnx family:    onnx, onnxruntime (+novec variant)
 #   - cvxpy family:   cvxpy(-base), osqp, qdldl-python
+#
+# onnx + onnxruntime were dropped (2026-05-27): onnx 1.20.x migrated to
+# nanobind (not pybind11) and onnxruntime vendors pybind11 v3.0.2 (ABI 11)
+# regardless of the system dep. Their cross-module interop goes via protobuf
+# serialization, not via pybind11 type-casters, so the abi pin is unnecessary
+# and was actively wrong (injected ==4/5 onto packages that have ABI 11 or no
+# pybind11 footprint at all).
 MISSING_PYBIND11_ABI_VERSION_RANGES = {
     "cvxpy": ("1.7.2", "1.8.2"),
     "cvxpy-base": ("1.7.2", "1.8.2"),
-    "onnx": ("1.10.2", "1.20.1"),
-    "onnxruntime": ("1.12.1", "1.24.4"),
-    "onnxruntime-novec": ("1.12.1", "1.24.4"),
     "osqp": ("0.6.3", "1.1.1"),
     "pytorch": ("0.2.0", "2.11.0"),
     "qdldl-python": ("0.1.7", "0.1.7.post5"),

@@ -135,15 +135,15 @@ def _make_record(name: str, version: str, build: str, depends: list[str]) -> dic
     ['name', 'version', 'build', 'subdir', 'depends', 'expected_abi'],
     [
         # Real records the PR description manually verified
-        pytest.param('onnxruntime', '1.24.4', 'py313h0000000_0', 'linux-64',
+        pytest.param('cvxpy', '1.8.2', 'py313h0000000_0', 'linux-64',
                      ['python 3.13.*', 'numpy'], '5',
-                     id='onnxruntime_py313_linux64'),
-        pytest.param('onnxruntime', '1.24.4', 'py311h0000000_0', 'linux-64',
+                     id='cvxpy_py313_linux64'),
+        pytest.param('cvxpy', '1.8.2', 'py311h0000000_0', 'linux-64',
                      ['python 3.11.*', 'numpy'], '4',
-                     id='onnxruntime_py311_linux64'),
-        pytest.param('onnxruntime', '1.24.4', 'py311h0000000_0', 'win-64',
+                     id='cvxpy_py311_linux64'),
+        pytest.param('cvxpy', '1.8.2', 'py311h0000000_0', 'win-64',
                      ['python 3.11.*', 'numpy'], '5',
-                     id='onnxruntime_py311_win64_msvc'),
+                     id='cvxpy_py311_win64_msvc'),
         pytest.param('cvxpy-base', '1.8.2', 'py310h0000000_0', 'osx-arm64',
                      ['python 3.10.*'], '4',
                      id='cvxpy_base_py310_osx_arm64'),
@@ -172,9 +172,9 @@ def test_patched_records_gain_pybind11_abi(
 
 def test_idempotent_when_pybind11_abi_already_present() -> None:
     """Records that already declare pybind11-abi (e.g. mamba pattern) are untouched."""
-    record = _make_record('onnxruntime', '1.24.4', 'py313h0000000_0',
+    record = _make_record('cvxpy', '1.8.2', 'py313h0000000_0',
                           ['python 3.13.*', 'numpy', 'pybind11-abi ==5'])
-    patch_record_in_place('onnxruntime-1.24.4-py313h0000000_0.conda', record, 'linux-64')
+    patch_record_in_place('cvxpy-1.8.2-py313h0000000_0.conda', record, 'linux-64')
     # exactly one pybind11-abi entry, original preserved
     abi_deps = [d for d in record['depends'] if d.split()[0] == 'pybind11-abi']
     assert abi_deps == ['pybind11-abi ==5']
