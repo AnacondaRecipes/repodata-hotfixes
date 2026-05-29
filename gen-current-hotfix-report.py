@@ -103,18 +103,19 @@ def find_diffs(patch_instructions: dict, ref_data: dict, patched_data: dict) -> 
     }
 
     pi_remove_packages = patch_instructions["remove"]
+    all_patched_keys = set(patched_data.get("packages", {})) | set(
+        patched_data.get("packages.conda", {})
+    )
+    sd["removed"] = [
+        prp for prp in pi_remove_packages if prp not in all_patched_keys
+    ]
+    sd["not_removed"] = [
+        prp for prp in pi_remove_packages if prp in all_patched_keys
+    ]
 
     for section in ("packages", "packages.conda"):
         pi_packages = patch_instructions.get(section, {})
         rd_packages = ref_data.get(section, {})
-        patched_packages = patched_data.get(section, {})
-
-        sd["removed"] = [
-            prp for prp in pi_remove_packages if prp not in patched_packages.keys()
-        ]
-        sd["not_removed"] = [
-            prp for prp in pi_remove_packages if prp in patched_packages.keys()
-        ]
         for package_name, pck in pi_packages.items():
             try:
                 if package_name in pi_remove_packages:

@@ -86,6 +86,27 @@ class TestPatchRepodataCondaFormat:
         assert "depends" in tk_fix
         assert "zlib >=1.2.13,<2.0.0a0" in tk_fix["depends"]
 
+    def test_dual_format_patches_tar_bz2_only(self):
+        """When both formats exist, patch .tar.bz2; conda-index mirrors to .conda."""
+        pkg = "tk-8.6.15-h54e0aa7_0"
+        record = {
+            "name": "tk",
+            "version": "8.6.15",
+            "build": "h54e0aa7_0",
+            "build_number": 0,
+            "depends": ["zlib >=1.2.13,<1.3.0a0"],
+            "subdir": "linux-64",
+        }
+        repodata = self._make_repodata(
+            tar_bz2_records={f"{pkg}.tar.bz2": record},
+            conda_records={f"{pkg}.conda": dict(record)},
+        )
+        instructions = _patch_repodata(repodata, "linux-64")
+        tar_fix = instructions["packages"].get(f"{pkg}.tar.bz2", {})
+        assert "depends" in tar_fix
+        assert "zlib >=1.2.13,<2.0.0a0" in tar_fix["depends"]
+        assert f"{pkg}.conda" not in instructions["packages.conda"]
+
     def test_instructions_has_both_buckets(self):
         repodata = self._make_repodata()
         instructions = _patch_repodata(repodata, "linux-64")
