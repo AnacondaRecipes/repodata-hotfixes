@@ -1387,6 +1387,12 @@ def patch_record_in_place(fn, record, subdir):
         sip_index = [dep.startswith("sip") for dep in depends].index(True)
         depends[sip_index] = "sip >=4.19.13,<=4.19.14"
 
+    # pip 26.1+ wheels require Python >=3.10 (PyPI has no upper bound); channel metadata
+    # incorrectly says >=3.9 and caps at <3.14.0a0
+    # https://github.com/pypa/pip/issues/14024
+    if name == "pip" and version == "26.1.1" and build.startswith("pyhc872135"):
+        replace_dep(depends, "python >=3.9,<3.14.0a0", "python >=3.10")
+
     if fn == "dask-2.7.0-py_0.tar.bz2":
         for i, dep in enumerate(depends):
             if dep.startswith("python "):
