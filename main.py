@@ -149,6 +149,10 @@ REVOKED = {
         # doesn't specify dependency on openssl, whereas it should
         "libssh2 1.8.0 h1218725_2",
     ],
+    "osx-arm64": [
+        # libtorch 2.11.0 build 201 gpu_mps artifacts are corrupted.
+        "libtorch-2.11.0-gpu_mps_h4371db2_201.*",
+    ],
     "win-32": [
         "spyder-kernels-1.0.1-*_0",
     ],
