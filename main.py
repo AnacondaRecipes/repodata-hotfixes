@@ -171,6 +171,9 @@ REVOKED = {
         "spyder-5.5.1-*_2.*",
         # anaconda-cli-base-0.4.1 build number 0 has missing run_constrained requirements
         "anaconda-cli-base-0.4.1-*_0.*",
+        # langgraph 1.0.7 builds 0 and 1 are missing depedency pinnings. Fixed in build 2
+        "langgraph-1.0.7-*_0.*",
+        "langgraph-1.0.7-*_1.*",
     ],
 }
 
