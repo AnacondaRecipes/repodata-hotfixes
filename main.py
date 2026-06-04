@@ -2113,6 +2113,14 @@ def patch_record_in_place(fn, record, subdir):
         replace_dep(depends, "rhash >=1.4.1,<2.0a0", "rhash >=1.4.1,<1.4.4a0")
         replace_dep(depends, "rhash >=1.4.3,<2.0a0", "rhash >=1.4.3,<1.4.4a0")
 
+    ##########################
+    # ob-metaflow-extensions #
+    ##########################
+
+    # https://github.com/outerbounds/ob-packages/issues/900
+    if name == "ob-metaflow-extensions":
+        replace_dep(depends, "python-kubernetes", "python-kubernetes !=36.0.0,!=36.0.1")
+
 
 def replace_dep(depends, old, new, *, append=False):
     """
