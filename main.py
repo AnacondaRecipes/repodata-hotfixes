@@ -1151,6 +1151,11 @@ def patch_record_in_place(fn, record, subdir):
         if not any(d.startswith("openssl") for d in depends):
             depends.append("openssl >=3.0.18,<4.0a0")
 
+    # python-jose is unmaintained and incompatible with cryptography >=48
+    # (removed deprecated APIs that python-jose relies on)
+    if name == "python-jose":
+        replace_dep(depends, "cryptography >=3.4.0", "cryptography >=3.4.0,<48")
+
     # intel-openmp requires newer glibc.
     if name == "intel-openmp" and version == "2025.0.0":
         replace_dep(constrains, "__glibc >=2.17", "__glibc >=2.26")
