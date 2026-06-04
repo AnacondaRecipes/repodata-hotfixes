@@ -345,6 +345,10 @@ MISSING_CUDA_VIRTUAL_PACKAGE_VERSION_RANGES = {
     "xformers": ("0.0.30", "0.0.30"),
 }
 
+# Linux OpenBLAS libtorch builds before 2.11 are linked against libgomp but did
+# not declare it, causing `import torch` to fail with missing libgomp.so.1.
+LIBTORCH_OPENBLAS_MISSING_LIBGOMP_UPPER_BOUND = "2.11.0"
+
 # https://anaconda.atlassian.net/browse/PKG-13552
 # Add pybind11-abi run dependency to packages built with pybind11 that don't
 # already declare it. The ABI version (4 or 5) is determined by:
@@ -841,6 +845,18 @@ def patch_record_in_place(fn, record, subdir):
         abi = _infer_pybind11_abi(record, subdir)
         if abi is not None:
             depends.append(f"pybind11-abi =={abi}")
+
+    if (
+        name == "libtorch"
+        and subdir.startswith("linux-")
+        and VersionOrder(version) < VersionOrder(LIBTORCH_OPENBLAS_MISSING_LIBGOMP_UPPER_BOUND)
+        and (
+            "openblas" in build
+            or any("openblas" in dep for dep in depends if dep)
+        )
+        and not any(dep.split()[0] == "libgomp" for dep in depends if dep)
+    ):
+        depends.append("libgomp")
 
     #######
     # MKL #
