@@ -150,6 +150,10 @@ REVOKED = {
         # doesn't specify dependency on openssl, whereas it should
         "libssh2 1.8.0 h1218725_2",
     ],
+    "osx-arm64": [
+        # libtorch 2.11.0 build 201 gpu_mps artifacts are corrupted.
+        "libtorch-2.11.0-gpu_mps_h4371db2_201.*",
+    ],
     "win-32": [
         "spyder-kernels-1.0.1-*_0",
     ],
@@ -339,38 +343,28 @@ MISSING_CUDA_VIRTUAL_PACKAGE_VERSION_RANGES = {
 # Pure C++ outputs (no python dep, e.g. libtorch) cannot have ABI inferred
 # from the build string alone; they are excluded here and left to recipe
 # fixes plus rebuild.
+# Only outputs that exchange pybind11-wrapped C++ types across module boundaries
+# need the abi pin — different-ABI extensions otherwise coexist safely via
+# separate per-DSO internals capsules (see PKG-13552 hotfix-scope analysis).
+# Sole retained ecosystem:
+#   - pytorch family: pytorch, torchvision, torchaudio, triton
+#
+# Dropped on 2026-05-27 after upstream code-level verification:
+#   - onnx 1.20.x — migrated to nanobind 2.8.0; no pybind11 footprint at all.
+#   - onnxruntime / onnxruntime-novec — vendors pybind11 v3.0.2 (ABI 11)
+#     regardless of system dep; interop with onnx goes via protobuf, not
+#     pybind11 type-casters.
+#   - cvxpy / cvxpy-base — only pybind11 use is sparsecholesky, which exposes
+#     a free function (m.def) returning std::vector — no py::class_ types.
+#   - osqp — every pybind11 class is declared py::module_local() (explicit
+#     "do not share across modules"). cvxpy↔osqp interop is via scipy.sparse.
+#   - qdldl-python — exports a single PySolver class whose C++ definition is
+#     not shared (no public headers); other modules can't legitimately bind it.
 MISSING_PYBIND11_ABI_VERSION_RANGES = {
-    "contourpy": ("1.0.5", "1.3.3"),
-    "ctranslate2": ("4.7.1", "4.7.1"),
-    "cvxpy": ("1.7.2", "1.8.2"),
-    "cvxpy-base": ("1.7.2", "1.8.2"),
-    "dm-tree": ("0.1.5", "0.1.10"),
-    "duckdb": ("1.2.1", "1.4.3"),
-    "google-re2": ("1.1.20251105", "1.1.20251105"),
-    "highspy": ("1.13.1", "1.13.1"),
-    "iminuit": ("1.2", "2.31.3"),
-    "matplotlib": ("2.0.2", "3.10.9"),
-    "matplotlib-base": ("3.1.2", "3.10.9"),
-    "nmslib": ("2.1.1", "2.1.1"),
-    "onnx": ("1.10.2", "1.20.1"),
-    "onnxruntime": ("1.12.1", "1.24.4"),
-    "onnxruntime-novec": ("1.12.1", "1.24.4"),
-    "optree": ("0.12.1", "0.18.0"),
-    "osqp": ("0.6.3", "1.1.1"),
-    "phik": ("0.10.0", "0.12.5"),
-    "pillow": ("4.2.1", "12.2.0"),
-    "pyamg": ("3.3.2", "5.3.0"),
-    "python-duckdb": ("1.2.1", "1.4.3"),
     "pytorch": ("0.2.0", "2.11.0"),
-    "qdldl-python": ("0.1.7", "0.1.7.post5"),
-    "scikit-build-core": ("0.6.1", "0.12.2"),
-    "scipy": ("0.19.1", "1.17.1"),
-    "tensorflow": ("1.4.1", "2.21.0"),
-    "tensorflow-base": ("1.4.1", "2.21.0"),
     "torchaudio": ("2.5.1", "2.10.0"),
     "torchvision": ("0.2.0", "0.26.0"),
     "triton": ("3.1.0", "3.7.0"),
-    "whylogs-sketching": ("3.4.1.dev3", "3.4.1.dev3"),
 }
 
 
@@ -1387,6 +1381,15 @@ def patch_record_in_place(fn, record, subdir):
         if dep.startswith("libcurl >=7.") or dep.startswith("curl >=7."):
             depends[i] = dep.split(",")[0] + ",<9.0a0"
 
+    # https://anaconda.atlassian.net/browse/PKG-13856
+    # utf8proc 2.9.0 ABI break (soname changed from libutf8proc.so.2 to libutf8proc.so.3).
+    # Packages built before the 2.11.3 release on defaults must not pull utf8proc >=2.9.0.
+    if record.get("timestamp", 0) < 1779840000000:  # 2026-05-27T00:00:00Z
+        replace_dep(depends, "utf8proc", "utf8proc <2.9.0")
+        replace_dep(depends, "utf8proc >=2.6.1,<3.0a0", "utf8proc >=2.6.1,<2.9.0")
+        replace_dep(depends, "libutf8proc", "libutf8proc <2.9.0")
+        replace_dep(depends, "libutf8proc >=2.6.1,<3.0a0", "libutf8proc >=2.6.1,<2.9.0")
+
     # libffi broke ABI compatibility in 3.3
     if name not in LIBFFI_HOTFIX_EXCLUDES and (
         "libffi >=3.2.1,<4.0a0" in depends or "libffi" in depends
@@ -1434,6 +1437,12 @@ def patch_record_in_place(fn, record, subdir):
     if fn_stem in ["pyqt-5.9.2-py38h05f1152_4", "pyqt-5.9.2-py38ha925a31_4"]:
         sip_index = [dep.startswith("sip") for dep in depends].index(True)
         depends[sip_index] = "sip >=4.19.13,<=4.19.14"
+
+    # pip 26.1+ wheels require Python >=3.10 (PyPI has no upper bound); channel metadata
+    # incorrectly says >=3.9 and caps at <3.14.0a0
+    # https://github.com/pypa/pip/issues/14024
+    if name == "pip" and version == "26.1.1" and build.startswith("pyhc872135"):
+        replace_dep(depends, "python >=3.9,<3.14.0a0", "python >=3.10")
 
     if _strip_pkg_ext(fn)[0] == "dask-2.7.0-py_0":
         for i, dep in enumerate(depends):
