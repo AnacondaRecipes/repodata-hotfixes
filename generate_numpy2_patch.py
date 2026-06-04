@@ -187,31 +187,32 @@ def main():
 
     # Process each subdir's repodata to update numpy dependencies
     for subdir in SUBDIRS:
-        index = repodatas[subdir]["packages"]
-        for fn, record in index.items():
-            name = record["name"]
-            depends = record["depends"]
-            constrains = record.get("constrains", [])
+        for repo_key in ("packages", "packages.conda"):
+            index = repodatas[subdir].get(repo_key, {})
+            for fn, record in index.items():
+                name = record["name"]
+                depends = record["depends"]
+                constrains = record.get("constrains", [])
 
-            # Filter out None dependencies
-            depends = [dep for dep in depends if dep is not None]
+                # Filter out None dependencies
+                depends = [dep for dep in depends if dep is not None]
 
-            # Check if the package is for specific Python versions
-            if any(py_ver in fn for py_ver in ["py39", "py310", "py311", "py312"]):
-                # Exclude certain package names from processing
-                if name not in ["anaconda", "_anaconda_depends", "__anaconda_core_depends", "_anaconda_core"]:
-                    try:
-                        # Update numpy dependencies in the 'depends' list
-                        for dep in depends:
-                            if dep.split()[0] in ["numpy", "numpy-base"]:
-                                update_numpy_dependencies(depends, record, "depends", subdir, fn)
-                        # Update numpy dependencies in the 'constrains' list
-                        for constrain in constrains:
-                            if constrain.split()[0] in ["numpy", "numpy-base"]:
-                                update_numpy_dependencies(constrains, record, "constrains", subdir, fn)
-                    except Exception as e:
-                        # Log any errors encountered during the update process
-                        logger.error(f"numpy 2.0.0 error {fn}: {e}")
+                # Check if the package is for specific Python versions
+                if any(py_ver in fn for py_ver in ["py39", "py310", "py311", "py312"]):
+                    # Exclude certain package names from processing
+                    if name not in ["anaconda", "_anaconda_depends", "__anaconda_core_depends", "_anaconda_core"]:
+                        try:
+                            # Update numpy dependencies in the 'depends' list
+                            for dep in depends:
+                                if dep.split()[0] in ["numpy", "numpy-base"]:
+                                    update_numpy_dependencies(depends, record, "depends", subdir, fn)
+                            # Update numpy dependencies in the 'constrains' list
+                            for constrain in constrains:
+                                if constrain.split()[0] in ["numpy", "numpy-base"]:
+                                    update_numpy_dependencies(constrains, record, "constrains", subdir, fn)
+                        except Exception as e:
+                            # Log any errors encountered during the update process
+                            logger.error(f"numpy 2.0.0 error {fn}: {e}")
 
     # Write the proposed changes to a JSON file
     json_filename = Path("numpy2_patch.json")

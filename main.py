@@ -14,6 +14,7 @@ import requests
 
 CHANNEL_NAME = "main"
 CHANNEL_ALIAS = "https://repo.anaconda.com/pkgs"
+
 SUBDIRS = (
     "noarch",
     "linux-32",
@@ -401,6 +402,11 @@ def apply_numpy2_changes(record, subdir, filename):
         return
 
     change = NUMPY_2_CHANGES[subdir].get(filename)
+    # numpy2_patch.json is keyed by .tar.bz2 filenames; look up by equivalent
+    # .tar.bz2 name when processing a .conda entry.
+    if change is None and filename.endswith('.conda'):
+        tar_filename = filename[:-6] + '.tar.bz2'
+        change = NUMPY_2_CHANGES[subdir].get(tar_filename)
     if change:
         replace_dep(record[change["type"]], change["original"], change["updated"])
 
@@ -452,7 +458,7 @@ def _replace_vc_features_with_vc_pkg_deps(name, record, depends):
                 depends.append("vc %d.*" % vc_version)
 
 
-def _apply_namespace_overrides(fn, record, instructions):
+def _apply_namespace_overrides(fn, record, pkg_instructions):
     record_name = record["name"]
     namespace_in_name_set = {
         "python-crfsuite",
@@ -488,20 +494,17 @@ def _apply_namespace_overrides(fn, record, instructions):
         "mxnet": "python",
     }
     if record_name in namespace_in_name_set and not record.get("namespace_in_name"):
-        # set the namespace_in_name field
-        instructions["packages"][fn]["namespace_in_name"] = True
+        pkg_instructions[fn]["namespace_in_name"] = True
     if namespace_overrides.get(record_name):
-        # explicitly set namespace
-        instructions["packages"][fn]["namespace"] = namespace_overrides[record_name]
+        pkg_instructions[fn]["namespace"] = namespace_overrides[record_name]
 
 
-def _get_record_depends(fn, record, instructions):
+def _get_record_depends(fn, record, pkg_instructions):
     """Return the depends information for a record, including any patching."""
     record_depends = record.get("depends", [])
-    if fn in instructions["packages"]:
-        if "depends" in instructions["packages"][fn]:
-            # the package depends have already been patched
-            record_depends = instructions["packages"][fn]["depends"]
+    if fn in pkg_instructions:
+        if "depends" in pkg_instructions[fn]:
+            record_depends = pkg_instructions[fn]["depends"]
     return record_depends
 
 
@@ -534,7 +537,7 @@ def _fix_nomkl_features(record, depends):
             depends[:] = depends + ["blas * openblas"]
 
 
-def _fix_numpy_base_constrains(record, index, instructions, subdir):
+def _fix_numpy_base_constrains(record, index, pkg_instructions, subdir):
     # numpy-base packages should have run constrains on the corresponding numpy package
     base_pkgs = [d for d in record["depends"] if d.startswith("numpy-base")]
     if not base_pkgs:
@@ -561,7 +564,7 @@ def _fix_numpy_base_constrains(record, index, instructions, subdir):
         # base package is a requirement of a single numpy package,
         # constrain to the exact build
         req = "%s %s %s" % (record["name"], record["version"], record["build"])
-    instructions["packages"][base_pkg_fn]["constrains"] = [req]
+    pkg_instructions[base_pkg_fn]["constrains"] = [req]
 
 
 def _fix_cudnn_depends(depends, subdir):
@@ -605,10 +608,10 @@ def _fix_cudnn_depends(depends, subdir):
 
 
 def _patch_repodata(repodata, subdir):
-    index = repodata["packages"]
     instructions = {
         "patch_instructions_version": 1,
         "packages": defaultdict(dict),
+        "packages.conda": defaultdict(dict),
         "revoke": [],
         "remove": [],
     }
@@ -618,39 +621,82 @@ def _patch_repodata(repodata, subdir):
             "meld3": "python:meld3",  # supervisor
             "msys2-conda-epoch": "global:msys2-conda-epoch",  # anaconda
         }
-    for fn, record in index.items():
+
+    tar_index = repodata.get("packages", {})
+    conda_index = repodata.get("packages.conda", {})
+    tar_stems = {fn[:-8] for fn in tar_index}
+
+    # Patch .tar.bz2 entries — conda-index auto-translates these to .conda
+    for fn, record in tar_index.items():
         if is_revoked(fn, subdir):
             instructions["revoke"].append(fn)
         if is_removed(fn, subdir):
             instructions["remove"].append(fn)
-        _apply_namespace_overrides(fn, record, instructions)
-        patch_record(fn, record, subdir, instructions, index)
+        _apply_namespace_overrides(fn, record, instructions["packages"])
+        patch_record(fn, record, subdir, instructions["packages"], tar_index)
+
+    # Patch .conda-only entries (no .tar.bz2 counterpart) directly
+    for fn, record in conda_index.items():
+        if fn[:-6] in tar_stems:
+            continue
+        if is_revoked(fn, subdir):
+            instructions["revoke"].append(fn)
+        if is_removed(fn, subdir):
+            instructions["remove"].append(fn)
+        _apply_namespace_overrides(fn, record, instructions["packages.conda"])
+        patch_record(fn, record, subdir, instructions["packages.conda"], conda_index)
+
     instructions["remove"].sort()
     instructions["revoke"].sort()
     return instructions
 
 
+def _strip_pkg_ext(fn):
+    """Strip .tar.bz2 or .conda extension, returning (stem, ext)."""
+    if fn.endswith('.tar.bz2'):
+        return fn[:-8], '.tar.bz2'
+    if fn.endswith('.conda'):
+        return fn[:-6], '.conda'
+    return fn, ''
+
+
+def _matches_pkg_pattern(fn, pattern):
+    """Match filename against a pattern, format-agnostic.
+
+    Handles cases where pattern has .tar.bz2 extension but filename is .conda
+    (or vice versa), as well as patterns without extensions.
+    """
+    if fnmatch.fnmatch(fn, pattern):
+        return True
+    # Cross-format: compare stems when extensions differ
+    fn_stem, fn_ext = _strip_pkg_ext(fn)
+    pat_stem, pat_ext = _strip_pkg_ext(pattern)
+    if fn_ext and pat_ext and fn_ext != pat_ext:
+        return fnmatch.fnmatch(fn_stem, pat_stem)
+    return False
+
+
 def is_revoked(fn, subdir):
     for rev in REVOKED.get(subdir, []):
-        if fnmatch.fnmatch(fn, rev):
+        if _matches_pkg_pattern(fn, rev):
             return True
     for rev in REVOKED.get("any", []):
-        if fnmatch.fnmatch(fn, rev):
+        if _matches_pkg_pattern(fn, rev):
             return True
     return False
 
 
 def is_removed(fn, subdir):
     for rev in REMOVALS.get(subdir, []):
-        if fnmatch.fnmatch(fn, rev):
+        if _matches_pkg_pattern(fn, rev):
             return True
     for rev in REMOVALS.get("any", []):
-        if fnmatch.fnmatch(fn, rev):
+        if _matches_pkg_pattern(fn, rev):
             return True
     return False
 
 
-def patch_record(fn, record, subdir, instructions, index):
+def patch_record(fn, record, subdir, pkg_instructions, index):
     # create a copy of the record, patch in-place and add keys that change
     # to the patch instructions
     original_record = copy.deepcopy(record)
@@ -669,21 +715,21 @@ def patch_record(fn, record, subdir, instructions, index):
     ]
     for key in keys_to_check:
         if record.get(key) != original_record.get(key):
-            instructions["packages"][fn][key] = record.get(key)
+            pkg_instructions[fn][key] = record.get(key)
 
     # One-off patches that do not fit in with others
     if record["name"] == "numpy":
-        _fix_numpy_base_constrains(record, index, instructions, subdir)
+        _fix_numpy_base_constrains(record, index, pkg_instructions, subdir)
 
     # set a specific timestamp for numba-0.36.1
     if fn.startswith("numba-0.36.1") and record.get("timestamp") != 1512604800000:
-        instructions["packages"][fn]["timestamp"] = 1512604800000
+        pkg_instructions[fn]["timestamp"] = 1512604800000
 
     # set the build_number of the blas-1.0-openblas.tar.bz2 package
     # to 7 to match the package in free
     # https://github.com/conda/conda/issues/8302
-    if subdir == "linux-ppc64le" and fn == "blas-1.0-openblas.tar.bz2":
-        instructions["packages"][fn]["build_number"] = 7
+    if subdir == "linux-ppc64le" and _strip_pkg_ext(fn)[0] == "blas-1.0-openblas":
+        pkg_instructions[fn]["build_number"] = 7
 
 
 def patch_record_in_place(fn, record, subdir):
@@ -738,7 +784,7 @@ def patch_record_in_place(fn, record, subdir):
             depends[i] = CUDATK_SUBS[dep] if dep in CUDATK_SUBS else dep
 
     # depends in package is set as cudatoolkit 9.*, should be 9.0.*
-    if fn == "cupti-9.0.176-0.tar.bz2":
+    if _strip_pkg_ext(fn)[0] == "cupti-9.0.176-0":
         replace_dep(depends, "cudatoolkit 9.*", "cudatoolkit 9.0.*")
 
     # documentation on cudnn versions before 8.5.0 is now unavailable.
@@ -1387,7 +1433,8 @@ def patch_record_in_place(fn, record, subdir):
 
     # three pyqt packages were built against sip 4.19.13
     # first filename is linux-64, second is win-64 and win-32
-    if fn in ["pyqt-5.9.2-py38h05f1152_4.tar.bz2", "pyqt-5.9.2-py38ha925a31_4.tar.bz2"]:
+    fn_stem, _ = _strip_pkg_ext(fn)
+    if fn_stem in ["pyqt-5.9.2-py38h05f1152_4", "pyqt-5.9.2-py38ha925a31_4"]:
         sip_index = [dep.startswith("sip") for dep in depends].index(True)
         depends[sip_index] = "sip >=4.19.13,<=4.19.14"
 
@@ -1397,12 +1444,12 @@ def patch_record_in_place(fn, record, subdir):
     if name == "pip" and version == "26.1.1" and build.startswith("pyhc872135"):
         replace_dep(depends, "python >=3.9,<3.14.0a0", "python >=3.10")
 
-    if fn == "dask-2.7.0-py_0.tar.bz2":
+    if _strip_pkg_ext(fn)[0] == "dask-2.7.0-py_0":
         for i, dep in enumerate(depends):
             if dep.startswith("python "):
                 depends[i] = "python >=3.6"
 
-    if fn == "dask-core-2.7.0-py_0.tar.bz2":
+    if _strip_pkg_ext(fn)[0] == "dask-core-2.7.0-py_0":
         depends[:] = ["python >=3.6"]
 
     if name == "dask-core" and version == "2021.3.1" and build_number == 0:
@@ -1554,7 +1601,7 @@ def patch_record_in_place(fn, record, subdir):
 
     # package found the freetype library in the build enviroment rather than
     # host but used the host run_export: freetype >=2.9.1,<3.0a0
-    if subdir == "osx-64" and fn == "harfbuzz-2.4.0-h831d699_0.tar.bz2":
+    if subdir == "osx-64" and _strip_pkg_ext(fn)[0] == "harfbuzz-2.4.0-h831d699_0":
         replace_dep(depends, "freetype >=2.9.1,<3.0a0", "freetype >=2.10.2,<3.0a0")
 
     # sympy 1.6 and 1.6.1 are missing fastcache and gmpy2 depends
