@@ -172,6 +172,19 @@ REVOKED = {
         "spyder-5.5.1-*_2.*",
         # anaconda-cli-base-0.4.1 build number 0 has missing run_constrained requirements
         "anaconda-cli-base-0.4.1-*_0.*",
+        # langgraph 1.0.7 builds 0 and 1 are missing depedency pinnings. Fixed in build 2
+        # langgrap 1.0.1 build 0 is missing dependency pinnings. Fixed in build 1
+        # langgrap 1.0.6 build 0 has pinnings, but was built without tests. Tests were added in build 1
+        "langgraph-1.0.1-*_0.*",
+        "langgraph-1.0.6-*_0.*",
+        "langgraph-1.0.7-*_0.*",
+        "langgraph-1.0.7-*_1.*",
+        # langgraph-prebuilt bootstrap builds missing circular run deps (langgraph/langchain).
+        "langgraph-prebuilt-1.0.1-*_0.*",
+        "langgraph-prebuilt-1.0.6-*_0.*",
+        "langgraph-prebuilt-1.0.7-*_0.*",
+        "langgraph-prebuilt-1.0.7-*_1.*",
+        "langgraph-prebuilt-1.1.0-*_0.*",
     ],
 }
 
