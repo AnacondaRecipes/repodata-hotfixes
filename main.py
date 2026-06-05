@@ -345,8 +345,10 @@ MISSING_CUDA_VIRTUAL_PACKAGE_VERSION_RANGES = {
     "xformers": ("0.0.30", "0.0.30"),
 }
 
-# Linux libtorch builds before 2.12 link libgomp (e.g. via oneDNN) but often
-# did not declare it, causing import/runtime failures after the OpenMP migration.
+# Linux libtorch builds in this audited range link libgomp (e.g. via oneDNN)
+# but often did not declare it, causing import/runtime failures after the
+# OpenMP migration.
+LIBTORCH_MISSING_LIBGOMP_LOWER_BOUND = "2.5.1"
 LIBTORCH_MISSING_LIBGOMP_UPPER_BOUND = "2.12.0"
 
 # Packages audited in openmp-research (ELF link to libgomp.so.1, no libgomp dep).
@@ -935,6 +937,7 @@ def patch_record_in_place(fn, record, subdir):
     if (
         name == "libtorch"
         and subdir.startswith("linux-")
+        and VersionOrder(LIBTORCH_MISSING_LIBGOMP_LOWER_BOUND) <= VersionOrder(version)
         and VersionOrder(version) < VersionOrder(LIBTORCH_MISSING_LIBGOMP_UPPER_BOUND)
         and not _has_dep_named(depends, "libgomp")
     ):
