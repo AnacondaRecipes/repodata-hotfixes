@@ -936,7 +936,7 @@ def patch_record_in_place(fn, record, subdir):
 
     if (
         name == "libtorch"
-        and subdir.startswith("linux-")
+        and subdir in ("linux-64", "linux-aarch64")
         and VersionOrder(LIBTORCH_MISSING_LIBGOMP_LOWER_BOUND) <= VersionOrder(version)
         and VersionOrder(version) < VersionOrder(LIBTORCH_MISSING_LIBGOMP_UPPER_BOUND)
         and not _has_dep_named(depends, "libgomp")
@@ -944,7 +944,7 @@ def patch_record_in_place(fn, record, subdir):
         depends.append("libgomp")
 
     if (
-        subdir.startswith("linux-")
+       subdir in ("linux-64", "linux-aarch64")
         and _version_in_exact_set(name, version, MISSING_LIBGOMP_EXACT_VERSIONS)
         and not _has_dep_named(depends, "libgomp")
     ):
