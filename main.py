@@ -944,7 +944,7 @@ def patch_record_in_place(fn, record, subdir):
         depends.append("libgomp")
 
     if (
-       subdir in ("linux-64", "linux-aarch64")
+        subdir in ("linux-64", "linux-aarch64")
         and _version_in_exact_set(name, version, MISSING_LIBGOMP_EXACT_VERSIONS)
         and not _has_dep_named(depends, "libgomp")
     ):
