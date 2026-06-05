@@ -345,6 +345,87 @@ MISSING_CUDA_VIRTUAL_PACKAGE_VERSION_RANGES = {
     "xformers": ("0.0.30", "0.0.30"),
 }
 
+# Linux libtorch builds in this audited range link libgomp (e.g. via oneDNN)
+# but often did not declare it, causing import/runtime failures after the
+# OpenMP migration.
+LIBTORCH_MISSING_LIBGOMP_LOWER_BOUND = "2.5.1"
+LIBTORCH_MISSING_LIBGOMP_UPPER_BOUND = "2.12.0"
+
+# Packages audited in openmp-research (ELF link to libgomp.so.1, no libgomp dep).
+# Exact channel versions only — not continuous ranges. Regenerate from
+# inspect/libgomp_hotfix_manifest.json via scripts/generate_libgomp_hotfix_constants.py.
+# libtorch is handled separately via LIBTORCH_MISSING_LIBGOMP_UPPER_BOUND.
+MISSING_LIBGOMP_EXACT_VERSIONS = {
+    "faiss": frozenset({"1.12.0", "1.14.1"}),
+    "fasttsne": frozenset({"0.2.13"}),
+    "gettext": frozenset({"0.21.0"}),
+    "igraph": frozenset({"1.0.0"}),
+    "intel-extension-for-pytorch": frozenset({"1.12.1"}),
+    "libctranslate2": frozenset({"4.7.1"}),
+    "libfaiss": frozenset({"1.12.0", "1.14.1"}),
+    "libfaiss-avx2": frozenset({"1.12.0", "1.14.1"}),
+    "libllama": frozenset({
+        "0.0.6082", "0.0.6402", "0.0.6872", "0.0.7229", "0.0.7710",
+        "0.0.7984", "0.0.8272", "0.0.8574", "0.0.8728", "0.0.8994",
+    }),
+    "libmklml": frozenset({"2018.0.3", "2019.0.3", "2019.0.5"}),
+    "libmxnet": frozenset({"1.0.0", "1.1.0", "1.2.1", "1.5.0", "1.5.1", "1.9.1"}),
+    "libopencv": frozenset({"4.5.2"}),
+    "libxgboost": frozenset({
+        "0.7", "0.71", "0.72", "0.80", "0.90", "1.3.3", "1.5.0", "1.5.1",
+        "1.7.3", "1.7.6", "2.0.3", "2.1.1", "2.1.4", "3.0.1", "3.1.2", "3.2.0",
+    }),
+    "lightgbm": frozenset({
+        "2.2.1", "2.2.3", "2.3.0", "3.1.1", "3.2.1", "3.3.5", "4.1.0", "4.3.0",
+        "4.5.0", "4.6.0",
+    }),
+    "llama.cpp": frozenset({"0.0.6188"}),
+    "matrixprofile": frozenset({"1.1.10"}),
+    "mpich": frozenset({"4.1.1"}),
+    "numba": frozenset({
+        "0.40.0", "0.41.0", "0.42.0", "0.43.0", "0.43.1", "0.44.0", "0.44.1",
+        "0.45.0", "0.45.1", "0.46.0", "0.47.0", "0.48.0", "0.49.0", "0.49.1",
+        "0.50.1", "0.51.2", "0.52.0", "0.53.0", "0.53.1", "0.54.1", "0.55.0",
+        "0.55.1", "0.56.3", "0.56.4", "0.57.0", "0.57.1", "0.58.0", "0.58.1",
+        "0.59.0", "0.59.1", "0.60.0", "0.61.0", "0.61.2", "0.62.1", "0.63.1",
+        "0.64.0", "0.65.0", "0.65.1",
+    }),
+    "opencv": frozenset({"3.3.1", "4.5.4", "4.5.5", "4.6.0", "4.10.0", "4.12.0", "4.13.0"}),
+    "openmpi": frozenset({"4.0.2"}),
+    "opentsne": frozenset({"0.3.11", "0.4.3", "0.6.2", "1.0.1", "1.0.2"}),
+    "pot": frozenset({"0.9.6.post1"}),
+    "pykdtree": frozenset({"1.3.4", "1.3.6"}),
+    "pytorch": frozenset({
+        "1.8.1", "1.10.2", "1.12.1", "1.13.1", "2.0.1", "2.1.0", "2.2.0",
+        "2.3.0", "2.3.1",
+    }),
+    "r-xgboost": frozenset({"0.90", "1.5.0", "1.5.1", "1.7.3"}),
+    "scikit-bio": frozenset({"0.7.0", "0.7.2"}),
+    "scikit-image": frozenset({"0.16.2", "0.18.1", "0.18.3", "0.19.2", "0.19.3"}),
+    "scikit-learn": frozenset({
+        "0.21.1", "0.21.2", "0.21.3", "0.22", "0.22.1", "0.23.1", "0.23.2",
+        "0.24.1", "0.24.2", "1.0.1", "1.0.2", "1.1.1", "1.1.2", "1.1.3", "1.2.0",
+        "1.2.1", "1.2.2", "1.3.0", "1.4.2", "1.5.1", "1.5.2", "1.6.1", "1.7.1",
+        "1.7.2", "1.8.0",
+    }),
+    "soxr": frozenset({"0.1.3"}),
+    "suitesparse": frozenset({"7.0.1", "7.8.3"}),
+    "tensorflow-base": frozenset({"2.11.0", "2.12.0"}),
+    "tensorflow-gpu-base": frozenset({"1.4.1", "1.5.0", "1.6.0", "1.7.0"}),
+    "tesseract": frozenset({"5.2.0"}),
+    "ucx": frozenset({"1.18.1", "1.20.0"}),
+    "whisper.cpp": frozenset({"1.8.2", "1.8.4"}),
+    "yt": frozenset({"3.4.1", "3.6.1", "4.1.4", "4.4.0", "4.4.2"}),
+    "zfp": frozenset({"0.5.5", "1.0.0", "1.0.1"}),
+}
+
+# Legacy linux-64-only builds: also need _openmp_mutex (no mutex in original metadata).
+MISSING_LIBGOMP_AND_MUTEX_EXACT_VERSIONS = {
+    "fasttsne": frozenset({"0.2.13"}),
+    "libmklml": frozenset({"2018.0.3", "2019.0.3", "2019.0.5"}),
+    "tensorflow-gpu-base": frozenset({"1.4.1", "1.5.0", "1.6.0", "1.7.0"}),
+}
+
 # https://anaconda.atlassian.net/browse/PKG-13552
 # Add pybind11-abi run dependency to packages built with pybind11 that don't
 # already declare it. The ABI version (4 or 5) is determined by:
@@ -401,6 +482,17 @@ def _infer_pybind11_abi(record, subdir):
         if dm:
             return "5" if int(dm.group(1)) >= 12 else "4"
     return None
+
+
+def _has_dep_named(depends, name):
+    return any(dep.split()[0] == name for dep in depends if dep)
+
+
+def _version_in_exact_set(name, version, exact_versions_by_name):
+    allowed = exact_versions_by_name.get(name)
+    if not allowed:
+        return False
+    return version in allowed
 
 
 def apply_numpy2_changes(record, subdir, filename):
@@ -841,6 +933,31 @@ def patch_record_in_place(fn, record, subdir):
         abi = _infer_pybind11_abi(record, subdir)
         if abi is not None:
             depends.append(f"pybind11-abi =={abi}")
+
+    if (
+        name == "libtorch"
+        and subdir in ("linux-64", "linux-aarch64")
+        and VersionOrder(LIBTORCH_MISSING_LIBGOMP_LOWER_BOUND) <= VersionOrder(version)
+        and VersionOrder(version) < VersionOrder(LIBTORCH_MISSING_LIBGOMP_UPPER_BOUND)
+        and not _has_dep_named(depends, "libgomp")
+    ):
+        depends.append("libgomp")
+
+    if (
+        subdir in ("linux-64", "linux-aarch64")
+        and _version_in_exact_set(name, version, MISSING_LIBGOMP_EXACT_VERSIONS)
+        and not _has_dep_named(depends, "libgomp")
+    ):
+        depends.append("libgomp")
+
+    if (
+        subdir == "linux-64"
+        and _version_in_exact_set(name, version, MISSING_LIBGOMP_AND_MUTEX_EXACT_VERSIONS)
+    ):
+        if not _has_dep_named(depends, "libgomp"):
+            depends.append("libgomp")
+        if not _has_dep_named(depends, "_openmp_mutex"):
+            depends.append("_openmp_mutex >=5.1")
 
     #######
     # MKL #
