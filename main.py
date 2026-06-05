@@ -417,12 +417,6 @@ MISSING_LIBGOMP_EXACT_VERSIONS = {
     "zfp": frozenset({"0.5.5", "1.0.0", "1.0.1"}),
 }
 
-# Exact build-number scoped libgomp fixes. These are intentionally kept out of
-# MISSING_LIBGOMP_EXACT_VERSIONS when newer builds of the same version are fixed.
-MISSING_LIBGOMP_EXACT_BUILD_NUMBERS = {
-    "sleef": frozenset({("3.5.1", 2)}),
-}
-
 # Legacy linux-64-only builds: also need _openmp_mutex (no mutex in original metadata).
 MISSING_LIBGOMP_AND_MUTEX_EXACT_VERSIONS = {
     "fasttsne": frozenset({"0.2.13"}),
@@ -497,13 +491,6 @@ def _version_in_exact_set(name, version, exact_versions_by_name):
     if not allowed:
         return False
     return version in allowed
-
-
-def _version_build_number_in_exact_set(name, version, build_number, exact_builds_by_name):
-    allowed = exact_builds_by_name.get(name)
-    if not allowed:
-        return False
-    return (version, build_number) in allowed
 
 
 def apply_numpy2_changes(record, subdir, filename):
@@ -956,13 +943,6 @@ def patch_record_in_place(fn, record, subdir):
     if (
         subdir.startswith("linux-")
         and _version_in_exact_set(name, version, MISSING_LIBGOMP_EXACT_VERSIONS)
-        and not _has_dep_named(depends, "libgomp")
-    ):
-        depends.append("libgomp")
-
-    if (
-        subdir.startswith("linux-")
-        and _version_build_number_in_exact_set(name, version, build_number, MISSING_LIBGOMP_EXACT_BUILD_NUMBERS)
         and not _has_dep_named(depends, "libgomp")
     ):
         depends.append("libgomp")
