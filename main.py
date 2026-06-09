@@ -1489,7 +1489,7 @@ def patch_record_in_place(fn, record, subdir):
     replace_dep(depends, "openssl !=1.1.1e", "openssl !=1.1.1e,<1.1.2a")
     replace_dep(constrains, "openssl !=1.1.1e", "openssl !=1.1.1e,<1.1.2a")
     replace_dep(constrains, "openssl >=1.1.1k", "openssl >=1.1.1k,<1.1.2a")
-    if name != "_anaconda_depends":
+    if name not in ("_anaconda_depends", "dotnet"):
         replace_dep(depends, "openssl", "openssl <1.1.2a")
 
     # kealib 1.4.8 changed sonames, add new upper bound to existing packages
