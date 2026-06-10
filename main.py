@@ -869,6 +869,19 @@ def patch_record_in_place(fn, record, subdir):
     if name == "python_abi" and version in ["3.10", "3.11", "3.12"] and build_number == 2:
         replace_dep(constrains, f"python {version}.* ^(?!.*_graalpy$)(?!.*_pypy$).*$", f"python {version}.*")
 
+    # Python 3.10 and 3.11 on win-64 are incompatible with openssl >=3.5.7.
+    # OpenSSL 3.5.7's stricter ASN1 parser (CVE-2026-34180 fix) causes
+    # _load_windows_store_certs to raise ssl.SSLError on malformed certificates
+    # present in the Windows system certificate store. Python >=3.12 was patched
+    # (gh-87005) to skip malformed certs individually; 3.10 and 3.11 are not.
+    # Restrict until a patched CPython release is available.
+    # See: https://openssl-library.org/news/vulnerabilities/#CVE-2026-34180
+    # TODO: Remove once CPython 3.10/3.11 releases a patch that handles
+    # malformed Windows store certificates gracefully (as 3.12 does via gh-87005).
+    if name == "python" and subdir == "win-64" and version.startswith(("3.10.", "3.11.")):
+        constrains.append("openssl <3.5.7")
+        record["constrains"] = constrains
+
     ################
     # CUDA related #
     ################
