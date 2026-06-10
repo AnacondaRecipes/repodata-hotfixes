@@ -869,10 +869,6 @@ def patch_record_in_place(fn, record, subdir):
     if name == "python_abi" and version in ["3.10", "3.11", "3.12"] and build_number == 2:
         replace_dep(constrains, f"python {version}.* ^(?!.*_graalpy$)(?!.*_pypy$).*$", f"python {version}.*")
 
-    ##########
-    # python #
-    ##########
-
     # Python 3.10 and 3.11 on win-64 are incompatible with openssl >=3.5.7.
     # OpenSSL 3.5.7's stricter ASN1 parser (CVE-2026-34180 fix) causes
     # _load_windows_store_certs to raise ssl.SSLError on malformed certificates
