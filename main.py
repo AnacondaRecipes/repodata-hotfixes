@@ -837,6 +837,21 @@ def patch_record(fn, record, subdir, pkg_instructions, index):
         pkg_instructions[fn]["build_number"] = 7
 
 
+def _python_win_openssl_needs_hotfix(version, build_number):
+    """True when an unpatched 3.10/3.11 win-64 python needs openssl <3.5.7."""
+    fixed_cutoffs = (
+        ("3.10.", "3.10.20", 1),
+        ("3.11.", "3.11.15", 1),
+    )
+    for prefix, fixed_version, fixed_build in fixed_cutoffs:
+        if version.startswith(prefix):
+            return (
+                VersionOrder(version) < VersionOrder(fixed_version)
+                or (version == fixed_version and build_number < fixed_build)
+            )
+    return False
+
+
 def patch_record_in_place(fn, record, subdir):
     """Patch record in place"""
     name = record["name"]
@@ -876,9 +891,13 @@ def patch_record_in_place(fn, record, subdir):
     # (gh-87005) to skip malformed certs individually; 3.10 and 3.11 are not.
     # Restrict until a patched CPython release is available.
     # See: https://openssl-library.org/news/vulnerabilities/#CVE-2026-34180
-    # TODO: Remove once CPython 3.10/3.11 releases a patch that handles
-    # malformed Windows store certificates gracefully (as 3.12 does via gh-87005).
-    if name == "python" and subdir == "win-64" and version.startswith(("3.10.", "3.11.")):
+    # python 3.10.20 build 1+ / 3.11.15 build 1+ and all later versions ship
+    # the cert-store fix. TODO: Remove once no unpatched builds remain.
+    if (
+        name == "python"
+        and subdir == "win-64"
+        and _python_win_openssl_needs_hotfix(version, build_number)
+    ):
         constrains.append("openssl <3.5.7")
         record["constrains"] = constrains
 
