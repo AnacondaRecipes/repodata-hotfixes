@@ -876,6 +876,8 @@ def patch_record_in_place(fn, record, subdir):
     # (gh-87005) to skip malformed certs individually; 3.10 and 3.11 are not.
     # Restrict until a patched CPython release is available.
     # See: https://openssl-library.org/news/vulnerabilities/#CVE-2026-34180
+    # TODO: Remove once CPython 3.10/3.11 releases a patch that handles
+    # malformed Windows store certificates gracefully (as 3.12 does via gh-87005).
     if name == "python" and subdir == "win-64" and version.startswith(("3.10.", "3.11.")):
         if not any(c.startswith("openssl") for c in constrains):
             constrains.append("openssl <3.5.7")
