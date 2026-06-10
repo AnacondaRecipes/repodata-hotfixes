@@ -879,9 +879,8 @@ def patch_record_in_place(fn, record, subdir):
     # TODO: Remove once CPython 3.10/3.11 releases a patch that handles
     # malformed Windows store certificates gracefully (as 3.12 does via gh-87005).
     if name == "python" and subdir == "win-64" and version.startswith(("3.10.", "3.11.")):
-        if not any(c.startswith("openssl") for c in constrains):
-            constrains.append("openssl <3.5.7")
-            record["constrains"] = constrains
+        constrains.append("openssl <3.5.7")
+        record["constrains"] = constrains
 
     ################
     # CUDA related #
