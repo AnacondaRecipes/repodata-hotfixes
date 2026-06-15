@@ -1245,11 +1245,11 @@ def patch_record_in_place(fn, record, subdir):
         constrains[:] = [req for req in constrains if not req.startswith("setuptools")]
 
     ###############################
-    # setuptools 82 compatibility #
+    # setuptools 81 compatibility #
     ###############################
 
-    # In setuptools 82.0.0, the pkg_resources module was removed.
-    # https://github.com/pypa/setuptools/blob/v82.0.0/NEWS.rst#deprecations-and-removals
+    # In setuptools 81.0.0, the pkg_resources module was removed.
+    # https://github.com/pypa/setuptools/blob/v81.0.0/NEWS.rst#deprecations-and-removals
     # Below is a list of packages that are affected by this change.
     SETUPTOOLS_PKG_RESOURCES_VERSIONS = {
         "csvkit": "1.0.5",
@@ -1263,6 +1263,7 @@ def patch_record_in_place(fn, record, subdir):
         "pystan": "3.10.0",
         "tensorboard": "2.20.0",
         "opentelemetry-api": "1.12.0",
+        "woodwork": "0.31.0",
     }
     if name in SETUPTOOLS_PKG_RESOURCES_VERSIONS:
         if (
@@ -1275,11 +1276,11 @@ def patch_record_in_place(fn, record, subdir):
                 if "<" in dep:
                     # Already has upper bound — keep unchanged
                     continue
-                # "setuptools"       -> "setuptools <82"
-                # "setuptools >=1"   -> "setuptools >=1,<82"
-                # "setuptools >1"    -> "setuptools >1,<82"
+                # "setuptools"       -> "setuptools <81"
+                # "setuptools >=1"   -> "setuptools >=1,<81"
+                # "setuptools >1"    -> "setuptools >1,<81"
                 sep = " " if dep.strip() == "setuptools" else ","
-                depends[i] = dep + sep + "<82"
+                depends[i] = dep + sep + "<81"
 
     # basemap is incompatible with proj/proj4 >=6
     # https://github.com/ContinuumIO/anaconda-issues/issues/11590
