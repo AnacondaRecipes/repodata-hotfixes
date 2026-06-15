@@ -1245,10 +1245,10 @@ def patch_record_in_place(fn, record, subdir):
         constrains[:] = [req for req in constrains if not req.startswith("setuptools")]
 
     ###############################
-    # setuptools 81 compatibility #
+    # setuptools 82 compatibility #
     ###############################
 
-    # In setuptools 81.0.0, the pkg_resources module was removed.
+    # In setuptools 82.0.0, the pkg_resources module was removed.
     # https://github.com/pypa/setuptools/blob/v81.0.0/NEWS.rst#deprecations-and-removals
     # Below is a list of packages that are affected by this change.
     SETUPTOOLS_PKG_RESOURCES_VERSIONS = {
@@ -1276,11 +1276,11 @@ def patch_record_in_place(fn, record, subdir):
                 if "<" in dep:
                     # Already has upper bound — keep unchanged
                     continue
-                # "setuptools"       -> "setuptools <81"
-                # "setuptools >=1"   -> "setuptools >=1,<81"
-                # "setuptools >1"    -> "setuptools >1,<81"
+                # "setuptools"       -> "setuptools <82"
+                # "setuptools >=1"   -> "setuptools >=1,<82"
+                # "setuptools >1"    -> "setuptools >1,<82"
                 sep = " " if dep.strip() == "setuptools" else ","
-                depends[i] = dep + sep + "<81"
+                depends[i] = dep + sep + "<82"
 
     # basemap is incompatible with proj/proj4 >=6
     # https://github.com/ContinuumIO/anaconda-issues/issues/11590
