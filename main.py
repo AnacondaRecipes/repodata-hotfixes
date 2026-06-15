@@ -1263,6 +1263,7 @@ def patch_record_in_place(fn, record, subdir):
         "pystan": "3.10.0",
         "tensorboard": "2.20.0",
         "opentelemetry-api": "1.12.0",
+        "woodwork": "0.31.0",
     }
     if name in SETUPTOOLS_PKG_RESOURCES_VERSIONS:
         if (
