@@ -185,6 +185,8 @@ REVOKED = {
         "langgraph-prebuilt-1.0.7-*_0.*",
         "langgraph-prebuilt-1.0.7-*_1.*",
         "langgraph-prebuilt-1.1.0-*_0.*",
+        # lz4-c 1.9.4 build 2 is broken; use build 1 instead.
+        "lz4-c-1.9.4-*_2.*",
     ],
 }
 
