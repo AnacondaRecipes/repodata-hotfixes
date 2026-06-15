@@ -1249,7 +1249,7 @@ def patch_record_in_place(fn, record, subdir):
     ###############################
 
     # In setuptools 82.0.0, the pkg_resources module was removed.
-    # https://github.com/pypa/setuptools/blob/v81.0.0/NEWS.rst#deprecations-and-removals
+    # https://github.com/pypa/setuptools/blob/v82.0.0/NEWS.rst#deprecations-and-removals
     # Below is a list of packages that are affected by this change.
     SETUPTOOLS_PKG_RESOURCES_VERSIONS = {
         "csvkit": "1.0.5",
