@@ -19,25 +19,43 @@ channel_map = {
     "main": "https://repo.anaconda.com/pkgs/main",
     "r": "https://repo.anaconda.com/pkgs/r",
     "msys2": "https://repo.anaconda.com/pkgs/msys2",
+    "bootstrap-win-arm64-round-2-native": "https://conda.anaconda.org/bootstrap-win-arm64-round-2-native",
 }
 
 
+def normalize_json_file(path):
+    with open(path) as f:
+        data = json.load(f)
+    with open(path, "w") as f:
+        json.dump(data, f, indent=2, sort_keys=True, separators=(",", ": "))
+        f.write("\n")
+
+
 def clone_subdir(channel_base_url: str, subdir: str):
-    """Download repodata.json and repodata_from_packages.json from channel
+    out_dir = os.path.join(channel_base_url.rsplit('/', 1)[-1], subdir)
+    os.makedirs(out_dir, exist_ok=True)
 
-    Args:
-        channel_base_url (str):
-        subdir (str): subdir of channel (aka platform) to download
-    """
-    out_file = os.path.join(channel_base_url.rsplit('/', 1)[-1], subdir, 'repodata-reference.json')
-    url = "%s/%s/repodata.json" % (channel_base_url, subdir)
-    print("downloading repodata from {}".format(url))
-    urllib.request.urlretrieve(url, out_file)
+    repodata_url = f"{channel_base_url}/{subdir}/repodata.json"
 
-    out_file = os.path.join(channel_base_url.rsplit('/', 1)[-1], subdir, 'repodata_from_packages.json')
-    url = "%s/%s/repodata_from_packages.json" % (channel_base_url, subdir)
-    print("downloading repodata from {}".format(url))
-    urllib.request.urlretrieve(url, out_file)
+    ref_file = os.path.join(out_dir, "repodata-reference.json")
+    raw_file = os.path.join(out_dir, "repodata_from_packages.json")
+
+    print(f"downloading repodata from {repodata_url}")
+    urllib.request.urlretrieve(repodata_url, ref_file)
+
+    try:
+        raw_url = f"{channel_base_url}/{subdir}/repodata_from_packages.json"
+        print(f"downloading repodata from {raw_url}")
+        urllib.request.urlretrieve(raw_url, raw_file)
+    except urllib.error.HTTPError as e:
+        if e.code == 404:
+            print("repodata_from_packages.json not found; using repodata.json as raw input")
+            import shutil
+            shutil.copyfile(ref_file, raw_file)
+        else:
+            raise
+    normalize_json_file(ref_file)
+    normalize_json_file(raw_file)
 
 
 def show_pkgs(subdir, ref_repodata_file, patched_repodata_file):
