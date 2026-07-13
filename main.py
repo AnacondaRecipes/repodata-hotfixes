@@ -1916,6 +1916,9 @@ def patch_record_in_place(fn, record, subdir):
     if name == "conda" and version == "25.9.0":
         replace_dep(depends, "conda-libmamba-solver >=24.11.0", "conda-libmamba-solver >=25.4.0")
 
+    if name == "conda-lockfiles" and version == "0.2.0":
+        replace_dep(depends, "conda >=25.9.0", "conda >=26.3.0")
+
     # Add run constraint for conda to fix plugin here:
     # https://github.com/anaconda/conda-anaconda-telemetry/issues/87
     # https://github.com/anaconda/conda-anaconda-telemetry/pull/96
