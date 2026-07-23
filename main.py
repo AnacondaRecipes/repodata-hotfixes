@@ -2274,6 +2274,20 @@ def patch_record_in_place(fn, record, subdir):
     if name == "ob-metaflow-extensions":
         replace_dep(depends, "python-kubernetes", "python-kubernetes !=36.0.0,!=36.0.1")
 
+    ################
+    # ob-metaflow #
+    ################
+
+    # Prevent co-installation with metaflow (mutually exclusive packages).
+    if name == "ob-metaflow" and (
+        version in ["2.19.21.1", "2.19.29.1"]
+        or (version == "2.19.34.1" and build_number == 0)
+    ):
+        constrains = record.get("constrains") or []
+        if "metaflow <0" not in constrains:
+            constrains.append("metaflow <0")
+            record["constrains"] = constrains
+
 
 def replace_dep(depends, old, new, *, append=False):
     """
