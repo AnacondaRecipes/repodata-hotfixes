@@ -2288,6 +2288,23 @@ def patch_record_in_place(fn, record, subdir):
             constrains.append("metaflow <0")
             record["constrains"] = constrains
 
+    #########################################
+    # mcp breaking changes on version 2.0.0 #
+    #########################################
+
+    # Tests for claude-agent-sdk failed with mcp 2.0.0
+    # Lowlevel decorators replaced with on_* constructor params
+    # AttributeError: 'Server' object has no attribute 'list_tools' on_* handlers
+    # See https://py.sdk.modelcontextprotocol.io/v2/migration/#changes-almost-every-project-hits
+    if name == "claude-agent-sdk" and version == "0.1.45":
+        replace_dep(depends, "mcp >=0.1.0", "mcp >=0.1.0,<2.0.0")
+    # Tests for mcp-compose failed with mcp 2.0.0
+    # from mcp.server.fastmcp import FastMCP
+    # ModuleNotFoundError: No module named 'mcp.server.fastmcp'
+    # https://py.sdk.modelcontextprotocol.io/v2/migration/#fastmcp-renamed-to-mcpserver
+    if name == "mcp-compose" and VersionOrder(version) <= VersionOrder("0.1.12"):
+        replace_dep(depends, "mcp >=1.2.1", "mcp >=1.2.1,<2.0.0")
+
 
 def replace_dep(depends, old, new, *, append=False):
     """
