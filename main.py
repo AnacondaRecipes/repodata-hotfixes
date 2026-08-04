@@ -2296,10 +2296,10 @@ def patch_record_in_place(fn, record, subdir):
     # Lowlevel decorators replaced with on_* constructor params
     # AttributeError: 'Server' object has no attribute 'list_tools' on_* handlers
     # See https://py.sdk.modelcontextprotocol.io/v2/migration/#changes-almost-every-project-hits
-    if name == "claude-agent-sdk":
+    if name == "claude-agent-sdk" and version == "0.1.45":
         replace_dep(depends, "mcp >=0.1.0", "mcp >=0.1.0,<2.0.0")
     # https://py.sdk.modelcontextprotocol.io/v2/migration/#fastmcp-renamed-to-mcpserver
-    if name == "mcp-compose":
+    if name == "mcp-compose" and VersionOrder(version) <= VersionOrder("0.1.12"):
         replace_dep(depends, "mcp >=1.2.1", "mcp >=1.2.1,<2.0.0")
 
 
