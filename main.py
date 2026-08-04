@@ -2299,6 +2299,7 @@ def patch_record_in_place(fn, record, subdir):
     if name == "claude-agent-sdk":
         replace_dep(depends, "mcp >=0.1.0", "mcp >=0.1.0,<2.0.0")
 
+
 def replace_dep(depends, old, new, *, append=False):
     """
     Replace an old dependency with a new one.
