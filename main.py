@@ -2305,6 +2305,19 @@ def patch_record_in_place(fn, record, subdir):
     if name == "mcp-compose" and VersionOrder(version) <= VersionOrder("0.1.12"):
         replace_dep(depends, "mcp >=1.2.1", "mcp >=1.2.1,<2.0.0")
 
+    ##############################################
+    # paramiko breaking changes on version 4.0.0 #
+    ##############################################
+    # Tests for pysftp failed with paramiko, starting from version 4.0.0
+    # Root cause - not possible to import DSSKey from paramiko:
+    # from paramiko import AgentKey, RSAKey, DSSKey
+    # ImportError: cannot import name 'DSSKey' from 'paramiko'
+
+    # Reason: DSSKey was removed from paramiko in version 4.0.0
+    # See: https://www.paramiko.org/changelog.html#4.0.0
+    if name == "pysftp" and version == "0.2.9":
+        replace_dep(depends, "paramiko >=1.17.0", "paramiko >=1.17.0,<4.0.0")
+
 
 def replace_dep(depends, old, new, *, append=False):
     """
