@@ -2322,13 +2322,16 @@ def patch_record_in_place(fn, record, subdir):
     # spacy: declare click explicitly (no longer via typer) #
     ##########################################################
     # spacy uses click but historically relied on typer to pull it in.
-    # typer>=0.26 vendors click and no longer depends on the click package, so
-    # solvers (esp. with main-x typer) can omit click and `import spacy` fails:
+    # Only 3.8.11+ allow typer <1.0.0, which can select typer builds that no
+    # longer depend on click (typer 0.20+ on main; typer>=0.26 on main-x), so
+    # solvers can omit click and `import spacy` fails:
     #   ModuleNotFoundError: No module named 'click'
+    # Older spacy builds pin typer below that range and are unaffected.
     # Upstream: https://github.com/explosion/spaCy/commit/dbe520e702e5a8176be2a5fe3cdb65854bb71abf
     # Use >=8.1.8 (not upstream's >=8.2.1) so py39 remains solvable on pkgs/main.
     if (
         name == "spacy"
+        and VersionOrder(version) >= VersionOrder("3.8.11")
         and _has_dep_named(depends, "typer")
         and not _has_dep_named(depends, "click")
     ):
