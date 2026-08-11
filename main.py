@@ -1408,6 +1408,10 @@ def patch_record_in_place(fn, record, subdir):
             # https://github.com/conda/conda-build/blob/main/CHANGELOG.md#2530-2025-03-17
             if dep_name == "py-lief" and VersionOrder(version) < VersionOrder("25.3.0"):
                 depends[i] = "py-lief <0.15"
+            # LIEF 1.0 not yet validated with conda-build; keep current builds on <1
+            # until https://github.com/conda/conda-build/issues/6085 is resolved.
+            elif dep_name == "py-lief":
+                depends[i] = "py-lief <1.0"
 
     if name == "constructor":
         if int(version[0]) < 3:
