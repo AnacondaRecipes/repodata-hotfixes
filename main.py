@@ -2337,6 +2337,25 @@ def patch_record_in_place(fn, record, subdir):
     ):
         depends.append("click >=8.1.8,<9.0.0")
 
+    ##########################################################
+    # weasel: declare click explicitly (no longer via typer) #
+    ##########################################################
+    # weasel's CLI is typer-based and historically relied on typer to pull
+    # click in. Builds that allow typer ranges covering versions that no
+    # longer depend on click (typer 0.20+ on main; typer>=0.26 on main-x)
+    # can omit click and break.
+    # 0.3.4 pins typer <0.10.0 (safe). 0.4.3 uses typer-slim, which still
+    # declares click (skipped by the typer-name check below).
+    # 0.4.1 (typer <1.0.0) and 1.0.0 (open typer >=0.3.0) are exposed.
+    # Same pin as the spacy hotfix for py39 solvability on pkgs/main.
+    if (
+        name == "weasel"
+        and VersionOrder(version) >= VersionOrder("0.4.1")
+        and _has_dep_named(depends, "typer")
+        and not _has_dep_named(depends, "click")
+    ):
+        depends.append("click >=8.1.8,<9.0.0")
+
 
 def replace_dep(depends, old, new, *, append=False):
     """
