@@ -2204,6 +2204,15 @@ def patch_record_in_place(fn, record, subdir):
     # - twisted 25.5.0 build 0: All tests passed
     # - spyder 6.1.0 build 1: All tests passed
 
+
+    # xgrammar 0.2.2 and 0.2.3 were built with apache-tvm-ffi 0.1.9 and a 
+    # pin that is too lax. The apache-tvm-ffi project has shown that
+    # they will potentially introduce breaking changes on any new
+    # version, so the version needs to be pinned to exactly the version
+    # built against.
+    if name == "xgrammar" and (version == "0.2.2" or version == "0.2.3"):
+        replace_dep(depends, "apache-tvm-ffi >=0.1.9,<0.2.0a0", "apache-tvm-ffi ==0.1.9")
+
     ###########################
     # compilers and run times #
     ###########################
