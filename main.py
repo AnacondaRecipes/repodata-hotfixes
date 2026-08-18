@@ -1610,7 +1610,8 @@ def patch_record_in_place(fn, record, subdir):
         record["app_type"] = "desk"
         record["type"] = "app"
         record["summary"] = f"JupyterLab {version}"
-        # md5 of the feedstock icon.png, matching 4.5.7 and earlier on main
+        # conda-build indexes the icon as md5(file)+.png, not recipe "icon.png".
+        # Same bytes as 4.5.7; the channel file is icons/jupyterlab.png.
         record["icon"] = "717340b6962ac8f292a17e7fa60ab5e7.png"
 
     # pyqt needs an upper limit of sip, build 2 has this already
