@@ -812,9 +812,11 @@ def patch_record(fn, record, subdir, pkg_instructions, index):
         "constrains",
         "depends",
         "features",
+        "icon",
         "namespace",
         "license_family",
         "subdir",
+        "summary",
         "track_features",
         "type",
     ]
@@ -1593,6 +1595,23 @@ def patch_record_in_place(fn, record, subdir):
     # https://github.com/ContinuumIO/anaconda-issues/issues/11315
     if subdir.startswith("win") and name == "jupyterlab" and "pywin32" not in depends:
         depends.append("pywin32")
+
+    # jupyterlab 4.5.9 dropped the recipe app: block (Navigator shortcut).
+    # Restore the index fields as they were on 4.5.7:
+    #   app:
+    #     entry: jupyter lab
+    #     icon: icon.png
+    #     summary: JupyterLab {{ version }}
+    #     type: desk
+    # https://github.com/AnacondaRecipes/jupyterlab-feedstock/pull/59
+    # https://anaconda.atlassian.net/browse/PKG-17295
+    if name == "jupyterlab" and version == "4.5.9" and "app_entry" not in record:
+        record["app_entry"] = "jupyter lab"
+        record["app_type"] = "desk"
+        record["type"] = "app"
+        record["summary"] = f"JupyterLab {version}"
+        # md5 of the feedstock icon.png, matching 4.5.7 and earlier on main
+        record["icon"] = "717340b6962ac8f292a17e7fa60ab5e7.png"
 
     # pyqt needs an upper limit of sip, build 2 has this already
     if name == "pyqt" and version == "5.9.2":
