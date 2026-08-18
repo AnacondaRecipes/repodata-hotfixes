@@ -2210,7 +2210,7 @@ def patch_record_in_place(fn, record, subdir):
     # version, so the version needs to be pinned to exactly the version
     # built against.
     if name == "xgrammar" and (version == "0.2.2" or version == "0.2.3"):
-        replace_dep(depends, "apache-tvm-ffi >=0.1.9,<0.2.0a0", "apache-tvm-ffi ==0.1.9")
+        replace_dep(depends, ["apache-tvm-ffi >=0.1.9,<0.2.0a0", "apache-tvm-ffi >=0.1.9"], "apache-tvm-ffi ==0.1.9")
 
     ###########################
     # compilers and run times #
