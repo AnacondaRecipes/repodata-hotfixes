@@ -1303,6 +1303,10 @@ def patch_record_in_place(fn, record, subdir):
         if not any(d.startswith("openssl") for d in depends):
             depends.append("openssl >=3.0.18,<4.0a0")
 
+    # azure-cli-core 2.85.0 using hard pin on msal 1.35.1 it is not compatible with the cryptography >=50
+    if name == "azure-cli-core" and version == "2.85.0":
+        replace_dep(depends, "cryptography", "cryptography <50")
+
     # intel-openmp requires newer glibc.
     if name == "intel-openmp" and version == "2025.0.0":
         replace_dep(constrains, "__glibc >=2.17", "__glibc >=2.26")
