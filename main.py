@@ -1307,6 +1307,11 @@ def patch_record_in_place(fn, record, subdir):
     if name == "intel-openmp" and version == "2025.0.0":
         replace_dep(constrains, "__glibc >=2.17", "__glibc >=2.26")
 
+    # fix for passlib 1.4.7 compatibility with crypthography 50.0.0
+    # passlib requires cryptography cryptography 50.0.0 needs openssl >=3.5.7
+    if name == "passlib" and version == "1.4.7":
+        replace_dep(constrains, "cryptography", "cryptography <50.0.0")
+
     ############
     # features #
     ############
