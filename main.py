@@ -1308,9 +1308,9 @@ def patch_record_in_place(fn, record, subdir):
         replace_dep(constrains, "__glibc >=2.17", "__glibc >=2.26")
 
     # fix for passlib 1.7.4 compatibility with crypthography 50.0.0
-    # passlib requires cryptography cryptography 50.0.0 needs openssl >=3.5.7
+    # passlib requires cryptography, cryptography 50.0.0 needs openssl >=3.5.7
     if name == "passlib" and version == "1.7.4":
-        replace_dep(constrains, "cryptography", "cryptography <50.0.0")
+        replace_dep(depends, "cryptography", "cryptography <50")
 
     # azure-cli-core 2.85.0 using hard pin on msal 1.35.1 it is not compatible with the cryptography >=50
     if name == "azure-cli-core" and version == "2.85.0":
