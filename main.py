@@ -2397,6 +2397,14 @@ def patch_record_in_place(fn, record, subdir):
     ):
         depends.append("click >=8.1.8,<9.0.0")
 
+    ##########################
+    # xorg-xorgproto 2025.1 #
+    ##########################
+    # Downstream tests for xorg-libx11 are failed because of xorg-xorgproto 2025.1
+    # https://package-build.anaconda.com/v1/graph/5b97fda0-61d1-4cc7-a077-375d0286970e
+    if name == "xorg-libx11" and version == "1.8.12":
+        replace_dep(depends, "xorg-xorgproto >=2024.1", "xorg-xorgproto ==2024.1")
+
 
 def replace_dep(depends, old, new, *, append=False):
     """
