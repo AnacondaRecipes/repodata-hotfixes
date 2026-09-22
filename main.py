@@ -1974,6 +1974,12 @@ def patch_record_in_place(fn, record, subdir):
             if not dep.startswith("conda-anaconda-tos ")
         ] + ["conda-anaconda-tos >=0.2.1"]
 
+    # conda 26.9 removes the deprecated conda.plugins type aliases.
+    # https://github.com/conda/conda/issues/16726
+    if name == "conda" and VersionOrder(version) >= VersionOrder("26.9.0a0"):
+        replace_dep(constrains, "conda-anaconda-telemetry >=0.3.0", "conda-anaconda-telemetry >=0.3.1")
+        replace_dep(constrains, "conda-anaconda-tos >=0.2.1", "conda-anaconda-tos >=0.3.0")
+
     # conda 26.3.1 started using pluggy.HookImpl.wrapper (added in pluggy 1.5.0)
     # without bumping the recipe's `pluggy >=1.0.0` lower bound, causing
     # AttributeError: 'HookImpl' object has no attribute 'wrapper' on every
