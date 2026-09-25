@@ -1545,6 +1545,15 @@ def patch_record_in_place(fn, record, subdir):
 
     # kealib 1.4.8 changed sonames, add new upper bound to existing packages
     replace_dep(depends, "kealib >=1.4.7,<1.5.0a0", "kealib >=1.4.7,<1.4.8.0a0")
+
+    # qtbase 6.11.0 -> 6.11.2 broke ABI compatibility for the Qt6 stack (pyqt,
+    # pyqtwebengine, qt-main and other Qt add-on modules, opencv, poppler-qt,
+    # vtk-base, etc), causing Spyder (and other Qt6 consumers) to fail to start
+    # when a fresh install mixes packages built against qtbase 6.11.0 with the
+    # newer qtbase 6.11.2.
+    # https://anaconda.atlassian.net/browse/PKG-18427
+    replace_dep(depends, "qtbase >=6.11.0,<6.12.0a0", "qtbase >=6.11.0,<6.11.1a0")
+
     # Other broad replacements
     for i, dep in enumerate(depends):
         # glib is compatible up to the major version
