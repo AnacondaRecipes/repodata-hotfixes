@@ -1525,6 +1525,9 @@ def patch_record_in_place(fn, record, subdir):
     if name == "conda-content-trust" and VersionOrder(version) <= VersionOrder("0.1.3"):
         replace_dep(depends, "cryptography", "cryptography <41.0.0a0")
 
+    if name == "anaconda-channel-guide" and version == "0.1.0" and build_number == 0:
+        replace_dep(depends, 'conda', 'conda >=26.5.0')
+
     ########################
     # run_exports mis-pins #
     ########################
