@@ -2233,6 +2233,12 @@ def patch_record_in_place(fn, record, subdir):
     if name == "xgrammar" and (version == "0.2.2" or version == "0.2.3"):
         replace_dep(depends, ["apache-tvm-ffi >=0.1.9,<0.2.0a0", "apache-tvm-ffi >=0.1.9"], "apache-tvm-ffi ==0.1.9")
 
+    # hugggingface_hub <1.22 is not compatible with typer >= 0.26.0. Newer huggingface_hub
+    # versions have removed the typer dependency entirely. For more details, see the
+    # huggingface_hub issue here: https://github.com/huggingface/huggingface_hub/issues/4440
+    if name == "huggingface_hub" and VersionOrder(version) < VersionOrder("1.22.0"):
+        depends.append("typer <1.26.0a0")
+
     ###########################
     # compilers and run times #
     ###########################
