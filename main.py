@@ -2227,8 +2227,9 @@ def patch_record_in_place(fn, record, subdir):
     # hugggingface_hub <1.22 is not compatible with typer >= 0.26.0. Newer huggingface_hub
     # versions have removed the typer dependency entirely. For more details, see the
     # huggingface_hub issue here: https://github.com/huggingface/huggingface_hub/issues/4440
-    # typer was introduce into huggingface_hub in v1.0.0 (PRs: 
-    # https://github.com/huggingface/huggingface_hub/pull/3464, https://github.com/huggingface/huggingface_hub/pull/3372,
+    # typer was introduce into huggingface_hub in v1.0.0 (PRs:
+    # https://github.com/huggingface/huggingface_hub/pull/3464,
+    # https://github.com/huggingface/huggingface_hub/pull/3372,
     # https://github.com/huggingface/huggingface_hub/pull/3365)
     # For these versions of huggingface_hub, if typer is explicitly listed, then add
     # an additional dependency for typer <0.26.0a0, otherwise, assume an implicit dependency and
