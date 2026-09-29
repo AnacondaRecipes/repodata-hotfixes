@@ -2275,6 +2275,11 @@ def patch_record_in_place(fn, record, subdir):
             constrains.append("typer <0.26.0a0")
             record["constrains"] = constrains
 
+    # sphinxcontrib-typer <0.9.0 is not compatible with typer >= 0.26.0.
+    # We only ever built version 0.8.1
+    if name == "sphinxcontrib-typer" and VersionOrder(version) == VersionOrder("0.8.1"):
+        replace_dep(depends, "typer >=0.22.0,<1.0.0", "typer >=0.22.0,<0.26.0")
+
     ###########################
     # compilers and run times #
     ###########################
