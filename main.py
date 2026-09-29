@@ -1528,6 +1528,26 @@ def patch_record_in_place(fn, record, subdir):
     if name == "anaconda-channel-guide" and version == "0.1.0" and build_number == 0:
         replace_dep(depends, 'conda', 'conda >=26.5.0')
 
+    # urllib3 <2.8.0 wrongly depended on brotlicffi on CPython (unquoted `cpython` in the
+    # recipe selector evaluated to False). 2.8.0 fixed it and depends on brotli-python, so
+    # `conda update --all` on an Anaconda 2026.07 Windows base env removes brotlicffi in the
+    # same transaction that runs notebook/navigator post-link scripts. conda's post-link
+    # activation imports urllib3 mid-transaction, finds a half-removed brotlicffi, crashes,
+    # and the rollback deletes conda-meta/history, bricking the install.
+    # Keep brotlicffi installed on win-64 until conda handles this; urllib3 prefers brotlicffi
+    # when both are present, so behaviour matches the 2026.07 release. Linux is unaffected
+    # (no post-link scripts in that transaction).
+    # https://github.com/ContinuumIO/anaconda-issues/issues/13516
+    if (
+        name == "urllib3"
+        and subdir == "win-64"
+        and version == "2.8.0"
+        and build_number == 0
+        and _has_dep_named(depends, "brotli-python")
+        and not _has_dep_named(depends, "brotlicffi")
+    ):
+        depends.append("brotlicffi >=1.2.0")
+
     ########################
     # run_exports mis-pins #
     ########################
