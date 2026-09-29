@@ -1542,6 +1542,7 @@ def patch_record_in_place(fn, record, subdir):
         name == "urllib3"
         and subdir == "win-64"
         and version == "2.8.0"
+        and build_number == 0
         and _has_dep_named(depends, "brotli-python")
         and not _has_dep_named(depends, "brotlicffi")
     ):
