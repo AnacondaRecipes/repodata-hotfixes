@@ -1999,7 +1999,7 @@ def patch_record_in_place(fn, record, subdir):
     # https://github.com/anaconda/conda-anaconda-telemetry/issues/127
     # https://github.com/anaconda/conda-anaconda-telemetry/issues/130
     if name in ("conda", "conda-build") and VersionOrder(version) >= VersionOrder("24.11.0"):
-        if name == "conda-build" or VersionOrder(version) <= VersionOrder("26.9.0") :
+        if name == "conda-build" or VersionOrder(version) <= VersionOrder("26.9.0"):
             constrains[:] = [
                 dep
                 for dep in constrains
