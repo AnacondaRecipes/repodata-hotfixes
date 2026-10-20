@@ -28,6 +28,7 @@ SUBDIRS = (
     "osx-arm64",
     "win-32",
     "win-64",
+    "win-arm64",
 )
 
 REMOVALS = {
@@ -1997,7 +1998,13 @@ def patch_record_in_place(fn, record, subdir):
     # https://github.com/anaconda/conda-anaconda-telemetry/pull/96
     # https://github.com/anaconda/conda-anaconda-telemetry/issues/127
     # https://github.com/anaconda/conda-anaconda-telemetry/issues/130
-    if name in ("conda", "conda-build") and VersionOrder(version) >= VersionOrder("24.11.0"):
+    if name == "conda-build" and VersionOrder(version) >= VersionOrder("24.11.0"):
+        constrains[:] = [
+            dep
+            for dep in constrains
+            if not dep.startswith("conda-anaconda-telemetry ")
+        ] + ["conda-anaconda-telemetry >=0.3.0"]
+    if name == "conda" and VersionOrder("24.11.0") <= VersionOrder(version) < VersionOrder("26.9.0"):
         constrains[:] = [
             dep
             for dep in constrains
@@ -2007,12 +2014,24 @@ def patch_record_in_place(fn, record, subdir):
     # Add run constraint for conda to require conda-anaconda-tos
     # with the lowest possible version of conda that is compatible with the current version
     # of conda-anaconda-tos
-    if name == "conda" and VersionOrder(version) >= VersionOrder("24.11.0"):
+    if name == "conda" and VersionOrder("26.9.0") > VersionOrder(version) >= VersionOrder("24.11.0"):
         constrains[:] = [
             dep
             for dep in constrains
             if not dep.startswith("conda-anaconda-tos ")
         ] + ["conda-anaconda-tos >=0.2.1"]
+
+    # Another fix for some conda plugins for conda >=26.9.0,<=26.9.3.
+    if name == "conda" and VersionOrder("26.9.0") <= VersionOrder(version) <= VersionOrder("26.9.3"):
+        constrains[:] = [
+            dep
+            for dep in constrains
+            if not dep.startswith(("conda-repo-cli ", "conda-anaconda-telemetry ", "conda-anaconda-tos "))
+        ] + [
+            "conda-repo-cli >=1.0.222",
+            "conda-anaconda-telemetry >=0.3.1",
+            "conda-anaconda-tos >=0.3.0",
+        ]
 
     # conda 26.3.1 started using pluggy.HookImpl.wrapper (added in pluggy 1.5.0)
     # without bumping the recipe's `pluggy >=1.0.0` lower bound, causing
