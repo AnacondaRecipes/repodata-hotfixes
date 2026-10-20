@@ -1998,13 +1998,18 @@ def patch_record_in_place(fn, record, subdir):
     # https://github.com/anaconda/conda-anaconda-telemetry/pull/96
     # https://github.com/anaconda/conda-anaconda-telemetry/issues/127
     # https://github.com/anaconda/conda-anaconda-telemetry/issues/130
-    if name in ("conda", "conda-build") and VersionOrder(version) >= VersionOrder("24.11.0"):
-        if name == "conda-build" or VersionOrder(version) < VersionOrder("26.9.0"):
-            constrains[:] = [
-                dep
-                for dep in constrains
-                if not dep.startswith("conda-anaconda-telemetry ")
-            ] + ["conda-anaconda-telemetry >=0.3.0"]
+    if name == "conda-build" and VersionOrder(version) >= VersionOrder("24.11.0"):
+        constrains[:] = [
+            dep
+            for dep in constrains
+            if not dep.startswith("conda-anaconda-telemetry ")
+        ] + ["conda-anaconda-telemetry >=0.3.0"]
+    if name == "conda" and VersionOrder("24.11.0") <= VersionOrder(version) < VersionOrder("26.9.0"):
+        constrains[:] = [
+            dep
+            for dep in constrains
+            if not dep.startswith("conda-anaconda-telemetry ")
+        ] + ["conda-anaconda-telemetry >=0.3.0"]
 
     # Add run constraint for conda to require conda-anaconda-tos
     # with the lowest possible version of conda that is compatible with the current version
