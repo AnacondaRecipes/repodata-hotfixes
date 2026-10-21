@@ -164,5 +164,39 @@
       "version": "2.3.2"
     },
     "subdir": "linux-aarch64"
+  },
+  {
+    "filename": "libmamba-2.3.2-h094a667_5.conda",
+    "record": {
+      "build": "h094a667_5",
+      "build_number": 5,
+      "depends": [
+        "bzip2 >=1.0.8,<2.0a0",
+        "cpp-expected >=1.3.1,<1.3.2.0a0",
+        "fmt >=12.1.0,<13.0a0",
+        "libarchive >=3.8.8,<3.9.0a0",
+        "libcurl >=8.22.0,<9.0a0",
+        "libsolv >=0.7.39,<0.8.0a0",
+        "nlohmann_json >=3.12.0,<3.12.1.0a0",
+        "openssl >=3.5.8,<4.0a0",
+        "reproc >=14.2,<15.0a0",
+        "reproc-cpp >=14.2,<15.0a0",
+        "simdjson >=4.6.4,<4.7.0a0",
+        "vc >=14.3,<15",
+        "vc14_runtime >=14.44.35208",
+        "yaml-cpp >=0.9.0,<0.10.0a0",
+        "zstd >=1.5.7,<1.6.0a0"
+      ],
+      "license": "BSD-3-Clause",
+      "license_family": "BSD",
+      "md5": "ea172e981ca11c317a6dc4e4c136460a",
+      "name": "libmamba",
+      "sha256": "b2e5b629cbe312046aff7b7c608a22161c48c7315e2cfe21f4cb69aeec9c616c",
+      "size": 4608813,
+      "subdir": "win-arm64",
+      "timestamp": 1790107172142,
+      "version": "2.3.2"
+    },
+    "subdir": "win-arm64"
   }
 ]

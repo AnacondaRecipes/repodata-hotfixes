@@ -9,15 +9,11 @@ import sys
 from collections import defaultdict
 from pathlib import Path
 
-from conda.models.match_spec import MatchSpec
 from conda.models.version import VersionOrder
 import requests
 
 CHANNEL_NAME = "main"
 CHANNEL_ALIAS = "https://repo.anaconda.com/pkgs"
-
-# 2026-09-16 07:54:44.140 UTC, in milliseconds since the Unix epoch.
-CA_BUNDLE_CONSTRAINTS_CUTOFF_MS = 1789545284140
 
 SUBDIRS = (
     "noarch",
@@ -2046,23 +2042,24 @@ def patch_record_in_place(fn, record, subdir):
     if name == "conda" and VersionOrder(version) >= VersionOrder("26.3.1"):
         replace_dep(depends, "pluggy >=1.0.0", "pluggy >=1.6.0")
 
-    # Existing records through the latest published libmamba build have no
-    # CA bundle pins. Preserve any pre-existing pins outside that inventory.
-    if (
-        name in {"conda-libmamba-solver", "libmamba", "mamba"}
-        and record.get("timestamp", 0) <= CA_BUNDLE_CONSTRAINTS_CUTOFF_MS
+    # CA bundle remediation for builds before the corrected recipes.
+    # Affected published records have no existing CA requirements.
+    if name == "conda-libmamba-solver" and (
+        VersionOrder(version) < VersionOrder("26.7.0")
+        or (version == "26.7.0" and build_number < 1)
     ):
-        ca_floors = {"ca-certificates": "2026.10.20"}
-        if name == "conda-libmamba-solver" or (
-            name == "mamba" and VersionOrder(version) < VersionOrder("2.0")
-        ):
-            ca_floors["certifi"] = "2026.10.19"
-        pinned_names = {MatchSpec(dep).name for dep in depends + constrains}
-        for dependency, minimum in ca_floors.items():
-            if dependency not in pinned_names:
-                replace_dep(constrains, [], f"{dependency} >={minimum}", append=True)
-        if constrains:
-            record["constrains"] = constrains
+        for constraint in ("ca-certificates >=2026.10.20", "certifi >=2026.10.19"):
+            if constraint not in constrains:
+                constrains.append(constraint)
+        record["constrains"] = constrains
+
+    if name == "libmamba" and (
+        VersionOrder(version) < VersionOrder("2.3.2")
+        or (version == "2.3.2" and build_number < 6)
+    ):
+        if "ca-certificates >=2026.10.20" not in constrains:
+            constrains.append("ca-certificates >=2026.10.20")
+        record["constrains"] = constrains
 
     if name == "conda-libmamba-solver":
         # libmambapy 0.23 introduced breaking changes
