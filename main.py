@@ -9,6 +9,7 @@ import sys
 from collections import defaultdict
 from pathlib import Path
 
+from conda.models.match_spec import MatchSpec
 from conda.models.version import VersionOrder
 import requests
 
@@ -2041,6 +2042,24 @@ def patch_record_in_place(fn, record, subdir):
     # https://github.com/conda/conda/issues/15985
     if name == "conda" and VersionOrder(version) >= VersionOrder("26.3.1"):
         replace_dep(depends, "pluggy >=1.0.0", "pluggy >=1.6.0")
+
+    # Existing records through the latest published libmamba build have no
+    # CA bundle pins. Preserve any pre-existing pins outside that inventory.
+    if (
+        name in {"conda-libmamba-solver", "libmamba", "mamba"}
+        and record.get("timestamp", 0) <= 1789545284140
+    ):
+        ca_floors = {"ca-certificates": "2026.10.20"}
+        if name == "conda-libmamba-solver" or (
+            name == "mamba" and VersionOrder(version) < VersionOrder("2.0")
+        ):
+            ca_floors["certifi"] = "2026.10.19"
+        pinned_names = {MatchSpec(dep).name for dep in depends + constrains}
+        for dependency, minimum in ca_floors.items():
+            if dependency not in pinned_names:
+                replace_dep(constrains, [], f"{dependency} >={minimum}", append=True)
+        if constrains:
+            record["constrains"] = constrains
 
     if name == "conda-libmamba-solver":
         # libmambapy 0.23 introduced breaking changes
