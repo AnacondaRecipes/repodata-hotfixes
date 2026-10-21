@@ -16,6 +16,9 @@ import requests
 CHANNEL_NAME = "main"
 CHANNEL_ALIAS = "https://repo.anaconda.com/pkgs"
 
+# 2026-09-16 07:54:44.140 UTC, in milliseconds since the Unix epoch.
+CA_BUNDLE_CONSTRAINTS_CUTOFF_MS = 1789545284140
+
 SUBDIRS = (
     "noarch",
     "linux-32",
@@ -2047,7 +2050,7 @@ def patch_record_in_place(fn, record, subdir):
     # CA bundle pins. Preserve any pre-existing pins outside that inventory.
     if (
         name in {"conda-libmamba-solver", "libmamba", "mamba"}
-        and record.get("timestamp", 0) <= 1789545284140
+        and record.get("timestamp", 0) <= CA_BUNDLE_CONSTRAINTS_CUTOFF_MS
     ):
         ca_floors = {"ca-certificates": "2026.10.20"}
         if name == "conda-libmamba-solver" or (
