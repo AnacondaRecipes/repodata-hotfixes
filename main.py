@@ -2042,6 +2042,25 @@ def patch_record_in_place(fn, record, subdir):
     if name == "conda" and VersionOrder(version) >= VersionOrder("26.3.1"):
         replace_dep(depends, "pluggy >=1.0.0", "pluggy >=1.6.0")
 
+    # CA bundle remediation for builds before the corrected recipes.
+    # Affected published records have no existing CA requirements.
+    if name == "conda-libmamba-solver" and (
+        VersionOrder(version) < VersionOrder("26.7.0")
+        or (version == "26.7.0" and build_number < 1)
+    ):
+        for constraint in ("ca-certificates >=2026.10.20", "certifi >=2026.10.19"):
+            if constraint not in constrains:
+                constrains.append(constraint)
+        record["constrains"] = constrains
+
+    if name == "libmamba" and (
+        VersionOrder(version) < VersionOrder("2.3.2")
+        or (version == "2.3.2" and build_number < 6)
+    ):
+        if "ca-certificates >=2026.10.20" not in constrains:
+            constrains.append("ca-certificates >=2026.10.20")
+        record["constrains"] = constrains
+
     if name == "conda-libmamba-solver":
         # libmambapy 0.23 introduced breaking changes
         replace_dep(depends, "libmambapy >=0.22.1", "libmambapy 0.22.*")

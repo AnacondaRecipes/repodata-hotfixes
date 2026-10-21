@@ -15,11 +15,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
       - name: Setup Miniconda
-        uses: conda-incubator/setup-miniconda@v2
+        uses: conda-incubator/setup-miniconda@v3
+        with:
+          miniconda-version: latest
       - name: Setup environment
         shell: bash -l {0}
         run: |
-          conda create --name testenv conda conda-index flake8 requests
+          conda create --name testenv conda conda-index flake8 pytest requests
       - name: Lint
         shell: bash -l {0}
         run: |
@@ -27,12 +29,17 @@ jobs:
           echo "::add-matcher::.github/flake8-matcher.json"
           flake8 --count .
           echo "::remove-matcher owner=flake8::"
+      - name: Unit tests
+        shell: bash -l {0}
+        run: |
+          conda activate testenv
+          python -m pytest -q tests/test_ca_certificates.py
       - name: Test
         shell: bash -l {0}
         run: |
           conda activate testenv
           echo "################## main ###########################"
-          python test-hotfix.py main --subdir noarch linux-32 linux-64 linux-aarch64 linux-ppc64le linux-s390x osx-64 osx-arm64 win-32 win-64
+          python test-hotfix.py main --subdir noarch linux-32 linux-64 linux-aarch64 linux-ppc64le linux-s390x osx-64 osx-arm64 win-32 win-64 win-arm64
           echo "################## r    ###########################"
           python test-hotfix.py r --subdir noarch linux-32 linux-64 linux-aarch64 linux-ppc64le osx-64 win-32 win-64
           echo "###################################################"

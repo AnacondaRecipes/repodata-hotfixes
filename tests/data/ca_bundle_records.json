@@ -1,0 +1,202 @@
+[
+  {
+    "filename": "conda-libmamba-solver-26.7.0-pyh3785b3c_0.tar.bz2",
+    "record": {
+      "build": "pyh3785b3c_0",
+      "build_number": 0,
+      "depends": [
+        "boltons >=23.0.0",
+        "conda >=26.5",
+        "libmambapy >=2.0.0,!=2.6.2",
+        "python >=3.10"
+      ],
+      "license": "BSD-3-Clause",
+      "license_family": "BSD",
+      "md5": "d7d97ab451a6df2574eb4a7e8200bb51",
+      "name": "conda-libmamba-solver",
+      "noarch": "python",
+      "sha256": "21d5f6a633d6c67422b13026fafab8618fd6aceaf51e689bfc4339eb6e5478bb",
+      "size": 41263,
+      "subdir": "noarch",
+      "timestamp": 1784135330205,
+      "version": "26.7.0"
+    },
+    "subdir": "noarch"
+  },
+  {
+    "filename": "conda-libmamba-solver-22.3.0-pyhd3eb1b0_0.tar.bz2",
+    "record": {
+      "build": "pyhd3eb1b0_0",
+      "build_number": 0,
+      "depends": [
+        "conda >=4.12",
+        "importlib_metadata",
+        "libmambapy 0.22.*",
+        "python >=3.6"
+      ],
+      "license": "BSD-3-Clause",
+      "license_family": "BSD",
+      "md5": "5ab6117184c3bd723750afb7dec1c559",
+      "name": "conda-libmamba-solver",
+      "noarch": "python",
+      "sha256": "456759a36d1847648c7e002edaad605c6e613cb6f2bbfee8dfbda3878fab5282",
+      "size": 39926,
+      "subdir": "noarch",
+      "timestamp": 1647380874197,
+      "version": "22.3.0"
+    },
+    "subdir": "noarch"
+  },
+  {
+    "filename": "conda-libmamba-solver-23.12.0-py310haa95532_0.tar.bz2",
+    "record": {
+      "build": "py310haa95532_0",
+      "build_number": 0,
+      "depends": [
+        "boltons >=23.0.0",
+        "conda >=23.7.4",
+        "libmambapy >=1.5.3,<2.0.0a0",
+        "python >=3.10,<3.11.0a0"
+      ],
+      "license": "BSD-3-Clause",
+      "license_family": "BSD",
+      "md5": "ff62e436bf5ddfd827dc6b5af7449300",
+      "name": "conda-libmamba-solver",
+      "sha256": "0a2291cec54e9e5bf0ac695ef44ee7c0eb027a415b6d69d200264ae6a1b932c0",
+      "size": 76204,
+      "subdir": "win-64",
+      "timestamp": 1702403422263,
+      "version": "23.12.0"
+    },
+    "subdir": "win-64"
+  },
+  {
+    "filename": "libmamba-0.22.1-h1566912_0.tar.bz2",
+    "record": {
+      "build": "h1566912_0",
+      "build_number": 0,
+      "depends": [
+        "libarchive >=3.4.2,<3.5.0a0",
+        "libcurl >=7.80.0,<9.0a0",
+        "libgcc-ng >=7.5.0",
+        "libsolv >=0.7.20,<0.8.0a0",
+        "libstdcxx-ng >=7.5.0",
+        "openssl >=1.1.1m,<1.1.2a",
+        "reproc >=14.2,<15.0a0",
+        "reproc-cpp >=14.2,<15.0a0",
+        "spdlog-fmt-embed >=1.9.2,<2.0a0",
+        "yaml-cpp >=0.7.0,<0.8.0a0"
+      ],
+      "license": "BSD-3-Clause",
+      "license_family": "BSD",
+      "md5": "4cf8b0ae1b4537fb28efeb1e60780cde",
+      "name": "libmamba",
+      "sha256": "6b75cf811f85ae9ccfa8e6b7e4f0d2b17c97e9e94b26d81e801de8d47ab2a064",
+      "size": 1358593,
+      "subdir": "linux-64",
+      "timestamp": 1647297012673,
+      "version": "0.22.1"
+    },
+    "subdir": "linux-64"
+  },
+  {
+    "filename": "libmamba-1.5.3-h7c6fafd_0.tar.bz2",
+    "record": {
+      "build": "h7c6fafd_0",
+      "build_number": 0,
+      "depends": [
+        "bzip2 >=1.0.8,<2.0a0",
+        "fmt >=9.1.0,<10.0a0",
+        "libarchive >=3.6.2,<3.7.0a0",
+        "libcurl >=8.4.0,<9.0a0",
+        "libgcc-ng >=11.2.0",
+        "libsolv >=0.7.24,<0.8.0a0",
+        "libstdcxx-ng >=11.2.0",
+        "openssl >=3.0.11,<4.0a0",
+        "reproc >=14.2,<15.0a0",
+        "reproc-cpp >=14.2,<15.0a0",
+        "yaml-cpp >=0.8.0,<0.9.0a0",
+        "zstd >=1.5.2,<1.6.0a0"
+      ],
+      "license": "BSD-3-Clause",
+      "license_family": "BSD",
+      "md5": "73c52d12ee503f9433666af82be7da7a",
+      "name": "libmamba",
+      "sha256": "b40aaf195e16aa24d53c4937c83c0a4af4ccb4805484d318291d714e409be381",
+      "size": 2182377,
+      "subdir": "linux-ppc64le",
+      "timestamp": 1698783357136,
+      "version": "1.5.3"
+    },
+    "subdir": "linux-ppc64le"
+  },
+  {
+    "filename": "libmamba-2.3.2-h08b12ab_4.tar.bz2",
+    "record": {
+      "build": "h08b12ab_4",
+      "build_number": 4,
+      "depends": [
+        "__glibc >=2.28,<3.0.a0",
+        "bzip2 >=1.0.8,<2.0a0",
+        "cpp-expected >=1.3.1,<1.3.2.0a0",
+        "fmt >=12.1.0,<13.0a0",
+        "libarchive >=3.8.8,<3.9.0a0",
+        "libcurl >=8.21.0,<9.0a0",
+        "libgcc >=14",
+        "libsolv >=0.7.39,<0.8.0a0",
+        "libstdcxx >=14",
+        "nlohmann_json >=3.12.0,<3.12.1.0a0",
+        "openssl >=3.5.8,<4.0a0",
+        "reproc >=14.2,<15.0a0",
+        "reproc-cpp >=14.2,<15.0a0",
+        "simdjson >=4.6.4,<4.7.0a0",
+        "yaml-cpp >=0.9.0,<0.10.0a0",
+        "zstd >=1.5.7,<1.6.0a0"
+      ],
+      "license": "BSD-3-Clause",
+      "license_family": "BSD",
+      "md5": "482d36a7462b020ea1d6b51a30b109c4",
+      "name": "libmamba",
+      "sha256": "589816a796542e9afdb4176c587d251e117113923030ff908c6063e05f932fe4",
+      "size": 2487531,
+      "subdir": "linux-aarch64",
+      "timestamp": 1788373030983,
+      "version": "2.3.2"
+    },
+    "subdir": "linux-aarch64"
+  },
+  {
+    "filename": "libmamba-2.3.2-h094a667_5.conda",
+    "record": {
+      "build": "h094a667_5",
+      "build_number": 5,
+      "depends": [
+        "bzip2 >=1.0.8,<2.0a0",
+        "cpp-expected >=1.3.1,<1.3.2.0a0",
+        "fmt >=12.1.0,<13.0a0",
+        "libarchive >=3.8.8,<3.9.0a0",
+        "libcurl >=8.22.0,<9.0a0",
+        "libsolv >=0.7.39,<0.8.0a0",
+        "nlohmann_json >=3.12.0,<3.12.1.0a0",
+        "openssl >=3.5.8,<4.0a0",
+        "reproc >=14.2,<15.0a0",
+        "reproc-cpp >=14.2,<15.0a0",
+        "simdjson >=4.6.4,<4.7.0a0",
+        "vc >=14.3,<15",
+        "vc14_runtime >=14.44.35208",
+        "yaml-cpp >=0.9.0,<0.10.0a0",
+        "zstd >=1.5.7,<1.6.0a0"
+      ],
+      "license": "BSD-3-Clause",
+      "license_family": "BSD",
+      "md5": "ea172e981ca11c317a6dc4e4c136460a",
+      "name": "libmamba",
+      "sha256": "b2e5b629cbe312046aff7b7c608a22161c48c7315e2cfe21f4cb69aeec9c616c",
+      "size": 4608813,
+      "subdir": "win-arm64",
+      "timestamp": 1790107172142,
+      "version": "2.3.2"
+    },
+    "subdir": "win-arm64"
+  }
+]
