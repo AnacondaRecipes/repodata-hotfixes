@@ -1384,6 +1384,14 @@ def patch_record_in_place(fn, record, subdir):
         elif len(mkl_version) > 1:
             raise Exception("Found multiple mkl entries, expected only 1.")
 
+    if name in ["anaconda", "_anaconda_core"] and (version == "2026.07" and build_number == 1):
+        # CA bundle remediation for latest anaconda metapackage
+        for i, dep in enumerate(depends):
+            if dep.startswith("certifi 2026.6.17"):
+                depends[i] = "certifi 2026.10.23"
+            if dep.startswith("ca-certificates 2026.7.16"):
+                depends[i] = "ca-certificates 2026.10.20"
+
     if name == "conda-build" and version.startswith("3.18"):
         for i, dep in enumerate(depends):
             parts = dep.split()
