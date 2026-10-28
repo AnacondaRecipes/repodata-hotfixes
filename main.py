@@ -2518,6 +2518,37 @@ def patch_record_in_place(fn, record, subdir):
     if name == "xorg-libx11" and version == "1.8.12":
         replace_dep(depends, "xorg-xorgproto >=2024.1", "xorg-xorgproto ==2024.1")
 
+    #################################################
+    # rust: relax toolchain and system requirements #
+    # and restrict contraint on rust compiler       #
+    #################################################
+    if name in [
+        "rust_linux-64",
+        "rust_linux-aarch64",
+        "rust_osx-64",
+        "rust_osx-arm64",
+        "rust_win-64",
+        "rust_win-arm64",
+        "rust-nightly_linux-64",
+        "rust-nightly_linux-aarch64",
+        "rust-nightly_osx-64",
+        "rust-nightly_osx-arm64",
+        "rust-nightly_win-64",
+        "rust-nightly_win-arm64",
+    ] and VersionOrder(version) < VersionOrder("1.97.1"):
+        for index, dep in enumerate(depends):
+            if match := re.match(r"(macosx_deployment_target_osx-(?:arm)?64)\s+([\d\.]+\d)(?:$|\.\*)", dep):
+                depends[index] = f"{match[1]} >={match[2]}"
+            elif match := re.match(r"(clang(?:xx)?_osx-(?:arm)?64)\s+([\d\.]+\d)(?:$|\.\*)", dep):
+                depends[index] = f"{match[1]} >={match[2]}"
+            elif match := re.match(r"((?:gcc|gxx)_linux-[a-zA-Z0-9]+)\s+([\d\.]+\d)(?:$|\.\*)", dep):
+                depends[index] = f"{match[1]} >={match[2]}"
+            elif match := re.match(r"(sysroot_linux-(?:aarch)?64)\s+([\d\.]+\d)(?:$|\.\*)", dep):
+                depends[index] = f"{match[1]} >={match[2]}"
+
+            elif dep.startswith("rust "):
+                depends[index] = f"rust {version}"
+
 
 def replace_dep(depends, old, new, *, append=False):
     """
