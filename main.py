@@ -2097,6 +2097,14 @@ def patch_record_in_place(fn, record, subdir):
             replace_dep(depends, "libmambapy >=0.23", "libmambapy >=0.23,<2.0.0a0")
             replace_dep(depends, "libmambapy >=0.22.1", "libmambapy >=0.22.1,<2.0.0a0")
 
+    # conda 26.9 removed the plugin type aliases used by these conda-auth releases.
+    if (
+        name == "conda-auth"
+        and version in ("0.2.0", "0.2.1")
+        and record.get("timestamp", 0) < 1793622915000  # 2026-11-02T12:35:15Z
+    ):
+        replace_dep(depends, "conda >=23.9.0", "conda >=23.9.0,<26.9.0a0")
+
     if name == "conda-token" and VersionOrder(version) < VersionOrder("0.6.1"):
         # conda-token <0.5.0 not compatible with conda >=23.9
         # conda-token <0.6.1 not compatible with conda >=25.9

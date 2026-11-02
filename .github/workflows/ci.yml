@@ -33,7 +33,7 @@ jobs:
         shell: bash -l {0}
         run: |
           conda activate testenv
-          python -m pytest -q tests/test_ca_certificates.py
+          python -m pytest -q tests/test_ca_certificates.py tests/test_conda_auth.py
       - name: Test
         shell: bash -l {0}
         run: |
