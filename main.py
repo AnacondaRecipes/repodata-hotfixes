@@ -2466,7 +2466,14 @@ def patch_record_in_place(fn, record, subdir):
     # https://py.sdk.modelcontextprotocol.io/v2/migration/#fastmcp-renamed-to-mcpserver
     if name == "mcp-compose" and VersionOrder(version) <= VersionOrder("0.1.12"):
         replace_dep(depends, "mcp >=1.2.1", "mcp >=1.2.1,<2.0.0")
-
+    # Hotfix: fastmcp 4.x removed the `fastmcp.tools.tool` back-compat alias (it was just
+    # sys.modules -> fastmcp.tools.base), so environments-mcp-server 1.0.7 dies at import:
+    # ModuleNotFoundError: No module named 'fastmcp.tools.tool' (already confirmed: 16/16
+    # downstream tasks failed on fastmcp 4.1.4, all platforms). Our recipe allows fastmcp
+    # >=2.12 with no upper bound, so every new env installs the broken combination and the
+    # CLI won't start.
+    if name == "environments-mcp-server" and VersionOrder(version) <= VersionOrder("1.0.7"):
+        replace_dep(depends, "fastmcp >=2.12", "fastmcp >=2.12,<4.0.0")
     ##############################################
     # paramiko breaking changes on version 4.0.0 #
     ##############################################
