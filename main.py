@@ -1239,6 +1239,14 @@ def patch_record_in_place(fn, record, subdir):
         if VersionOrder(version) <= VersionOrder("2.5.0"):
             replace_dep(depends, "numpy >=1.16.6,<2.0a0", "numpy >=1.16.6,<1.24.0a0")
 
+    ############
+    # fla-core #
+    ############
+    # fla-core 0.5.2 build 0: integrate the changes from build number 1
+    if name == "fla-core" and version == "0.5.2" and build_number == 0:
+        replace_dep(depends, "triton >=3.3", "triton >=3.3,<3.9")
+        depends.append("packaging")
+
     ##############
     # versioneer #
     ##############
