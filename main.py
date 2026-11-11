@@ -359,6 +359,14 @@ GCC_TOOLCHAIN_PACKAGE_PREFIXES = (
 # the older _libgcc_mutex runtime mutex.
 GCC_MUTEX_PACKAGE = "_gcc_mutex"
 GCC_MUTEX_DEPENDENCY = f"{GCC_MUTEX_PACKAGE} * main_*"
+# Mutex packages are shared infrastructure across toolchain generations. They
+# must never be stamped with the generation marker themselves (some, like
+# older _openmp_mutex builds, depend on libgomp and would otherwise match).
+GCC_MUTEX_PACKAGES = frozenset({
+    "_gcc_mutex",
+    "_libgcc_mutex",
+    "_openmp_mutex",
+})
 
 # Packages that do *not* need to have their libffi dependencies patched
 LIBFFI_HOTFIX_EXCLUDES = [
@@ -555,13 +563,16 @@ def _add_gcc_mutex_if_needed(name, record):
 
     The upcoming manylinux-compliant toolchain will use a different build of
     ``_gcc_mutex``. Marking every package that is part of, or depends on, the
-    current GCC toolchain with ``_gcc_mutex * main`` prevents any existing
+    current GCC toolchain with ``_gcc_mutex * main_*`` prevents any existing
     package from being mixed with the future manylinux ones. An existing
     ``_libgcc_mutex`` is a different, shared runtime mutex and does not
-    satisfy this marker.
+    satisfy this marker. Mutex packages themselves are never stamped.
     """
+
     depends = record["depends"]
     constrains = record.get("constrains") or []
+    if name in GCC_MUTEX_PACKAGES:
+        return
     if _has_dep_named(depends, GCC_MUTEX_PACKAGE) or _has_dep_named(
         constrains, GCC_MUTEX_PACKAGE
     ):

@@ -224,18 +224,29 @@ def test_manylinux_pin_in_constrains_is_left_alone() -> None:
 
 
 @pytest.mark.parametrize(
-    "name", ["_libgcc_mutex", "_openmp_mutex", "_gcc_mutex"]
+    ["name", "depends"],
+    [
+        pytest.param("_libgcc_mutex", [], id="libgcc_mutex"),
+        # Older _openmp_mutex builds depend on libgomp, which is itself a
+        # toolchain component. The explicit mutex exclusion must take priority.
+        pytest.param(
+            "_openmp_mutex",
+            ["_libgcc_mutex 0.1 main", "libgomp >=7.5.0"],
+            id="openmp_mutex_with_libgomp",
+        ),
+        pytest.param("_gcc_mutex", [], id="gcc_mutex"),
+    ],
 )
-def test_mutex_packages_are_not_stamped(name: str) -> None:
+def test_mutex_packages_are_not_stamped(name: str, depends: list[str]) -> None:
     """Mutex packages are shared infrastructure and must never be stamped.
 
     _libgcc_mutex and _openmp_mutex are reused by both generations, and
     _gcc_mutex is the marker itself. Adding the marker to them would make every
     environment conflict with itself.
     """
-    record = _make_record(name, [])
+    record = _make_record(name, depends)
     patch_record_in_place(f"{name}-0.1-main.tar.bz2", record, "linux-64")
-    assert record["depends"] == []
+    assert record["depends"] == depends
 
 
 @pytest.mark.parametrize(
