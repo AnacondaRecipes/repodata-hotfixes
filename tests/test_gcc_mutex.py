@@ -143,6 +143,31 @@ def _make_record(name: str, depends: list[str], build: str = "h1234567_0") -> di
             ["ld_impl_linux-64 2.44 h153f514_2", "libffi >=3.4", "openssl"],
             id="python_depending_on_ld_impl",
         ),
+        # Toolchain components that are published as noarch (linux-targeted).
+        pytest.param(
+            "libgcc-devel_linux-64",
+            "noarch",
+            ["__unix"],
+            id="noarch_libgcc_devel",
+        ),
+        pytest.param(
+            "libstdcxx-devel_linux-aarch64",
+            "noarch",
+            ["__unix"],
+            id="noarch_libstdcxx_devel",
+        ),
+        pytest.param(
+            "sysroot_linux-64",
+            "noarch",
+            ["kernel-headers_linux-64 4.18.0 h3108a97_2"],
+            id="noarch_sysroot",
+        ),
+        pytest.param(
+            "kernel-headers_linux-64",
+            "noarch",
+            [],
+            id="noarch_kernel_headers",
+        ),
     ],
 )
 def test_gcc_toolchain_dependents_gain_mutex(
@@ -266,6 +291,26 @@ def test_mutex_packages_are_not_stamped(name: str, depends: list[str]) -> None:
             ["python >=3.10,<3.11.0a0"],
             id="pure_python_no_toolchain",
         ),
+        # noarch packages that merely depend on a toolchain component inherit
+        # the marker through that component and are not stamped themselves.
+        pytest.param(
+            "audit-libs-el8-x86_64",
+            "noarch",
+            ["sysroot_linux-64"],
+            id="noarch_dependent_of_sysroot",
+        ),
+        pytest.param(
+            "tensorflow-hub",
+            "noarch",
+            ["libgcc-ng >=11.2.0", "python"],
+            id="noarch_dependent_of_libgcc",
+        ),
+        pytest.param(
+            "six",
+            "noarch",
+            ["python >=3.10,<3.11.0a0"],
+            id="noarch_pure_python",
+        ),
         # Non-Linux subdirs do not use the GCC toolchain.
         pytest.param(
             "gfortran_osx-64",
@@ -287,8 +332,10 @@ def test_records_without_gcc_toolchain_dependency_unchanged(
     """Out-of-scope and already-marked records must keep their metadata as-is.
 
     Pure Python packages stay generation-neutral (so they remain installable
-    with either a main or a manylinux python), non-Linux subdirs do not use
-    this toolchain, and already-marked records must not be modified again.
+    with either a main or a manylinux python), noarch packages that merely
+    depend on a toolchain component inherit the marker through that component,
+    non-Linux subdirs do not use this toolchain, and already-marked records
+    must not be modified again.
     """
     record = _make_record(name, depends)
     patch_record_in_place(f"{name}-15.2.0-h1234567_0.tar.bz2", record, subdir)

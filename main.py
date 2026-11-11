@@ -2467,8 +2467,14 @@ def patch_record_in_place(fn, record, subdir):
         depends.append("_libgcc_mutex * main")
 
     # Mark every package belonging to the current GCC toolchain generation so
-    # it cannot be mixed with the future manylinux-compliant toolchain.
-    if subdir.startswith("linux-"):
+    # it cannot be mixed with the future manylinux-compliant toolchain. Some
+    # toolchain components are noarch (libgcc-devel_*, libstdcxx-devel_*,
+    # sysroot_linux-*, kernel-headers_linux-*); stamp those by name only so
+    # unrelated platform-independent noarch packages are left alone. Their
+    # consumers inherit the marker transitively.
+    if subdir.startswith("linux-") or (
+        subdir == "noarch" and _is_gcc_toolchain_package(name)
+    ):
         _add_gcc_mutex_if_needed(name, record)
 
     # Limit breaks as we transition from CentOS 6 to 7
