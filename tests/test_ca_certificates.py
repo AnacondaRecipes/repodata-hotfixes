@@ -7,7 +7,11 @@ from pathlib import Path
 import pytest
 from conda_index.index import _apply_instructions
 
-from main import _patch_repodata
+from main import (
+    GCC_MUTEX_DEPENDENCY,
+    _is_gcc_toolchain_package,
+    _patch_repodata,
+)
 
 
 RECORDS = json.loads(
@@ -33,7 +37,18 @@ def test_published_records_gain_constraints(sample, section, extension):
         assert "certifi >=2026.10.19" in result["constrains"]
     else:
         assert not any(pin.startswith("certifi") for pin in result["constrains"])
-    assert result["depends"] == record["depends"]
+    # The CA hotfix must only add constrains, but these are real published
+    # records and the separate GCC-generation hotfix also adds _gcc_mutex to
+    # linux packages that depend on a toolchain component. Account for that one
+    # intended depends change, and assert nothing else in depends was modified.
+    expected_depends = list(record["depends"])
+    if sample["subdir"].startswith("linux-") and any(
+        _is_gcc_toolchain_package(dep.split()[0])
+        for dep in expected_depends
+        if dep
+    ):
+        expected_depends.append(GCC_MUTEX_DEPENDENCY)
+    assert result["depends"] == expected_depends
     second = patched({section: {filename: result}}, sample["subdir"])[section][filename]
     assert second["constrains"] == result["constrains"]
 

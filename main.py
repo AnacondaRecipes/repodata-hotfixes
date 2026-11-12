@@ -307,6 +307,67 @@ MKL_VERSION_2018_EXTENDED_RC = re.compile(r">=2018(.\d){0,2}")
 LINUX_RUNTIME_RE = re.compile(r"lib(\w+)-ng\s(?:>=)?([\d\.]+\d)(?:$|\.\*)")
 LINUX_RUNTIME_DEPS = ("libgcc-ng", "libstdcxx-ng", "libgfortran-ng")
 
+# GCC toolchain packages (compilers, binutils, runtime, and build-only
+# components). The upcoming manylinux-compliant toolchain will be published
+# with a different build of _gcc_mutex. Every package that is part of, or
+# depends on, this toolchain generation must be marked with the current
+# generation's mutex so that no existing package can be mixed with the future
+# manylinux ones. Mutex packages (_libgcc_mutex, _openmp_mutex) are shared and
+# intentionally excluded.
+GCC_TOOLCHAIN_PACKAGES = frozenset({
+    "binutils",
+    "conda-gcc-specs",
+    "gcc",
+    "gcc-no-conda-specs",
+    "gfortran",
+    "gxx",
+    "libgcc",
+    "libgcc-ng",
+    "libgfortran",
+    "libgfortran-ng",
+    "libgfortran4",
+    "libgfortran5",
+    "libgomp",
+    "libsanitizer",
+    "libstdcxx",
+    "libstdcxx-ng",
+})
+GCC_TOOLCHAIN_PACKAGE_PREFIXES = (
+    "binutils_impl_",
+    "binutils_linux-",
+    "gcc-dbg_",
+    "gcc_impl_",
+    "gcc_linux-",
+    "gcc_bootstrap_",
+    "gfortran-dbg_",
+    "gfortran_impl_",
+    "gfortran_linux-",
+    "gxx-dbg_",
+    "gxx_impl_",
+    "gxx_linux-",
+    "kernel-headers_linux-",
+    "ld_impl_linux-",
+    "libgcc-devel_",
+    "libstdcxx-devel_",
+    "sysroot_linux-",
+)
+# _gcc_mutex marks packages belonging to the current GCC toolchain generation
+# (the one distributed on the "main" label). It does not exist in main yet: the
+# upcoming manylinux-compliant toolchain will use a different build of this
+# mutex, so adding `* main` here keeps existing and future toolchain packages
+# from being mixed in the same environment. This is deliberately distinct from
+# the older _libgcc_mutex runtime mutex.
+GCC_MUTEX_PACKAGE = "_gcc_mutex"
+GCC_MUTEX_DEPENDENCY = f"{GCC_MUTEX_PACKAGE} * main_*"
+# Mutex packages are shared infrastructure across toolchain generations. They
+# must never be stamped with the generation marker themselves (some, like
+# older _openmp_mutex builds, depend on libgomp and would otherwise match).
+GCC_MUTEX_PACKAGES = frozenset({
+    "_gcc_mutex",
+    "_libgcc_mutex",
+    "_openmp_mutex",
+})
+
 # Packages that do *not* need to have their libffi dependencies patched
 LIBFFI_HOTFIX_EXCLUDES = [
     "_anaconda_depends",
@@ -487,6 +548,39 @@ def _infer_pybind11_abi(record, subdir):
 
 def _has_dep_named(depends, name):
     return any(dep.split()[0] == name for dep in depends if dep)
+
+
+def _is_gcc_toolchain_package(name):
+    """Return True for packages that are part of the GCC toolchain."""
+    return (
+        name in GCC_TOOLCHAIN_PACKAGES
+        or name.startswith(GCC_TOOLCHAIN_PACKAGE_PREFIXES)
+    )
+
+
+def _add_gcc_mutex_if_needed(name, record):
+    """Mark a record as belonging to the current GCC toolchain generation.
+
+    The upcoming manylinux-compliant toolchain will use a different build of
+    ``_gcc_mutex``. Marking every package that is part of, or depends on, the
+    current GCC toolchain with ``_gcc_mutex * main_*`` prevents any existing
+    package from being mixed with the future manylinux ones. An existing
+    ``_libgcc_mutex`` is a different, shared runtime mutex and does not
+    satisfy this marker. Mutex packages themselves are never stamped.
+    """
+
+    depends = record["depends"]
+    constrains = record.get("constrains") or []
+    if name in GCC_MUTEX_PACKAGES:
+        return
+    if _has_dep_named(depends, GCC_MUTEX_PACKAGE) or _has_dep_named(
+        constrains, GCC_MUTEX_PACKAGE
+    ):
+        return
+    if _is_gcc_toolchain_package(name) or any(
+        _is_gcc_toolchain_package(dep.split()[0]) for dep in depends if dep
+    ):
+        depends.append(GCC_MUTEX_DEPENDENCY)
 
 
 def _version_in_exact_set(name, version, exact_versions_by_name):
@@ -2379,6 +2473,17 @@ def patch_record_in_place(fn, record, subdir):
     # Add mutex package for libgcc-ng
     if name == "libgcc-ng":
         depends.append("_libgcc_mutex * main")
+
+    # Mark every package belonging to the current GCC toolchain generation so
+    # it cannot be mixed with the future manylinux-compliant toolchain. Some
+    # toolchain components are noarch (libgcc-devel_*, libstdcxx-devel_*,
+    # sysroot_linux-*, kernel-headers_linux-*); stamp those by name only so
+    # unrelated platform-independent noarch packages are left alone. Their
+    # consumers inherit the marker transitively.
+    if subdir.startswith("linux-") or (
+        subdir == "noarch" and _is_gcc_toolchain_package(name)
+    ):
+        _add_gcc_mutex_if_needed(name, record)
 
     # Limit breaks as we transition from CentOS 6 to 7
     if (
